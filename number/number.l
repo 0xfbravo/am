@@ -34,10 +34,17 @@ Hex [a-fA-F0-9]
   printf("Color: %s\n", yytext);
 }
 
+"^"   { return '^'; }
 "+"   { return '+'; }
 "-"   { return '-'; }
 "*"   { return '*'; }
 "/"   { return '/'; }
+"("   { return '('; }
+")"   { return ')'; }
+"["   { return '['; }
+"]"   { return ']'; }
+"{"   { return '{'; }
+"}"   { return '}'; }
 
 [ \t] /* Ignorar Espaços e TABs */
 
