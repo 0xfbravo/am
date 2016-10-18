@@ -12,6 +12,7 @@
 %{
   #include "am-custom.h"
   #include <iostream>
+  #include <fstream>
   #include <map>
   #include <string>
   using namespace std;
@@ -19,10 +20,12 @@
   /* Structs */
   #define YYSTYPE attr
   struct attr {
-    int token;
-    string id;
-    string type;
-    string translate;
+    int token;                // LexToken (Type)
+    string id;                // (Var||Const).name
+    string value;             // (Var||Const).value || Value
+    bool isVar;               // Var||Const
+    string translation;         // C Translation
+    string constTranslation;    // Const C Translation
   };
 
   /* Flex/Yacc Functions */
@@ -33,7 +36,7 @@
   void addVar(string,string,int);
   attr getVar(string);
   string checkType(string);
-  bool isVar(string);
+  void checkVar(string);
 
   /* VarMap */
   map<string,attr> varInfo;
@@ -43,46 +46,89 @@
 %token INTEGER FLOAT BOOLEAN CHARACTER VAR CONST
 %token END_LINE
 
+%left '+' '-'
+%left '*' '/'
+%left '^'
+%left '(' ')'
+
 %start BEFORE_THE_BEGINNING
 
 %%
   BEFORE_THE_BEGINNING:
     BLOCK {
-      cout <<
+      ofstream ccode;
+      ccode.open("am-ccode.c");
+      ccode <<
+      "/*" << endl <<
+      "     _" << endl <<
+      "    /_\\    /\\/\\" << endl <<
+      "   //_\\\\  /    \\" << endl <<
+      "  /  _  \\/ /\\/\\ \\" << endl <<
+      "  \\_/ \\_/\\/    \\/" << endl <<
+      "*/" << endl <<
       "#include <stdlib.h>" << endl <<
-      "#include <stdio.h>\n" << endl <<
+      "#include <stdio.h>" << endl <<
+      "#include <math.h>\n" << endl <<
       "#define TRUE 1" << endl <<
       "#define FALSE 0\n" << endl <<
+      "// User Consts" << endl <<
+      $$.constTranslation << endl <<
       "int main() {" << endl <<
-      $$.translate << endl <<
+      $$.translation << endl <<
       "\treturn 0;" << endl <<
       "}" << endl;
+      ccode.close();
     };
   BLOCK:
-    CMDS { $$.translate = "\t"+$1.translate; };
+    CMDS {
+      $$.translation = $1.translation;
+      $$.constTranslation = $1.constTranslation;
+    };
   CMDS:
-    CMD CMDS
+    CMD CMDS {
+      $$.translation = $1.translation + $2.translation;
+      $$.constTranslation = $1.constTranslation + $2.constTranslation;
+    };
     |;
   CMD:
-    EXP END_LINE;
-  EXP:
-    varConst '=' temp {
-      addVar($1.id, $3.translate, $3.token);
-      $$.id = $1.id;  $$.translate = $3.translate; $$.token = $3.token;
-      string type = checkType($1.id) == "bool" ? "int" : checkType($1.id);
-      string translate = checkType($1.id) == "bool" ? (getVar($1.id).translate == "false" ? "FALSE" : "TRUE") : $3.translate;
-      $$.translate = type + " " + $1.id + " = " + translate+";\n";
+    EXP END_LINE {
+      if(!$1.translation.empty()){ $$.translation = "\t" + $1.translation + ";\n"; }
+      if(!$1.constTranslation.empty()){ $$.constTranslation = $1.constTranslation + "\n"; }
     };
+    | EXP ';' END_LINE {
+      if(!$1.translation.empty()){ $$.translation = "\t" + $1.translation + ";\n"; }
+      if(!$1.constTranslation.empty()){ $$.constTranslation = $1.constTranslation + "\n"; }
+    };
+  EXP:
+    varConst '=' EXP {
+      addVar($1.id, $3.translation, $3.token);
+      string type = checkType($1.id) == "bool" ? "int" : checkType($1.id);
+      string translation = checkType($1.id) == "bool" ? (getVar($1.id).translation == "false" ? "FALSE" : "TRUE") : $3.translation;
+
+      if(!$1.isVar){ $$.constTranslation = "#define " + $1.id.erase(0,1) + " " + $3.translation; }
+      else { $$.translation = type + " " + $1.id + " = " + translation; }
+    };
+    | EXP '+' EXP { $$.translation = $1.translation + " + " + $3.translation; };
+    | EXP '-' EXP { $$.translation = $1.translation + " - " + $3.translation; };
+    | EXP '*' EXP { $$.translation = $1.translation + " * " + $3.translation; };
+    | EXP '/' EXP { $$.translation = $1.translation + " / " + $3.translation; };
+    | EXP '^' EXP { $$.translation = "pow("+ $1.translation + "," + $3.translation + ")"; };
+    | '(' EXP ')' { $$.translation = "("+ $2.translation + ")"; };
+    | VAR {
+      checkVar($1.id);
+      $$.translation = $1.id;
+    };
+    | CONST {
+      checkVar($1.id);
+      $$.translation = $1.id;
+    };
+    | INTEGER { $$.translation = $1.value; };
+    | FLOAT { $$.translation = $1.value; };
+    | BOOLEAN { $$.translation = $1.value; };
+    | CHARACTER { $$.translation = $1.value; };
   varConst:
     VAR { $$.id = $1.id; };
     | CONST { $$.id = $1.id; };
-  temp:
-    VAR { $$.id = $1.id; };
-    | CONST { $$.id = $1.id; };
-    | INTEGER { $$.translate = $1.translate; };
-    | FLOAT { $$.translate = $1.translate; };
-    | BOOLEAN { $$.translate = $1.translate; };
-    | CHARACTER { $$.translate = $1.translate; };
 %%
 
 #include "lex.yy.c"
@@ -91,10 +137,11 @@ int main(int argc, char** argv){ yyparse(); }
 
 /* Bison Error Msg */
 void yyerror(string msg){
-  cout << colorText("ERROR: ",hexToRGB(RED)) << msg  << " at " << colorText("'"+(string)yytext+"'",hexToRGB(YELLOW)) << endl <<
-  colorText("\tyylval.id: ",hexToRGB(TEXT)) << yylval.id << endl <<
-  colorText("\tyylval.type: ",hexToRGB(TEXT)) << yylval.type << endl <<
-  colorText("\tyylval.translate: ",hexToRGB(TEXT)) << yylval.translate << endl;
+  cout <<
+  colorText("error:"+to_string(yylineno)+": ",hexToRGB(RED)) <<  msg  << " with " << colorText("'"+(string)yytext+"'",hexToRGB(YELLOW)) << endl <<
+  colorText("yylval.id: ",hexToRGB(TEXT)) << yylval.id << endl <<
+  colorText("yylval.token: ",hexToRGB(TEXT)) << yylval.token << endl <<
+  colorText("yylval.translation: ",hexToRGB(TEXT)) << yylval.translation << endl;
 }
 
 /* GetVar */
@@ -104,15 +151,24 @@ attr getVar(string name){
 }
 
 /* AddVar */
-void addVar(string name, string translate, int type){
+void addVar(string name, string translation, int token){
   varInfoIt = varInfo.find(name);
   if(varInfoIt != varInfo.end()){
-    cout << colorText("ERROR: ",hexToRGB(RED)) << "Dude... " << colorText(name,hexToRGB(YELLOW)) << " was already declared previously..." << endl;
-    exit(1);
+    attr var = varInfoIt->second;
+    if(!var.isVar) {
+      /* Error when try to add a new value to a Const */
+      cout << colorText("error:"+to_string(yylineno-1)+": ",hexToRGB(RED)) << colorText(name,hexToRGB(CYAN)) << " is a " << colorText("Constant",hexToRGB(GREEN)) << " and was declared previously." << endl;
+      exit(1);
+    }
+    if(var.token != token) {
+      /* Error when try to add a new value with a Different Type */
+      cout << colorText("error:"+to_string(yylineno-1)+": ",hexToRGB(RED)) << colorText(name,hexToRGB(CYAN))  << " was declared previously with type " << colorText(checkType(name),hexToRGB(GREEN))  << endl;
+      exit(1);
+    }
   }
   attr v;
-  v.token = type;
-  v.translate = translate;
+  v.token = token;
+  v.translation = translation;
   varInfo[name] = v;
 }
 
@@ -121,12 +177,20 @@ string checkType(string name){
   varInfoIt = varInfo.find(name);
   attr v = varInfoIt->second;
   switch (v.token) {
-    case INTEGER: v.type = "int"; return "int";
-    case FLOAT: v.type = "float"; return "float";
-    case BOOLEAN: v.type = "bool"; return "bool";
-    case CHARACTER: v.type = "char"; return "char";
-    case VAR: v.type = "var"; return "var";
-    case CONST: v.type = "const"; return "const";
+    case INTEGER: return "int";
+    case FLOAT: return "float";
+    case BOOLEAN: return "bool";
+    case CHARACTER: return "char";
     default: return "UNDEFINED";
+  }
+}
+
+/* CheckVar */
+void checkVar(string name){
+  varInfoIt = varInfo.find(name);
+  if(varInfoIt == varInfo.end()){
+    /* Error when a Var/Const wasn't declared previously */
+    cout << colorText("error:"+to_string(yylineno-1)+": ",hexToRGB(RED)) << colorText(name,hexToRGB(CYAN)) << " wasn't " << colorText("declared",hexToRGB(GREEN)) << " previously." << endl;
+    exit(1);
   }
 }
