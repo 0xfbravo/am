@@ -23,12 +23,12 @@
 Int                 [0-9]+
 Const               @{Var}
 Char                '[A-z]'
-Arithmetic          [\^*+/-=]
-Logic               !|\|\||&&
 FloatZero           (\.[0-9]+)
-Var                 ([A-z])+([0-9])*
+Arithmetic          [*+\-=/\^]
+Logic               (!|\|\||&&)
+Var                 [a-zA-Z]+[0-9]*
 Float               {Int}{FloatZero}*
-Relational          ==|===|!=|!==|>|=>|<=|<
+Relational          ((===|==)|(!==|!=)|>|=>|<=|<)
 Bool                true|false|True|False|TRUE|FALSE
 
 %%
@@ -60,6 +60,7 @@ Bool                true|false|True|False|TRUE|FALSE
   yylval.token = CHARACTER;
   return CHARACTER;
 }
+
 {Var} {
   /* Variables */
   //cout << colorText("Var ",hexToRGB(GREEN)) << "Found: " << yytext << endl;
@@ -80,7 +81,7 @@ Bool                true|false|True|False|TRUE|FALSE
 {Logic}             { return *yytext; }
 {Relational}        { return *yytext; }
 {Arithmetic}        { return *yytext; }
-[()]                { return *yytext; }
-"\n"                { return END_LINE; }
+[();]               { return *yytext; }
+[\n]                { return END_LINE; }
 [ \t]               /* Ignore Spaces and TABs */
 %%
