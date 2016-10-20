@@ -15,7 +15,9 @@
 // User Consts
 
 int main() {
-	float a = pow((float) 2,3.0);
+	int a = TRUE;
+	int b = FALSE;
+	int c = !(a && b);
 
 	return 0;
 }

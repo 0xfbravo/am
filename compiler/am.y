@@ -11,8 +11,9 @@
 */
 %{
   #include "am-custom.h"
-  #include <iostream>
   #include <fstream>
+  #include <iostream>
+  #include <locale>
   #include <map>
   #include <string>
   using namespace std;
@@ -26,6 +27,7 @@
     bool isVar;                 // Var||Const
     string translation;         // C Translation
     string constTranslation;    // Const C Translation
+    string operation;           // Operation
   };
 
   /* Flex/Yacc Functions */
@@ -36,21 +38,25 @@
   /* VarMap Functions */
   void addVar(string,bool,string,int);
   attr getVar(string);
+  string checkType(int);
   string checkType(string);
   void checkVar(string);
 
   /* VarMap */
   map<string,attr> varInfo;
   map<string,attr>::iterator varInfoIt;
+
+  /* Useful Functions */
+  string toUpper(const string&);
 %}
 
 %token INTEGER FLOAT BOOLEAN CHARACTER
-%token RELATIONAL LOGIC
+%token ASSIGNMENT BOOLEAN_LOGIC CONDITIONAL_LOGIC EQUALITY_TEST ORDER_RELATION
 %token VAR CONST
 %token END_LINE
 
 %left '='
-%left "=="
+%left "||" "&&" '!' '?' ':' "==" "!=" "===" "!==" '<' '>' "<=" ">="
 %left '+' '-'
 %left '*' '/'
 %left '^'
@@ -105,17 +111,60 @@
       if(!$1.constTranslation.empty()){ $$.constTranslation = $1.constTranslation + "\n"; }
     };
   EXP:
-    EXP "==" EXP {
-      cout << $1.translation << " " << $3.translation << endl;
+    EXP BOOLEAN_LOGIC EXP {
+      if($1.token != BOOLEAN){ wrongOperation($2.operation,checkType($1.token)); }
+      else if($3.token != BOOLEAN){ wrongOperation($2.operation,checkType($3.token)); }
+      if($2.operation == "||"){ $$.translation = $1.id + " || " + $3.id; }
+      else if($2.operation == "&&"){ $$.translation = $1.id + " && " + $3.id; }
+      $$.token = BOOLEAN;
     };
-    | varConst '=' EXP {
-      addVar($1.id, $1.isVar, $3.translation, $3.token);
-
-      string type = checkType($1.id) == "bool" ? "int" : checkType($1.id);
-      string translation = checkType($1.id) == "bool" ? (getVar($1.id).value == "false" ? "FALSE" : "TRUE") : $3.translation;
-
+    | '!' EXP {
+      if($2.token != BOOLEAN){ wrongOperation("!",checkType($2.token)); }
+      $$.translation = "!" + $2.translation;
+      $$.token = BOOLEAN;
+    }
+    | EXP '?' EXP ':' EXP {
+      cout << $2.operation << " " << $1.translation << " " << $3.translation << endl;
+    };
+    | EXP EQUALITY_TEST EXP {
+      cout << $1.value << " " << $2.value << endl;
+      if($2.operation == "==="){
+        // Equal Types
+        $$.translation = $1.token == $3.token ? "TRUE" : "FALSE";
+        $$.value = $1.token == $3.token ? "true" : "false";
+        $$.token = BOOLEAN;
+      }
+      else if($2.operation == "!=="){
+        // Different Types
+        $$.translation = $1.token != $3.token ? "TRUE" : "FALSE";
+        $$.value = $1.token != $3.token ? "true" : "false";
+        $$.token = BOOLEAN;
+      }
+      else if($2.operation == "=="){
+        // Equal Values
+        $$.translation = $1.value == $3.value ? "TRUE" : "FALSE";
+        $$.value = $1.value == $3.value ? "true" : "false";
+        $$.token = BOOLEAN;
+      }
+      else if($2.operation == "!="){
+        // Different Values
+        $$.translation = $1.value != $3.value ? "TRUE" : "FALSE";
+        $$.value = $1.value != $3.value ? "true" : "false";
+        $$.token = BOOLEAN;
+      }
+    };
+    | EXP ORDER_RELATION EXP {
+      if($1.token != FLOAT && $1.token != INTEGER){ wrongOperation($2.operation,checkType($1.token)); }
+      else if($3.token != FLOAT && $3.token != INTEGER){ wrongOperation($2.operation,checkType($3.token)); }
+      cout << $2.operation << " " << $1.translation << " " << $3.translation << endl;
+    };
+    | varConst ASSIGNMENT EXP {
+      addVar($1.id, $1.isVar, $3.value, $3.token);
       if(!$1.isVar){ $$.constTranslation = "#define " + $1.id.erase(0,1) + " " + $3.translation; }
-      else { $$.translation = type + " " + $1.id + " = " + translation; }
+      else {
+        string type = checkType($1.id) == "bool" ? "int" : checkType($1.id);
+        $$.translation = type + " " + $1.id + " = " + $3.translation;
+      }
     };
     | EXP '+' EXP {
       if($1.token == BOOLEAN || $3.token == BOOLEAN){ wrongOperation("+","bool"); }
@@ -150,21 +199,24 @@
     | '(' EXP ')' {
       $$.token = $2.token;
       $$.translation = "("+ $2.translation + ")";
+      $$.value = $2.value;
     };
     | VAR {
       checkVar($1.id);
       $$.token = getVar($1.id).token;
+      $$.value = getVar($1.id).value;
       $$.translation = $1.id;
     };
     | CONST {
       checkVar($1.id);
       $$.token = getVar($1.id).token;
+      $$.value = getVar($1.id).value;
       $$.translation = $1.id;
     };
-    | INTEGER { $$.translation = $1.value; };
-    | FLOAT { $$.translation = $1.value; };
-    | BOOLEAN { $$.translation = $1.value; };
-    | CHARACTER { $$.translation = $1.value; };
+    | INTEGER { $$.translation = $1.value; $$.value = $1.value; $$.token = INTEGER; };
+    | FLOAT { $$.translation = $1.value; $$.value = $1.value; $$.token = FLOAT; };
+    | BOOLEAN { $$.translation = toUpper($1.value); $$.value = $1.value; $$.token = BOOLEAN; };
+    | CHARACTER { $$.translation = $1.value; $$.value = $1.value; $$.token = CHARACTER; };
   varConst:
     VAR { $$.id = $1.id; };
     | CONST { $$.id = $1.id; };
@@ -228,6 +280,15 @@ void addVar(string name, bool isVar, string value, int token){
 }
 
 /* CheckType */
+string checkType(int token){
+  switch (token) {
+    case INTEGER: return "int";
+    case FLOAT: return "float";
+    case BOOLEAN: return "bool";
+    case CHARACTER: return "char";
+    default: return "UNDEFINED";
+  }
+}
 string checkType(string name){
   varInfoIt = varInfo.find(name);
   attr v = varInfoIt->second;
@@ -248,4 +309,11 @@ void checkVar(string name){
     cout << colorText("error:"+to_string(yylineno-1)+": ",hexToRGB(RED)) << colorText(name,hexToRGB(CYAN)) << " wasn't " << colorText("declared",hexToRGB(GREEN)) << " previously." << endl;
     exit(1);
   }
+}
+
+/* ToUpper */
+string toUpper(const string& s){
+  string result; locale l;
+  for(int i = 0; i < s.length(); i++){ result += toupper(s.at(i),l); }
+  return result;
 }

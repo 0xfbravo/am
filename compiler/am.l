@@ -20,16 +20,23 @@
 %option yylineno
 
 /* Regexp */
+/* Types */
 Int                 [0-9]+
-Const               @{Var}
 Char                '[A-z]'
+Bool                true|false
 FloatZero           (\.[0-9]+)
-Arithmetic          [*+\-=/\^]
-Logic               (!|\|\||&&)
-Var                 [a-zA-Z]+[0-9]*
 Float               {Int}{FloatZero}*
-Relational          ((===|==)|(!==|!=)|>|=>|<=|<)
-Bool                true|false|True|False|TRUE|FALSE
+/* Var||Const */
+Var                 [a-zA-Z]+[0-9]*
+Const               @{Var}
+/* Operators */
+BooleanLogic        (\|\||&&)
+ConditionalLogic    [?:]
+EqualityTest        ==|!=|===|!==
+OrderRelation       <|<=|>|>=
+Arithmetic          [*+\-/\^]
+Not                 !
+Assignment          =
 
 %%
 {Int} {
@@ -60,7 +67,6 @@ Bool                true|false|True|False|TRUE|FALSE
   yylval.token = CHARACTER;
   return CHARACTER;
 }
-
 {Var} {
   /* Variables */
   //cout << colorText("Var ",hexToRGB(GREEN)) << "Found: " << yytext << endl;
@@ -77,10 +83,13 @@ Bool                true|false|True|False|TRUE|FALSE
   yylval.isVar = false;
   return CONST;
 }
-
-{Logic}             { return *yytext; }
-{Relational}        { return *yytext; }
 {Arithmetic}        { return *yytext; }
+{BooleanLogic}      { yylval.operation = yytext; return BOOLEAN_LOGIC; }
+{ConditionalLogic}  { yylval.operation = yytext; return CONDITIONAL_LOGIC; }
+{EqualityTest}      { yylval.operation = yytext; return EQUALITY_TEST; }
+{OrderRelation}     { yylval.operation = yytext; return ORDER_RELATION; }
+{Assignment}        { yylval.operation = yytext; return ASSIGNMENT; }
+{Not}               { return *yytext; }
 [();]               { return *yytext; }
 [\n]                { return END_LINE; }
 [ \t]               /* Ignore Spaces and TABs */
