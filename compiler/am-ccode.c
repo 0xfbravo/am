@@ -15,8 +15,10 @@
 // User Consts
 
 int main() {
-	int a = 1;
-	int b = !(a != 1);
+	int temp1; int temp2; //1,a
+
+	temp1 = 1;
+	temp2 = temp1;
 
 	return 0;
 }

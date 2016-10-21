@@ -18,14 +18,25 @@
   #include <string>
   using namespace std;
 
+  int tempCount = 0;
+
   /* Structs */
+  struct temp {
+    int token;
+    string name;
+    string value;
+    string translation;
+  };
+
   #define YYSTYPE attr
   struct attr {
     int token;                  // LexToken (Type)
+    temp tempVar;               // TempVar
     string id;                  // (Var||Const).name
     string value;               // (Var||Const).value || Value
     bool isVar;                 // Var||Const
     string translation;         // C Translation
+    string tempTranslation;     // Var declared C Translation
     string constTranslation;    // Const C Translation
     string operation;           // Operation
   };
@@ -36,7 +47,9 @@
   void wrongOperation(string,string);
 
   /* VarMap Functions */
-  void addVar(string,bool,string,int);
+  bool exists(string);
+  bool exists(temp);
+  void addVar(temp,string,bool,string,int);
   attr getVar(string);
   string checkType(int);
   string checkType(string);
@@ -47,6 +60,7 @@
   map<string,attr>::iterator varInfoIt;
 
   /* Useful Functions */
+  temp createTemp(int,string);
   string toUpper(const string&);
 %}
 
@@ -85,6 +99,7 @@
       "// User Consts" << endl <<
       $$.constTranslation << endl <<
       "int main() {" << endl <<
+      $$.tempTranslation << endl <<
       $$.translation << endl <<
       "\treturn 0;" << endl <<
       "}" << endl;
@@ -94,21 +109,25 @@
     CMDS {
       $$.translation = $1.translation;
       $$.constTranslation = $1.constTranslation;
+      $$.tempTranslation = $1.tempTranslation;
     };
   CMDS:
     CMD CMDS {
       $$.translation = $1.translation + $2.translation;
       $$.constTranslation = $1.constTranslation + $2.constTranslation;
+      $$.tempTranslation = $1.tempTranslation + $2.tempTranslation;
     };
     |;
   CMD:
     EXP END_LINE {
-      if(!$1.translation.empty()){ $$.translation = "\t" + $1.translation + ";\n"; }
+      if(!$1.translation.empty()){ $$.translation = "\t" + $1.translation + "\n"; }
       if(!$1.constTranslation.empty()){ $$.constTranslation = $1.constTranslation + "\n"; }
+      if(!$1.tempTranslation.empty()){ $$.tempTranslation = "\t" + $1.tempTranslation + "\n"; }
     };
     | EXP ';' END_LINE {
-      if(!$1.translation.empty()){ $$.translation = "\t" + $1.translation + ";\n"; }
+      if(!$1.translation.empty()){ $$.translation = "\t" + $1.translation + "\n"; }
       if(!$1.constTranslation.empty()){ $$.constTranslation = $1.constTranslation + "\n"; }
+      if(!$1.tempTranslation.empty()){ $$.tempTranslation = "\t" + $1.tempTranslation + "\n"; }
     };
   EXP:
     EXP BOOLEAN_LOGIC EXP {
@@ -164,11 +183,27 @@
       $$.token = BOOLEAN;
     };
     | varConst ASSIGNMENT EXP {
-      addVar($1.id, $1.isVar, $3.value, $3.token);
+      if(!(exists($1.id))) { $1.tempVar = createTemp($3.token,$3.translation); }
+      if(!exists($1.id) && !exists($3.id)){
+        $$.tempTranslation = $3.tempVar.translation + " " + $1.tempVar.translation + " //" + $3.translation + "," +  $1.translation;
+        addVar($1.tempVar,$1.id, $1.isVar, $3.value, $3.token);
+      }
+      else if(exists($1.id)){ $$.tempTranslation = $3.tempVar.translation + " //" + $3.translation; }
+      else if(exists($3.id)){ $$.tempTranslation = $1.tempVar.translation + " //" + $1.translation; }
+
       if(!$1.isVar){ $$.constTranslation = "#define " + $1.id.erase(0,1) + " " + $3.translation; }
       else {
-        string type = checkType($1.id) == "bool" ? "int" : checkType($1.id);
-        $$.translation = type + " " + $1.id + " = " + $3.translation;
+        if((exists($1.id))){
+          $$.translation =
+            exists($3.tempVar) ?
+              getVar($1.id).tempVar.name + " = " + $3.tempVar.name + ";" :
+              $3.tempVar.name + " = " + $3.tempVar.value + ";\n\t" + getVar($1.id).tempVar.name + " = " + $3.tempVar.name + ";"; }
+        else {
+          $$.translation =
+            exists($3.tempVar) ?
+              $1.tempVar.name + " = " + $3.tempVar.name + ";" :
+              $3.tempVar.name + " = " + $3.tempVar.value + ";\n\t" + $1.tempVar.name + " = " + $3.tempVar.name + ";";
+        }
       }
     };
     | EXP '+' EXP {
@@ -208,23 +243,25 @@
     };
     | VAR {
       checkVar($1.id);
+      $$.tempVar = getVar($1.id).tempVar;
       $$.token = getVar($1.id).token;
       $$.value = getVar($1.id).value;
       $$.translation = $1.id;
     };
     | CONST {
       checkVar($1.id);
+      $$.tempVar = getVar($1.id).tempVar;
       $$.token = getVar($1.id).token;
       $$.value = getVar($1.id).value;
       $$.translation = $1.id;
     };
-    | INTEGER { $$.translation = $1.value; $$.value = $1.value; $$.token = INTEGER; };
-    | FLOAT { $$.translation = $1.value; $$.value = $1.value; $$.token = FLOAT; };
-    | BOOLEAN { $$.translation = toUpper($1.value); $$.value = $1.value; $$.token = BOOLEAN; };
-    | CHARACTER { $$.translation = $1.value; $$.value = $1.value; $$.token = CHARACTER; };
+    | INTEGER { $$.tempVar = createTemp($1.token,$1.value); $$.tempTranslation = $$.tempVar.translation; $$.translation = $1.value; $$.value = $1.value; $$.token = INTEGER; };
+    | FLOAT { $$.tempVar = createTemp($1.token,$1.value); $$.tempTranslation = $$.tempVar.translation; $$.translation = $1.value; $$.value = $1.value; $$.token = FLOAT; };
+    | BOOLEAN { $$.tempVar = createTemp($1.token,$1.value); $$.tempTranslation = $$.tempVar.translation; $$.translation = toUpper($1.value); $$.value = $1.value; $$.token = BOOLEAN; };
+    | CHARACTER { $$.tempVar = createTemp($1.token,$1.value); $$.tempTranslation = $$.tempVar.translation; $$.translation = $1.value; $$.value = $1.value; $$.token = CHARACTER; };
   varConst:
-    VAR { $$.id = $1.id; };
-    | CONST { $$.id = $1.id; };
+    VAR { $$.id = $1.id; $$.translation = $1.id; };
+    | CONST { $$.id = $1.id; $$.translation = $1.id; };
 %%
 
 #include "lex.yy.c"
@@ -256,7 +293,7 @@ attr getVar(string name){
 }
 
 /* AddVar */
-void addVar(string name, bool isVar, string value, int token){
+void addVar(temp tempVar, string name, bool isVar, string value, int token){
   varInfoIt = varInfo.find(name);
   //cout << name << " " << isVar << " " << value << " " << token << endl;
 
@@ -281,6 +318,7 @@ void addVar(string name, bool isVar, string value, int token){
   v.isVar = isVar;
   v.value = value;
   v.token = token;
+  v.tempVar = tempVar;
   varInfo[name] = v;
 }
 
@@ -306,6 +344,18 @@ string checkType(string name){
   }
 }
 
+/* Exists */
+bool exists(string varName){
+  varInfoIt = varInfo.find(varName);
+  return !(varInfoIt == varInfo.end());
+}
+bool exists(temp tempVar){
+  for(varInfoIt = varInfo.begin(); varInfoIt != varInfo.end(); ++varInfoIt){
+    if(varInfoIt->second.tempVar.name == tempVar.name){ return true; }
+  }
+  return false;
+}
+
 /* CheckVar */
 void checkVar(string name){
   varInfoIt = varInfo.find(name);
@@ -321,4 +371,15 @@ string toUpper(const string& s){
   string result; locale l;
   for(int i = 0; i < s.length(); i++){ result += toupper(s.at(i),l); }
   return result;
+}
+
+/* TempName */
+temp createTemp(int token, string value){
+  tempCount++;
+  temp t;
+  t.token = token;
+  t.value = value;
+  t.name = "temp" + to_string(tempCount);
+  t.translation = checkType(t.token) + " " + t.name + ";";
+  return t;
 }
