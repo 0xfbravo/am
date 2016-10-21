@@ -193,16 +193,17 @@
 
       if(!$1.isVar){ $$.constTranslation = "#define " + $1.id.erase(0,1) + " " + $3.translation; }
       else {
+        string expTranslation = $3.token == BOOLEAN ? toUpper($3.tempVar.value) : $3.tempVar.value;
         if((exists($1.id))){
           $$.translation =
             exists($3.tempVar) ?
               getVar($1.id).tempVar.name + " = " + $3.tempVar.name + ";" :
-              $3.tempVar.name + " = " + $3.tempVar.value + ";\n\t" + getVar($1.id).tempVar.name + " = " + $3.tempVar.name + ";"; }
+              $3.tempVar.name + " = " + expTranslation + ";\n\t" + getVar($1.id).tempVar.name + " = " + $3.tempVar.name + ";"; }
         else {
           $$.translation =
             exists($3.tempVar) ?
               $1.tempVar.name + " = " + $3.tempVar.name + ";" :
-              $3.tempVar.name + " = " + $3.tempVar.value + ";\n\t" + $1.tempVar.name + " = " + $3.tempVar.name + ";";
+              $3.tempVar.name + " = " + expTranslation + ";\n\t" + $1.tempVar.name + " = " + $3.tempVar.name + ";";
         }
       }
     };
@@ -327,7 +328,7 @@ string checkType(int token){
   switch (token) {
     case INTEGER: return "int";
     case FLOAT: return "float";
-    case BOOLEAN: return "bool";
+    case BOOLEAN: return "int";
     case CHARACTER: return "char";
     default: return "UNDEFINED";
   }
@@ -338,7 +339,7 @@ string checkType(string name){
   switch (v.token) {
     case INTEGER: return "int";
     case FLOAT: return "float";
-    case BOOLEAN: return "bool";
+    case BOOLEAN: return "int";
     case CHARACTER: return "char";
     default: return "UNDEFINED";
   }
