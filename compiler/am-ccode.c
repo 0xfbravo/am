@@ -15,9 +15,8 @@
 // User Consts
 
 int main() {
-	int a = TRUE;
-	int b = FALSE;
-	int c = !(a && b);
+	int a = 1;
+	int b = !(a != 1);
 
 	return 0;
 }

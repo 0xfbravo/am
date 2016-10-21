@@ -127,7 +127,6 @@
       cout << $2.operation << " " << $1.translation << " " << $3.translation << endl;
     };
     | EXP EQUALITY_TEST EXP {
-      cout << $1.value << " " << $2.value << endl;
       if($2.operation == "==="){
         // Equal Types
         $$.translation = $1.token == $3.token ? "TRUE" : "FALSE";
@@ -142,13 +141,13 @@
       }
       else if($2.operation == "=="){
         // Equal Values
-        $$.translation = $1.value == $3.value ? "TRUE" : "FALSE";
+        $$.translation = $1.translation + " == " + $3.translation;
         $$.value = $1.value == $3.value ? "true" : "false";
         $$.token = BOOLEAN;
       }
       else if($2.operation == "!="){
         // Different Values
-        $$.translation = $1.value != $3.value ? "TRUE" : "FALSE";
+        $$.translation = $1.translation + " != " + $3.translation;
         $$.value = $1.value != $3.value ? "true" : "false";
         $$.token = BOOLEAN;
       }
@@ -156,7 +155,13 @@
     | EXP ORDER_RELATION EXP {
       if($1.token != FLOAT && $1.token != INTEGER){ wrongOperation($2.operation,checkType($1.token)); }
       else if($3.token != FLOAT && $3.token != INTEGER){ wrongOperation($2.operation,checkType($3.token)); }
-      cout << $2.operation << " " << $1.translation << " " << $3.translation << endl;
+
+      if($2.operation == "<"){ $$.translation = $1.translation + " < " + $3.translation; }
+      else if($2.operation == "<="){ $$.translation = $1.translation + " <= " + $3.translation; }
+      else if($2.operation == ">"){ $$.translation = $1.translation + " > " + $3.translation; }
+      else if($2.operation == ">="){ $$.translation = $1.translation + " >= " + $3.translation; }
+
+      $$.token = BOOLEAN;
     };
     | varConst ASSIGNMENT EXP {
       addVar($1.id, $1.isVar, $3.value, $3.token);
@@ -230,17 +235,17 @@ int main(int argc, char** argv){ yyparse(); }
 void yyerror(string msg){
   cout <<
   colorText("error:"+to_string(yylineno)+": ",hexToRGB(RED)) <<  msg  << " with " << colorText("'"+(string)yytext+"'",hexToRGB(YELLOW)) << endl <<
-  colorText("yylval.token: ",hexToRGB(TEXT)) << yylval.token << endl <<
-  colorText("yylval.id: ",hexToRGB(TEXT)) << yylval.id << endl <<
-  colorText("yylval.value: ",hexToRGB(TEXT)) << yylval.value << endl <<
-  colorText("yylval.isVar: ",hexToRGB(TEXT)) << yylval.isVar << endl <<
-  colorText("yylval.translation: ",hexToRGB(TEXT)) << yylval.translation << endl <<
-  colorText("yylval.constTranslation: ",hexToRGB(TEXT)) << yylval.constTranslation << endl;
+  colorText("yylval.token: ",hexToRGB(OFF_WHITE)) << yylval.token << endl <<
+  colorText("yylval.id: ",hexToRGB(OFF_WHITE)) << yylval.id << endl <<
+  colorText("yylval.value: ",hexToRGB(OFF_WHITE)) << yylval.value << endl <<
+  colorText("yylval.isVar: ",hexToRGB(OFF_WHITE)) << yylval.isVar << endl <<
+  colorText("yylval.translation: ",hexToRGB(OFF_WHITE)) << yylval.translation << endl <<
+  colorText("yylval.constTranslation: ",hexToRGB(OFF_WHITE)) << yylval.constTranslation << endl;
 }
 
 /* WrongOperation */
 void wrongOperation(string operation, string type){
-  cout << colorText("error:"+to_string(yylineno-1)+": ",hexToRGB(RED)) << "This operation " << colorText("'"+operation+"'",hexToRGB(CYAN)) << " wasn't defined for type " << colorText(type,hexToRGB(GREEN))  << endl;
+  cout << colorText("error:"+to_string(yylineno-1)+": ",hexToRGB(RED)) << "This operation " << colorText("'"+operation+"'",hexToRGB(AQUA)) << " wasn't defined for type " << colorText(type,hexToRGB(GREEN))  << endl;
   exit(1);
 }
 
@@ -260,13 +265,13 @@ void addVar(string name, bool isVar, string value, int token){
 
     if(!var.isVar) {
       /* Error when try to add a new value to a Const */
-      cout << colorText("error:"+to_string(yylineno-1)+": ",hexToRGB(RED)) << colorText(name,hexToRGB(CYAN)) << " is a " << colorText("Constant",hexToRGB(GREEN)) << " and was declared previously." << endl;
+      cout << colorText("error:"+to_string(yylineno-1)+": ",hexToRGB(RED)) << colorText(name,hexToRGB(AQUA)) << " is a " << colorText("Constant",hexToRGB(GREEN)) << " and was declared previously." << endl;
       exit(1);
     }
 
     if(var.token != token) {
       /* Error when try to add a new value with a Different Type */
-      cout << colorText("error:"+to_string(yylineno-1)+": ",hexToRGB(RED)) << colorText(name,hexToRGB(CYAN))  << " was declared previously with type " << colorText(checkType(name),hexToRGB(GREEN))  << endl;
+      cout << colorText("error:"+to_string(yylineno-1)+": ",hexToRGB(RED)) << colorText(name,hexToRGB(AQUA))  << " was declared previously with type " << colorText(checkType(name),hexToRGB(GREEN))  << endl;
       exit(1);
     }
   }
@@ -306,7 +311,7 @@ void checkVar(string name){
   varInfoIt = varInfo.find(name);
   if(varInfoIt == varInfo.end()){
     /* Error when a Var/Const wasn't declared previously */
-    cout << colorText("error:"+to_string(yylineno-1)+": ",hexToRGB(RED)) << colorText(name,hexToRGB(CYAN)) << " wasn't " << colorText("declared",hexToRGB(GREEN)) << " previously." << endl;
+    cout << colorText("error:"+to_string(yylineno-1)+": ",hexToRGB(RED)) << colorText(name,hexToRGB(AQUA)) << " wasn't " << colorText("declared",hexToRGB(GREEN)) << " previously." << endl;
     exit(1);
   }
 }

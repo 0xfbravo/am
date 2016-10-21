@@ -14,17 +14,20 @@
 #include <regex>
 using namespace std;
 
-/* Default Colors - Material Shell Colors - https://github.com/carloscuesta/materialshell/blob/master/colors.md */
-#define BLACK "#252525"
-#define RED "#FF5252"
-#define GREEN "#C3D82C"
-#define YELLOW "#FFD740"
-#define BLUE "#40C4FF"
-#define MAGENTA "#FF4081"
-#define CYAN "#18FFFF"
-#define WHITE "#F5F5F5"
-#define TEXT "#A1B0B8"
-#define BACKGROUND "#263238"
+/* Default Colors - Brogrammer */
+#define WHITE "#ffffff"
+#define OFF_WHITE "#ecf0f1"
+#define DARK_GREY "#1a1a1a"
+#define LIGHT_GREY "#555555"
+#define MEDIUM_LIGHT_GREY "#2a2a2a"
+#define MEDIUM_DARK_GREY "#222222"
+#define GREEN "#2ecc71"
+#define AQUA "#1abc9c"
+#define RED "#e74c3c"
+#define BLUE "#3498db"
+#define YELLOW "#f1c40f"
+#define ORANGE_RED "#e67e22"
+#define PERIWINKLE "#6c71c4"
 
 struct COLOR {
   int r;
