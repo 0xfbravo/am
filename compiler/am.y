@@ -431,7 +431,9 @@
     };
     | '(' EXP ')' {
       $$.token = $2.token;
+      $$.tempTranslation = $2.tempTranslation;
       $$.translation = $2.translation;
+      $$.tempVar = $2.tempVar;
     };
     | VAR {
       checkVar($1.id);
