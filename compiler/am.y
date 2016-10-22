@@ -137,6 +137,12 @@
       else if($3.token != BOOLEAN){ wrongOperation($2.operation,checkType($3.token)); }
     };
     | '!' EXP {
+      if($2.token != BOOLEAN){ wrongOperation("!",checkType($2.token)); }
+      temp t = createTemp($2.token,$2.translation);
+      $$.translation = $2.translation + "\n\t" + t.name + " = !" + $2.tempVar.name + ";";
+      $$.tempTranslation = $2.tempTranslation + "\n\t" + t.translation + " // !" + $2.tempVar.name;
+      $$.token = $2.token;
+      $$.tempVar = t;
     };
     | EXP '?' EXP ':' EXP {
     };
