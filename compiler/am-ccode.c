@@ -16,20 +16,16 @@
 
 int main() {
 	// Declare
-	int temp1; // temp1 = FALSE;
-	int temp2; // temp2 = TRUE;
-	int temp3; // temp1 || temp2
-	int temp4; // temp4 = TRUE;
-	int temp5; // temp3 && temp4
-	int temp6; // a
+	float temp1; // temp1 = 2.0;
+	int temp2; // temp2 = 1;
+	int temp3; // TRUE
+	int temp4; // a
 
 	// Operations
-	temp1 = FALSE;
-	temp2 = TRUE;
-	temp3 = temp1 || temp2;
-	temp4 = TRUE;
-	temp5 = temp3 && temp4;
-	temp6 = temp5;
+	temp1 = 2.0;
+	temp2 = 1;
+	temp3 = TRUE;
+	temp4 = temp3;
 
 	return 0;
 }

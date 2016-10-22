@@ -1,1 +1,1 @@
-a = (false || true) && true
+a = 2.0 !== 1

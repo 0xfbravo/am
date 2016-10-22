@@ -161,6 +161,29 @@
     | EXP '?' EXP ':' EXP {
     };
     | EXP EQUALITY_TEST EXP {
+      temp t;
+      if($2.operation == "===" || $2.operation == "!=="){ // Equal Types || Different Types
+        t = $2.operation == "===" ?
+          createTemp(BOOLEAN, ($1.tempVar.token == $3.tempVar.token) ? "TRUE" : "FALSE") :
+          createTemp(BOOLEAN, ($1.tempVar.token != $3.tempVar.token) ? "TRUE" : "FALSE");
+      }
+      else {
+        t = $2.operation == "==" ?
+          createTemp(BOOLEAN,$1.tempVar.name + " == " + $3.tempVar.name) :
+          createTemp(BOOLEAN,$1.tempVar.name + " != " + $3.tempVar.name);
+      }
+
+      $$.tempTranslation =
+        $1.tempTranslation + "\n\t" +
+        $3.tempTranslation + "\n\t" +
+        t.translation + " // " + t.value;
+      $$.translation =
+        $1.translation + "\n\t" +
+        $3.translation + "\n\t" +
+        t.name + " = " + t.value + ";";
+
+      $$.tempVar = t;
+      $$.token = BOOLEAN;
     };
     | EXP ORDER_RELATION EXP {
       if($1.token != FLOAT && $1.token != INTEGER){ wrongOperation($2.operation,checkType($1.token)); }
