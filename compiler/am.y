@@ -135,12 +135,26 @@
     EXP BOOLEAN_LOGIC EXP {
       if($1.token != BOOLEAN){ wrongOperation($2.operation,checkType($1.token)); }
       else if($3.token != BOOLEAN){ wrongOperation($2.operation,checkType($3.token)); }
+
+      temp t = $2.operation == "&&" ?
+        createTemp(BOOLEAN,$1.tempVar.name + " && " + $3.tempVar.name) :
+        createTemp(BOOLEAN,$1.tempVar.name + " || " + $3.tempVar.name);
+      $$.tempTranslation =
+        $1.tempTranslation + "\n\t" +
+        $3.tempTranslation + "\n\t" +
+        t.translation + " // " + t.value;
+      $$.translation =
+        $1.translation + "\n\t" +
+        $3.translation + "\n\t" +
+        t.name + " = " + t.value + ";";
+      $$.token = BOOLEAN;
+      $$.tempVar = t;
     };
     | '!' EXP {
       if($2.token != BOOLEAN){ wrongOperation("!",checkType($2.token)); }
       temp t = createTemp($2.token,$2.translation);
-      $$.translation = $2.translation + "\n\t" + t.name + " = !" + $2.tempVar.name + ";";
       $$.tempTranslation = $2.tempTranslation + "\n\t" + t.translation + " // !" + $2.tempVar.name;
+      $$.translation = $2.translation + "\n\t" + t.name + " = !" + $2.tempVar.name + ";";
       $$.token = $2.token;
       $$.tempVar = t;
     };
@@ -156,12 +170,12 @@
       if(!(exists($1.id))) {
         $1.tempVar = createTemp($3.token,$3.translation);
         addVar($1.tempVar,$1.id, $1.isVar, $3.value, $3.token);
-        $$.translation = $3.translation + "\n\t" + $1.tempVar.name + " = " + $3.tempVar.name + ";";
         $$.tempTranslation = $3.tempTranslation + "\n\t" + $1.tempVar.translation + " // " + $1.id;
+        $$.translation = $3.translation + "\n\t" + $1.tempVar.name + " = " + $3.tempVar.name + ";";
       }
       else {
-        $$.translation = $3.translation + "\n\t" + getVar($1.id).tempVar.name + " = " + $3.tempVar.name + ";";
         $$.tempTranslation = $3.tempTranslation;
+        $$.translation = $3.translation + "\n\t" + getVar($1.id).tempVar.name + " = " + $3.tempVar.name + ";";
       }
     };
     | EXP '+' EXP {
