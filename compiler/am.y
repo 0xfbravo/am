@@ -133,8 +133,13 @@
     EXP BOOLEAN_LOGIC EXP {
       if($1.token != BOOLEAN){ wrongOperation($2.operation,checkType($1.token)); }
       else if($3.token != BOOLEAN){ wrongOperation($2.operation,checkType($3.token)); }
-      if($2.operation == "||"){ $$.translation = $1.id + " || " + $3.id; }
-      else if($2.operation == "&&"){ $$.translation = $1.id + " && " + $3.id; }
+      if($2.operation == "||"){
+        if(!exists($1.id) && !exists($3.id)){
+          $$.tempTranslation = $3.tempVar.translation + " " + $1.tempVar.translation + " //" + $3.translation + "," +  $1.translation;
+        }
+        $$.translation = $1.tempVar.name + " || " + $3.tempVar.name;
+      }
+      else if($2.operation == "&&"){ $$.translation = $1.tempVar.name + " && " + $3.tempVar.name; }
       $$.token = BOOLEAN;
     };
     | '!' EXP {
@@ -184,12 +189,8 @@
     };
     | varConst ASSIGNMENT EXP {
       if(!(exists($1.id))) { $1.tempVar = createTemp($3.token,$3.translation); }
-      if(!exists($1.id) && !exists($3.id)){
-        $$.tempTranslation = $3.tempVar.translation + " " + $1.tempVar.translation + " //" + $3.translation + "," +  $1.translation;
-        addVar($1.tempVar,$1.id, $1.isVar, $3.value, $3.token);
-      }
-      else if(exists($1.id)){ $$.tempTranslation = $3.tempVar.translation + " //" + $3.translation; }
-      else if(exists($3.id)){ $$.tempTranslation = $1.tempVar.translation + " //" + $1.translation; }
+      if(!exists($1.id) && !exists($3.id)){ addVar($1.tempVar,$1.id, $1.isVar, $3.value, $3.token); }
+      $$.tempTranslation = $3.tempTranslation + "\n\t" + $1.tempVar.translation + " // " + $1.id;
 
       if(!$1.isVar){ $$.constTranslation = "#define " + $1.id.erase(0,1) + " " + $3.translation; }
       else {
@@ -209,9 +210,12 @@
     };
     | EXP '+' EXP {
       if($1.token == BOOLEAN || $3.token == BOOLEAN){ wrongOperation("+","bool"); }
-      if($1.token == INTEGER && $3.token == FLOAT){ $1.translation = "(float) "+$1.translation; $$.token = FLOAT; }
+      if($1.token == INTEGER && $3.token == FLOAT){
+        $1.tempVar.value = "(float) "+$1.translation;
+        $$.token = FLOAT;
+      }
       else if($1.token == FLOAT && $3.token == INTEGER){ $3.translation = "(float) "+$3.translation; $$.token = FLOAT; }
-      $$.translation = $1.translation + " + " + $3.translation;
+      $$.translation = $1.tempVar.name;
     };
     | EXP '-' EXP {
       if($1.token == BOOLEAN || $3.token == BOOLEAN){ wrongOperation("-","bool"); }
@@ -256,10 +260,34 @@
       $$.value = getVar($1.id).value;
       $$.translation = $1.id;
     };
-    | INTEGER { $$.tempVar = createTemp($1.token,$1.value); $$.tempTranslation = $$.tempVar.translation; $$.translation = $1.value; $$.value = $1.value; $$.token = INTEGER; };
-    | FLOAT { $$.tempVar = createTemp($1.token,$1.value); $$.tempTranslation = $$.tempVar.translation; $$.translation = $1.value; $$.value = $1.value; $$.token = FLOAT; };
-    | BOOLEAN { $$.tempVar = createTemp($1.token,$1.value); $$.tempTranslation = $$.tempVar.translation; $$.translation = toUpper($1.value); $$.value = $1.value; $$.token = BOOLEAN; };
-    | CHARACTER { $$.tempVar = createTemp($1.token,$1.value); $$.tempTranslation = $$.tempVar.translation; $$.translation = $1.value; $$.value = $1.value; $$.token = CHARACTER; };
+    | INTEGER {
+      $$.tempVar = createTemp($1.token,$1.value);
+      $$.translation = $1.value;
+      $$.value = $1.value;
+      $$.token = INTEGER;
+      $$.tempTranslation = $$.tempVar.translation + " // " + $$.translation;
+    };
+    | FLOAT {
+      $$.tempVar = createTemp($1.token,$1.value);
+      $$.translation = $1.value;
+      $$.value = $1.value;
+      $$.token = FLOAT;
+      $$.tempTranslation = $$.tempVar.translation + " // " + $$.translation;
+    };
+    | BOOLEAN {
+      $$.tempVar = createTemp($1.token,$1.value);
+      $$.translation = toUpper($1.value);
+      $$.value = $1.value;
+      $$.token = BOOLEAN;
+      $$.tempTranslation = $$.tempVar.translation + " // " + $$.translation;
+    };
+    | CHARACTER {
+      $$.tempVar = createTemp($1.token,$1.value);
+      $$.translation = $1.value;
+      $$.value = $1.value;
+      $$.token = CHARACTER;
+      $$.tempTranslation = $$.tempVar.translation + " // " + $$.translation;
+    };
   varConst:
     VAR { $$.id = $1.id; $$.translation = $1.id; };
     | CONST { $$.id = $1.id; $$.translation = $1.id; };
