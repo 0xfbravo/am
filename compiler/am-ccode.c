@@ -15,14 +15,17 @@
 // User Consts
 
 int main() {
-	float temp1; // 2.0
-	float temp2; // a
-	
-	float temp3; // b
+	// Declare
+	int temp1; // temp1 = 2;
+	int temp2; // temp2 = 2;
+	int temp3; // temp1 / temp2
+	int temp4; // a
 
-	temp1 = 2.0;
-	temp2 = temp1;
-	temp3 = temp2;
+	// Operations
+	temp1 = 2;
+	temp2 = 2;
+	temp3 = temp1 / temp2;
+	temp4 = temp3;
 
 	return 0;
 }
