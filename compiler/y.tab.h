@@ -50,14 +50,16 @@ extern int yydebug;
     BOOLEAN = 260,
     CHARACTER = 261,
     ARITHMETIC = 262,
-    ASSIGNMENT = 263,
-    BOOLEAN_LOGIC = 264,
-    CONDITIONAL_LOGIC = 265,
-    EQUALITY_TEST = 266,
-    ORDER_RELATION = 267,
-    VAR = 268,
-    CONST = 269,
-    END_LINE = 270
+    BOOLEAN_LOGIC = 263,
+    EQUALITY_TEST = 264,
+    ORDER_RELATION = 265,
+    ASSIGNMENT = 266,
+    NOT = 267,
+    COLON = 268,
+    QUESTION = 269,
+    VAR = 270,
+    CONST = 271,
+    END_LINE = 272
   };
 #endif
 /* Tokens.  */
@@ -66,14 +68,16 @@ extern int yydebug;
 #define BOOLEAN 260
 #define CHARACTER 261
 #define ARITHMETIC 262
-#define ASSIGNMENT 263
-#define BOOLEAN_LOGIC 264
-#define CONDITIONAL_LOGIC 265
-#define EQUALITY_TEST 266
-#define ORDER_RELATION 267
-#define VAR 268
-#define CONST 269
-#define END_LINE 270
+#define BOOLEAN_LOGIC 263
+#define EQUALITY_TEST 264
+#define ORDER_RELATION 265
+#define ASSIGNMENT 266
+#define NOT 267
+#define COLON 268
+#define QUESTION 269
+#define VAR 270
+#define CONST 271
+#define END_LINE 272
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED

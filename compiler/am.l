@@ -31,11 +31,12 @@ Var                 [a-zA-Z]+[0-9]*
 Const               @{Var}
 /* Operators */
 BooleanLogic        (\|\||&&)
-ConditionalLogic    [?:]
 EqualityTest        ==|!=|===|!==
 OrderRelation       <|<=|>|>=
 Arithmetic          [*+\-/\^]
 Not                 !
+Question            \?
+Colon               :
 Assignment          =
 
 %%
@@ -85,11 +86,12 @@ Assignment          =
 }
 {Arithmetic}        { yylval.operation = yytext; return ARITHMETIC; }
 {BooleanLogic}      { yylval.operation = yytext; return BOOLEAN_LOGIC; }
-{ConditionalLogic}  { yylval.operation = yytext; return CONDITIONAL_LOGIC; }
 {EqualityTest}      { yylval.operation = yytext; return EQUALITY_TEST; }
 {OrderRelation}     { yylval.operation = yytext; return ORDER_RELATION; }
 {Assignment}        { yylval.operation = yytext; return ASSIGNMENT; }
-{Not}               { return *yytext; }
+{Question}          { yylval.operation = yytext; return QUESTION; }
+{Colon}             { yylval.operation = yytext; return COLON; }
+{Not}               { yylval.operation = yytext; return NOT; }
 [();]               { return *yytext; }
 [\n]                { return END_LINE; }
 [ \t]               /* Ignore Spaces and TABs */
