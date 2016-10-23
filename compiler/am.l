@@ -83,7 +83,7 @@ Assignment          =
   yylval.isVar = false;
   return CONST;
 }
-{Arithmetic}        { return *yytext; }
+{Arithmetic}        { yylval.operation = yytext; return ARITHMETIC; }
 {BooleanLogic}      { yylval.operation = yytext; return BOOLEAN_LOGIC; }
 {ConditionalLogic}  { yylval.operation = yytext; return CONDITIONAL_LOGIC; }
 {EqualityTest}      { yylval.operation = yytext; return EQUALITY_TEST; }

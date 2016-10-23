@@ -16,16 +16,14 @@
 
 int main() {
 	// Declare
-	float temp1; // temp1 = 2.0;
-	int temp2; // temp2 = 1;
-	int temp3; // TRUE
-	int temp4; // a
+	int temp1; // temp1 = FALSE;
+	int temp2; // !temp1
+	int temp3; // a
 
 	// Operations
-	temp1 = 2.0;
-	temp2 = 1;
-	temp3 = TRUE;
-	temp4 = temp3;
+	temp1 = FALSE;
+	temp2 = !temp1;
+	temp3 = temp2;
 
 	return 0;
 }

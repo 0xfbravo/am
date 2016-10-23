@@ -65,7 +65,7 @@
 %}
 
 %token INTEGER FLOAT BOOLEAN CHARACTER
-%token ASSIGNMENT BOOLEAN_LOGIC CONDITIONAL_LOGIC EQUALITY_TEST ORDER_RELATION
+%token ARITHMETIC ASSIGNMENT BOOLEAN_LOGIC CONDITIONAL_LOGIC EQUALITY_TEST ORDER_RELATION
 %token VAR CONST
 %token END_LINE
 
@@ -135,10 +135,7 @@
     EXP BOOLEAN_LOGIC EXP {
       if($1.token != BOOLEAN){ wrongOperation($2.operation,checkType($1.token)); }
       else if($3.token != BOOLEAN){ wrongOperation($2.operation,checkType($3.token)); }
-
-      temp t = $2.operation == "&&" ?
-        createTemp(BOOLEAN,$1.tempVar.name + " && " + $3.tempVar.name) :
-        createTemp(BOOLEAN,$1.tempVar.name + " || " + $3.tempVar.name);
+      temp t = createTemp(BOOLEAN,$1.tempVar.name + " " + $2.operation + " " + $3.tempVar.name);
       $$.tempTranslation =
         $1.tempTranslation + "\n\t" +
         $3.tempTranslation + "\n\t" +
@@ -159,35 +156,69 @@
       $$.tempVar = t;
     };
     | EXP '?' EXP ':' EXP {
+
     };
     | EXP EQUALITY_TEST EXP {
       temp t;
+      temp op;
+
+      $$.tempTranslation = $1.tempTranslation + "\n\t" + $3.tempTranslation + "\n\t";
+      $$.translation = $1.translation + "\n\t" + $3.translation + "\n\t";
+
       if($2.operation == "===" || $2.operation == "!=="){ // Equal Types || Different Types
         t = $2.operation == "===" ?
           createTemp(BOOLEAN, ($1.tempVar.token == $3.tempVar.token) ? "TRUE" : "FALSE") :
           createTemp(BOOLEAN, ($1.tempVar.token != $3.tempVar.token) ? "TRUE" : "FALSE");
       }
       else {
-        t = $2.operation == "==" ?
-          createTemp(BOOLEAN,$1.tempVar.name + " == " + $3.tempVar.name) :
-          createTemp(BOOLEAN,$1.tempVar.name + " != " + $3.tempVar.name);
+        if($1.token == INTEGER && $3.token == FLOAT){ // int ORDER_RELATION float -> float
+          t = createTemp(FLOAT, "(float) " + $1.tempVar.name);
+          op = createTemp(BOOLEAN,t.name + " "+ $2.operation +" " + $3.tempVar.name);
+          $$.tempTranslation = $$.tempTranslation + t.translation + " // " + t.value + "\n\t";
+          $$.translation = $$.translation + t.name + " = " + t.value + ";\n\t";
+        }
+        else if($1.token == FLOAT && $3.token == INTEGER){ // float ORDER_RELATION int -> float
+          t = createTemp(FLOAT, "(float) " + $3.tempVar.name);
+          op = createTemp(BOOLEAN,t.name + " "+ $2.operation +" " + $1.tempVar.name);
+          $$.tempTranslation = $$.tempTranslation + t.translation + " // " + t.value + "\n\t";
+          $$.translation = $$.translation + t.name + " = " + t.value + ";\n\t";
+        }
+        else { op = createTemp(BOOLEAN, $1.tempVar.name + " "+ $2.operation +" " + $3.tempVar.name); }
       }
 
-      $$.tempTranslation =
-        $1.tempTranslation + "\n\t" +
-        $3.tempTranslation + "\n\t" +
-        t.translation + " // " + t.value;
-      $$.translation =
-        $1.translation + "\n\t" +
-        $3.translation + "\n\t" +
-        t.name + " = " + t.value + ";";
+      $$.tempTranslation = $$.tempTranslation + op.translation + " // " + op.value;
+      $$.translation = $$.translation + op.name + " = " + op.value + ";";
 
       $$.tempVar = t;
       $$.token = BOOLEAN;
     };
     | EXP ORDER_RELATION EXP {
+      temp t;
+      temp op;
+
+      $$.tempTranslation = $1.tempTranslation + "\n\t" + $3.tempTranslation + "\n\t";
+      $$.translation = $1.translation + "\n\t" + $3.translation + "\n\t";
+
       if($1.token != FLOAT && $1.token != INTEGER){ wrongOperation($2.operation,checkType($1.token)); }
       else if($3.token != FLOAT && $3.token != INTEGER){ wrongOperation($2.operation,checkType($3.token)); }
+
+      if($1.token == INTEGER && $3.token == FLOAT){ // int ORDER_RELATION float -> float
+        t = createTemp(FLOAT, "(float) " + $1.tempVar.name);
+        op = createTemp(BOOLEAN,t.name + " "+ $2.operation +" " + $3.tempVar.name);
+        $$.tempTranslation = $$.tempTranslation + t.translation + " // " + t.value + "\n\t";
+        $$.translation = $$.translation + t.name + " = " + t.value + ";\n\t";
+      }
+      else if($1.token == FLOAT && $3.token == INTEGER){ // float ORDER_RELATION int -> float
+        t = createTemp(FLOAT, "(float) " + $3.tempVar.name);
+        op = createTemp(BOOLEAN,t.name + " "+ $2.operation +" " + $1.tempVar.name);
+        $$.tempTranslation = $$.tempTranslation + t.translation + " // " + t.value + "\n\t";
+        $$.translation = $$.translation + t.name + " = " + t.value + ";\n\t";
+      }
+      else { op = createTemp(BOOLEAN, $1.tempVar.name + " "+ $2.operation +" " + $3.tempVar.name); }
+      $$.tempTranslation = $$.tempTranslation + op.translation + " // " + op.value;
+      $$.translation = $$.translation + op.name + " = " + op.value + ";";
+      $$.tempVar = op;
+      $$.token = BOOLEAN;
     };
     | varConst ASSIGNMENT EXP {
       if(!(exists($1.id))) {
@@ -201,276 +232,39 @@
         $$.translation = $3.translation + "\n\t" + getVar($1.id).tempVar.name + " = " + $3.tempVar.name + ";";
       }
     };
-    | EXP '+' EXP {
+    | EXP ARITHMETIC EXP {
       temp t;
-      temp add;
-      if($1.token == BOOLEAN || $3.token == BOOLEAN){ wrongOperation("+","bool"); }
-      if($1.token == INTEGER && $3.token == FLOAT){ // int + float -> float
-        $$.token = FLOAT;
+      temp op;
 
+      $$.tempTranslation = $1.tempTranslation + "\n\t" + $3.tempTranslation + "\n\t";
+      $$.translation = $1.translation + "\n\t" + $3.translation + "\n\t";
+
+      if($1.token == BOOLEAN || $3.token == BOOLEAN){ wrongOperation($2.operation,"bool"); }
+      if($1.token == INTEGER && $3.token == FLOAT){ // int ARITHMETIC float -> float
+        $$.token = FLOAT;
         t = createTemp(FLOAT, "(float) " + $1.tempVar.name);
-        add = createTemp(FLOAT,t.name + " + " + $3.tempVar.name);
-        $$.tempTranslation =
-          $1.tempTranslation + "\n\t" +
-          $3.tempTranslation + "\n\t" +
-          t.translation + " // " + t.value + "\n\t" +
-          add.translation + " // " + add.value;
-
-        $$.translation =
-          $1.translation + "\n\t" +
-          $3.translation + "\n\t" +
-          t.name + " = " + t.value + ";\n\t" +
-          add.name + " = " + add.value + ";";
+        op = createTemp(FLOAT,t.name + " "+ $2.operation +" " + $3.tempVar.name);
+        $$.tempTranslation = $$.tempTranslation + t.translation + " // " + t.value + "\n\t";
+        $$.translation = $$.translation + t.name + " = " + t.value + ";\n\t";
       }
-      else if($1.token == FLOAT && $3.token == INTEGER){ // float + int -> float
+      else if($1.token == FLOAT && $3.token == INTEGER){ // float ARITHMETIC int -> float
         $$.token = FLOAT;
-
         t = createTemp(FLOAT, "(float) " + $3.tempVar.name);
-        add = createTemp(FLOAT,t.name + " + " + $1.tempVar.name);
-        $$.tempTranslation =
-          $1.tempTranslation + "\n\t" +
-          $3.tempTranslation + "\n\t" +
-          t.translation + " // " + t.value + "\n\t" +
-          add.translation + " // " + add.value;
-
-        $$.translation =
-          $1.translation + "\n\t" +
-          $3.translation + "\n\t" +
-          t.name + " = " + t.value + ";\n\t" +
-          add.name + " = " + add.value + ";";
+        op = createTemp(FLOAT,t.name + " "+ $2.operation +" " + $1.tempVar.name);
+        $$.tempTranslation = $$.tempTranslation + t.translation + " // " + t.value + "\n\t";
+        $$.translation = $$.translation + t.name + " = " + t.value + ";\n\t";
       }
-      else if($1.token == INTEGER && $3.token == INTEGER){ // int + int -> int
+      else if($1.token == INTEGER && $3.token == INTEGER){ // int ARITHMETIC int -> int
         $$.token = INTEGER;
-
-        add = createTemp(INTEGER, $1.tempVar.name + " + " + $3.tempVar.name);
-        $$.tempTranslation =
-          $1.tempTranslation + "\n\t" +
-          $3.tempTranslation + "\n\t" +
-          add.translation + " // " + add.value;
-        $$.translation =
-          $1.translation + "\n\t" +
-          $3.translation + "\n\t" +
-          add.name + " = " + add.value + ";";
+        op = createTemp(INTEGER, $1.tempVar.name + " "+ $2.operation +" " + $3.tempVar.name);
       }
-      else if($1.token == FLOAT && $3.token == FLOAT){ // float + float -> float
+      else if($1.token == FLOAT && $3.token == FLOAT){ // float ARITHMETIC float -> float
         $$.token = FLOAT;
-
-        add = createTemp(FLOAT, $1.tempVar.name + " + " + $3.tempVar.name);
-        $$.tempTranslation =
-          $1.tempTranslation + "\n\t" +
-          $3.tempTranslation + "\n\t" +
-          add.translation + " // " + add.value;
-        $$.translation =
-          $1.translation + "\n\t" +
-          $3.translation + "\n\t" +
-          add.name + " = " + add.value + ";";
+        op = createTemp(FLOAT, $1.tempVar.name + " "+ $2.operation +" " + $3.tempVar.name);
       }
-
-      $$.tempVar = add;
-    };
-    | EXP '-' EXP {
-      temp t;
-      temp sub;
-      if($1.token == BOOLEAN || $3.token == BOOLEAN){ wrongOperation("-","bool"); }
-      if($1.token == INTEGER && $3.token == FLOAT){ // int - float -> float
-        $$.token = FLOAT;
-
-        t = createTemp(FLOAT, "(float) " + $1.tempVar.name);
-        sub = createTemp(FLOAT,t.name + " - " + $3.tempVar.name);
-        $$.tempTranslation =
-          $1.tempTranslation + "\n\t" +
-          $3.tempTranslation + "\n\t" +
-          t.translation + " // " + t.value + "\n\t" +
-          sub.translation + " // " + sub.value;
-
-        $$.translation =
-          $1.translation + "\n\t" +
-          $3.translation + "\n\t" +
-          t.name + " = " + t.value + ";\n\t" +
-          sub.name + " = " + sub.value + ";";
-      }
-      else if($1.token == FLOAT && $3.token == INTEGER){ // float - int -> float
-        $$.token = FLOAT;
-
-        t = createTemp(FLOAT, "(float) " + $3.tempVar.name);
-        sub = createTemp(FLOAT,t.name + " - " + $1.tempVar.name);
-        $$.tempTranslation =
-          $1.tempTranslation + "\n\t" +
-          $3.tempTranslation + "\n\t" +
-          t.translation + " // " + t.value + "\n\t" +
-          sub.translation + " // " + sub.value;
-
-        $$.translation =
-          $1.translation + "\n\t" +
-          $3.translation + "\n\t" +
-          t.name + " = " + t.value + ";\n\t" +
-          sub.name + " = " + sub.value + ";";
-      }
-      else if($1.token == INTEGER && $3.token == INTEGER){ // int - int -> int
-        $$.token = INTEGER;
-
-        sub = createTemp(INTEGER, $1.tempVar.name + " - " + $3.tempVar.name);
-        $$.tempTranslation =
-          $1.tempTranslation + "\n\t" +
-          $3.tempTranslation + "\n\t" +
-          sub.translation + " // " + sub.value;
-        $$.translation =
-          $1.translation + "\n\t" +
-          $3.translation + "\n\t" +
-          sub.name + " = " + sub.value + ";";
-      }
-      else if($1.token == FLOAT && $3.token == FLOAT){ // float - float -> float
-        $$.token = FLOAT;
-
-        sub = createTemp(FLOAT, $1.tempVar.name + " - " + $3.tempVar.name);
-        $$.tempTranslation =
-          $1.tempTranslation + "\n\t" +
-          $3.tempTranslation + "\n\t" +
-          sub.translation + " // " + sub.value;
-        $$.translation =
-          $1.translation + "\n\t" +
-          $3.translation + "\n\t" +
-          sub.name + " = " + sub.value + ";";
-      }
-
-      $$.tempVar = sub;
-    };
-    | EXP '*' EXP {
-      temp t;
-      temp mult;
-      if($1.token == BOOLEAN || $3.token == BOOLEAN){ wrongOperation("*","bool"); }
-      if($1.token == INTEGER && $3.token == FLOAT){ // int * float -> float
-        $$.token = FLOAT;
-
-        t = createTemp(FLOAT, "(float) " + $1.tempVar.name);
-        mult = createTemp(FLOAT,t.name + " * " + $3.tempVar.name);
-        $$.tempTranslation =
-          $1.tempTranslation + "\n\t" +
-          $3.tempTranslation + "\n\t" +
-          t.translation + " // " + t.value + "\n\t" +
-          mult.translation + " // " + mult.value;
-
-        $$.translation =
-          $1.translation + "\n\t" +
-          $3.translation + "\n\t" +
-          t.name + " = " + t.value + ";\n\t" +
-          mult.name + " = " + mult.value + ";";
-      }
-      else if($1.token == FLOAT && $3.token == INTEGER){ // float * int -> float
-        $$.token = FLOAT;
-
-        t = createTemp(FLOAT, "(float) " + $3.tempVar.name);
-        mult = createTemp(FLOAT,t.name + " * " + $1.tempVar.name);
-        $$.tempTranslation =
-          $1.tempTranslation + "\n\t" +
-          $3.tempTranslation + "\n\t" +
-          t.translation + " // " + t.value + "\n\t" +
-          mult.translation + " // " + mult.value;
-
-        $$.translation =
-          $1.translation + "\n\t" +
-          $3.translation + "\n\t" +
-          t.name + " = " + t.value + ";\n\t" +
-          mult.name + " = " + mult.value + ";";
-      }
-      else if($1.token == INTEGER && $3.token == INTEGER){ // int * int -> int
-        $$.token = INTEGER;
-
-        mult = createTemp(INTEGER, $1.tempVar.name + " * " + $3.tempVar.name);
-        $$.tempTranslation =
-          $1.tempTranslation + "\n\t" +
-          $3.tempTranslation + "\n\t" +
-          mult.translation + " // " + mult.value;
-        $$.translation =
-          $1.translation + "\n\t" +
-          $3.translation + "\n\t" +
-          mult.name + " = " + mult.value + ";";
-      }
-      else if($1.token == FLOAT && $3.token == FLOAT){ // float * float -> float
-        $$.token = FLOAT;
-
-        mult = createTemp(FLOAT, $1.tempVar.name + " * " + $3.tempVar.name);
-        $$.tempTranslation =
-          $1.tempTranslation + "\n\t" +
-          $3.tempTranslation + "\n\t" +
-          mult.translation + " // " + mult.value;
-        $$.translation =
-          $1.translation + "\n\t" +
-          $3.translation + "\n\t" +
-          mult.name + " = " + mult.value + ";";
-      }
-
-      $$.tempVar = mult;
-    };
-    | EXP '/' EXP {
-      temp t;
-      temp divs;
-      if($1.token == BOOLEAN || $3.token == BOOLEAN){ wrongOperation("/","bool"); }
-      if($1.token == INTEGER && $3.token == FLOAT){ // int / float -> float
-        $$.token = FLOAT;
-
-        t = createTemp(FLOAT, "(float) " + $1.tempVar.name);
-        divs = createTemp(FLOAT,t.name + " / " + $3.tempVar.name);
-        $$.tempTranslation =
-          $1.tempTranslation + "\n\t" +
-          $3.tempTranslation + "\n\t" +
-          t.translation + " // " + t.value + "\n\t" +
-          divs.translation + " // " + divs.value;
-
-        $$.translation =
-          $1.translation + "\n\t" +
-          $3.translation + "\n\t" +
-          t.name + " = " + t.value + ";\n\t" +
-          divs.name + " = " + divs.value + ";";
-      }
-      else if($1.token == FLOAT && $3.token == INTEGER){ // float / int -> float
-        $$.token = FLOAT;
-
-        t = createTemp(FLOAT, "(float) " + $3.tempVar.name);
-        divs = createTemp(FLOAT,t.name + " / " + $1.tempVar.name);
-        $$.tempTranslation =
-          $1.tempTranslation + "\n\t" +
-          $3.tempTranslation + "\n\t" +
-          t.translation + " // " + t.value + "\n\t" +
-          divs.translation + " // " + divs.value;
-
-        $$.translation =
-          $1.translation + "\n\t" +
-          $3.translation + "\n\t" +
-          t.name + " = " + t.value + ";\n\t" +
-          divs.name + " = " + divs.value + ";";
-      }
-      else if($1.token == INTEGER && $3.token == INTEGER){ // int / int -> int
-        $$.token = INTEGER;
-
-        divs = createTemp(INTEGER, $1.tempVar.name + " / " + $3.tempVar.name);
-        $$.tempTranslation =
-          $1.tempTranslation + "\n\t" +
-          $3.tempTranslation + "\n\t" +
-          divs.translation + " // " + divs.value;
-        $$.translation =
-          $1.translation + "\n\t" +
-          $3.translation + "\n\t" +
-          divs.name + " = " + divs.value + ";";
-      }
-      else if($1.token == FLOAT && $3.token == FLOAT){ // float / float -> float
-        $$.token = FLOAT;
-
-        divs = createTemp(FLOAT, $1.tempVar.name + " / " + $3.tempVar.name);
-        $$.tempTranslation =
-          $1.tempTranslation + "\n\t" +
-          $3.tempTranslation + "\n\t" +
-          divs.translation + " // " + divs.value;
-        $$.translation =
-          $1.translation + "\n\t" +
-          $3.translation + "\n\t" +
-          divs.name + " = " + divs.value + ";";
-      }
-
-      $$.tempVar = divs;
-    };
-    | EXP '^' EXP {
-      if($1.token == BOOLEAN || $3.token == BOOLEAN){ wrongOperation("^","bool"); }
+      $$.tempTranslation = $$.tempTranslation + op.translation + " // " + op.value;
+      $$.translation = $$.translation + op.name + " = " + op.value + ";";
+      $$.tempVar = op;
     };
     | '(' EXP ')' {
       $$.token = $2.token;
