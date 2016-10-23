@@ -1,1 +1,21 @@
-
+a = 10
+b = 2.0
+c = false
+d = '#'
+e = a + b
+f = a * b
+g = a / b
+h = a - b
+i = false || true
+j = true && false
+k = i && j
+l = a > b
+m = a < b
+n = b <= a
+i = a >= 10
+o = !i
+p = a === b
+q = a !== b
+r = a != b
+s = a == b
+t = (e + f) / 2 + g

@@ -18,7 +18,7 @@
   #include <string>
   using namespace std;
 
-  int tempCount = 0;
+  long long tempCount = 0;
 
   /* Structs */
   struct temp {
@@ -267,6 +267,7 @@
       else {
         $$.tempTranslation = $3.tempTranslation;
         $$.translation = $3.translation + "\n\t" + getVar($1.id).tempVar.name + " = " + $3.tempVar.name + ";";
+        getVar($1.id).value = $3.value;
       }
     };
     | EXP ARITHMETIC EXP {
