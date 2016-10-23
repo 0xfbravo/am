@@ -59,7 +59,8 @@ extern int yydebug;
     QUESTION = 269,
     VAR = 270,
     CONST = 271,
-    END_LINE = 272
+    EXPLICIT_TYPE = 272,
+    END_LINE = 273
   };
 #endif
 /* Tokens.  */
@@ -77,7 +78,8 @@ extern int yydebug;
 #define QUESTION 269
 #define VAR 270
 #define CONST 271
-#define END_LINE 272
+#define EXPLICIT_TYPE 272
+#define END_LINE 273
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED

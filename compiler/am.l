@@ -21,8 +21,9 @@
 
 /* Regexp */
 /* Types */
+ExplicitType        int|float
 Int                 [0-9]+
-Char                '[A-z]'
+Char                '.'
 Bool                true|false
 FloatZero           (\.[0-9]+)
 Float               {Int}{FloatZero}*
@@ -40,6 +41,11 @@ Colon               :
 Assignment          =
 
 %%
+{ExplicitType} {
+  if((string)yytext == "int"){ yylval.token = INTEGER; }
+  if((string)yytext == "float"){ yylval.token = FLOAT; }
+  return EXPLICIT_TYPE;
+}
 {Int} {
   /* Integer */
   //cout << colorText("Integer ",hexToRGB(GREEN)) << "Found: " << yytext << endl;
@@ -68,14 +74,6 @@ Assignment          =
   yylval.token = CHARACTER;
   return CHARACTER;
 }
-{Var} {
-  /* Variables */
-  //cout << colorText("Var ",hexToRGB(GREEN)) << "Found: " << yytext << endl;
-  yylval.id = yytext;
-  yylval.token = VAR;
-  yylval.isVar = true;
-  return VAR;
-}
 {Const} {
   /* Constants */
   //cout << colorText("Const ",hexToRGB(GREEN)) << "Found: " << yytext << endl;
@@ -83,6 +81,14 @@ Assignment          =
   yylval.token = CONST;
   yylval.isVar = false;
   return CONST;
+}
+{Var} {
+  /* Variables */
+  //cout << colorText("Var ",hexToRGB(GREEN)) << "Found: " << yytext << endl;
+  yylval.id = yytext;
+  yylval.token = VAR;
+  yylval.isVar = true;
+  return VAR;
 }
 {Arithmetic}        { yylval.operation = yytext; return ARITHMETIC; }
 {BooleanLogic}      { yylval.operation = yytext; return BOOLEAN_LOGIC; }

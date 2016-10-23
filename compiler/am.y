@@ -45,6 +45,7 @@
   int yylex(void);
   void yyerror(string);
   void wrongOperation(string,string);
+  void warningExplicit(string,string);
 
   /* VarMap Functions */
   bool exists(string);
@@ -67,7 +68,7 @@
 %token INTEGER FLOAT BOOLEAN CHARACTER
 %token ARITHMETIC BOOLEAN_LOGIC EQUALITY_TEST ORDER_RELATION
 %token ASSIGNMENT NOT COLON QUESTION
-%token VAR CONST
+%token VAR CONST EXPLICIT_TYPE
 %token END_LINE
 
 %left '='
@@ -133,7 +134,26 @@
       if(!$1.tempTranslation.empty()){ $$.tempTranslation = "\t" + $1.tempTranslation + "\n"; }
     };
   EXP:
-    EXP BOOLEAN_LOGIC EXP {
+    EXP COLON COLON EXPLICIT_TYPE {
+      temp t;
+      if($1.token == $4.token){ warningExplicit($1.tempVar.value,checkType($4.token)); }
+      else if(($1.token != FLOAT) && ($1.token != INTEGER)){ wrongOperation("::"+checkType($4.token),checkType($1.token)); }
+      else if($4.token == FLOAT){
+        t = createTemp(FLOAT,"(float) "+$1.tempVar.name);
+        $$.tempTranslation = $1.tempTranslation + "\n\t" + t.translation + " // " + t.value;
+        $$.translation = $1.translation + "\n\t" + t.name + " = " + t.value;
+        $$.token = FLOAT;
+        $$.tempVar = t;
+      }
+      else if($4.token == INTEGER){
+        t = createTemp(INTEGER,"(int) "+$1.tempVar.name);
+        $$.tempTranslation = $1.tempTranslation + "\n\t" + t.translation + " // " + t.value;
+        $$.translation = $1.translation + "\n\t" + t.name + " = " + t.value;
+        $$.token = INTEGER;
+        $$.tempVar = t;
+      }
+    };
+    | EXP BOOLEAN_LOGIC EXP {
       if($1.token != BOOLEAN){ wrongOperation($2.operation,checkType($1.token)); }
       else if($3.token != BOOLEAN){ wrongOperation($2.operation,checkType($3.token)); }
       temp t = createTemp(BOOLEAN,$1.tempVar.name + " " + $2.operation + " " + $3.tempVar.name);
@@ -354,8 +374,12 @@ void yyerror(string msg){
 
 /* WrongOperation */
 void wrongOperation(string operation, string type){
-  cout << colorText("error:"+to_string(yylineno-1)+": ",hexToRGB(RED)) << "This operation " << colorText("'"+operation+"'",hexToRGB(AQUA)) << " wasn't defined for type " << colorText(type,hexToRGB(GREEN))  << endl;
+  cout << colorText("error:"+to_string(yylineno)+": ",hexToRGB(RED)) << "You're a dumbass... This operation " << colorText("'"+operation+"'",hexToRGB(AQUA)) << " wasn't defined for type " << colorText(type,hexToRGB(GREEN))  << endl;
   exit(1);
+}
+
+void warningExplicit(string value, string type){
+  cout << colorText("warning:"+to_string(yylineno)+": ",hexToRGB(YELLOW)) << "You're a dumbass... " << colorText(value,hexToRGB(AQUA)) << " already has the type " << colorText(type,hexToRGB(GREEN)) << ". I can't do anything about it!"  << endl;
 }
 
 /* GetVar */
