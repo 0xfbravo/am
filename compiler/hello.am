@@ -19,3 +19,7 @@ q = a !== b
 r = a != b
 s = a == b
 t = (e + f) / 2 + g
+u = 10::int
+v = 2.0::int
+x = (1 + 2.9)::int
+z = 400::float + 2.0
