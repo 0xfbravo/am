@@ -20,6 +20,10 @@
 %option yylineno
 
 /* Regexp */
+/* Block */
+BlockInit           \{
+BlockEnd            \}
+SemiColon           ;
 /* Types */
 ExplicitType        int|float
 Int                 [0-9]+
@@ -41,6 +45,21 @@ Colon               :
 Assignment          =
 
 %%
+{BlockInit}         { return BLOCK_INIT; }
+{BlockEnd}          { return BLOCK_END; }
+{SemiColon}         { return SEMI_COLON; }
+{Arithmetic}        { yylval.operation = yytext; return ARITHMETIC; }
+{BooleanLogic}      { yylval.operation = yytext; return BOOLEAN_LOGIC; }
+{EqualityTest}      { yylval.operation = yytext; return EQUALITY_TEST; }
+{OrderRelation}     { yylval.operation = yytext; return ORDER_RELATION; }
+{Assignment}        { yylval.operation = yytext; return ASSIGNMENT; }
+{Question}          { yylval.operation = yytext; return QUESTION; }
+{Colon}             { yylval.operation = yytext; return COLON; }
+{Not}               { yylval.operation = yytext; return NOT; }
+[\(\)]              { return *yytext; }
+[\n]                { return END_LINE; }
+[ \t]               /* Ignore Spaces and TABs */
+
 {ExplicitType} {
   if((string)yytext == "int"){ yylval.token = INTEGER; }
   if((string)yytext == "float"){ yylval.token = FLOAT; }
@@ -90,15 +109,4 @@ Assignment          =
   yylval.isVar = true;
   return VAR;
 }
-{Arithmetic}        { yylval.operation = yytext; return ARITHMETIC; }
-{BooleanLogic}      { yylval.operation = yytext; return BOOLEAN_LOGIC; }
-{EqualityTest}      { yylval.operation = yytext; return EQUALITY_TEST; }
-{OrderRelation}     { yylval.operation = yytext; return ORDER_RELATION; }
-{Assignment}        { yylval.operation = yytext; return ASSIGNMENT; }
-{Question}          { yylval.operation = yytext; return QUESTION; }
-{Colon}             { yylval.operation = yytext; return COLON; }
-{Not}               { yylval.operation = yytext; return NOT; }
-[();]               { return *yytext; }
-[\n]                { return END_LINE; }
-[ \t]               /* Ignore Spaces and TABs */
 %%

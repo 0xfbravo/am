@@ -45,41 +45,47 @@ extern int yydebug;
 # define YYTOKENTYPE
   enum yytokentype
   {
-    INTEGER = 258,
-    FLOAT = 259,
-    BOOLEAN = 260,
-    CHARACTER = 261,
-    ARITHMETIC = 262,
-    BOOLEAN_LOGIC = 263,
-    EQUALITY_TEST = 264,
-    ORDER_RELATION = 265,
-    ASSIGNMENT = 266,
-    NOT = 267,
-    COLON = 268,
-    QUESTION = 269,
-    VAR = 270,
-    CONST = 271,
-    EXPLICIT_TYPE = 272,
-    END_LINE = 273
+    BLOCK_INIT = 258,
+    BLOCK_END = 259,
+    SEMI_COLON = 260,
+    INTEGER = 261,
+    FLOAT = 262,
+    BOOLEAN = 263,
+    CHARACTER = 264,
+    ARITHMETIC = 265,
+    BOOLEAN_LOGIC = 266,
+    EQUALITY_TEST = 267,
+    ORDER_RELATION = 268,
+    ASSIGNMENT = 269,
+    NOT = 270,
+    COLON = 271,
+    QUESTION = 272,
+    VAR = 273,
+    CONST = 274,
+    EXPLICIT_TYPE = 275,
+    END_LINE = 276
   };
 #endif
 /* Tokens.  */
-#define INTEGER 258
-#define FLOAT 259
-#define BOOLEAN 260
-#define CHARACTER 261
-#define ARITHMETIC 262
-#define BOOLEAN_LOGIC 263
-#define EQUALITY_TEST 264
-#define ORDER_RELATION 265
-#define ASSIGNMENT 266
-#define NOT 267
-#define COLON 268
-#define QUESTION 269
-#define VAR 270
-#define CONST 271
-#define EXPLICIT_TYPE 272
-#define END_LINE 273
+#define BLOCK_INIT 258
+#define BLOCK_END 259
+#define SEMI_COLON 260
+#define INTEGER 261
+#define FLOAT 262
+#define BOOLEAN 263
+#define CHARACTER 264
+#define ARITHMETIC 265
+#define BOOLEAN_LOGIC 266
+#define EQUALITY_TEST 267
+#define ORDER_RELATION 268
+#define ASSIGNMENT 269
+#define NOT 270
+#define COLON 271
+#define QUESTION 272
+#define VAR 273
+#define CONST 274
+#define EXPLICIT_TYPE 275
+#define END_LINE 276
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
