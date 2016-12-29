@@ -13,13 +13,27 @@
 #define FALSE 0
 
 int main() {
-	// Declare
-	int temp1; // temp1 = 1;
-	int temp2; // a
+	/* Declarations */
+	// Scope
+	int temp1; // temp1 = 3;
+	int temp2; // b
+	// Scope
+	int temp3; // temp3 = 3;
+	int temp4; // a
+	// Scope
+	int temp5; // temp5 = 4;
+	int temp6; // c
 
-	// Operations
-	temp1 = 1;
+	/* Operations */
+	// Scope
+	temp1 = 3;
 	temp2 = temp1;
+	// Scope
+	temp3 = 3;
+	temp4 = temp3;
+	// Scope
+	temp5 = 4;
+	temp6 = temp5;
 
 	return 0;
 }

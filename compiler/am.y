@@ -19,6 +19,7 @@
   using namespace std;
 
   long long tempCount = 0;
+  long long scopeCount = 0;
 
   /* Structs */
   struct temp {
@@ -87,7 +88,8 @@
 
 %%
   BEFORE_THE_BEGINNING:
-    BLOCK {
+    CMDS
+    | BLOCK {
       ofstream ccode;
       ccode.open("am-ccode.c");
       ccode <<
@@ -104,34 +106,28 @@
       "#define TRUE 1" << endl <<
       "#define FALSE 0\n" << endl <<
       "int main() {" << endl <<
-      "\t// Declare" << endl <<
+      "\t/* Declarations */" << endl <<
       $$.tempTranslation << endl <<
-      "\t// Operations" << endl <<
+      "\t/* Operations */" << endl <<
       $$.translation << endl <<
       "\treturn 0;" << endl <<
       "}" << endl;
       ccode.close();
     };
   BLOCK:
-    BLOCK_INIT CMDS {
-      $$.translation = $2.translation;
-      $$.tempTranslation = $2.tempTranslation;
-    };
-    | CMDS {
-      $$.translation = $1.translation;
-      $$.tempTranslation = $1.tempTranslation;
+    BLOCK_INIT CMDS BLOCK_END {
+      $$.translation = "\t// Scope\n" + $1.translation;
+      $$.tempTranslation = "\t// Scope\n" + $1.tempTranslation;
     };
   CMDS:
     CMD CMDS {
       $$.translation = $1.translation + $2.translation;
       $$.tempTranslation = $1.tempTranslation + $2.tempTranslation;
     };
-    | CMD {
-      $$.translation = $1.translation;
-      $$.tempTranslation = $1.tempTranslation;
-    };
+    |;
   CMD:
-    EXP SEMI_COLON EXP { // EXP;EXP
+    BLOCK {};
+    | EXP SEMI_COLON EXP { // EXP;EXP
       if(!$1.translation.empty() && !$3.translation.empty()){ $$.translation = "\t" + $1.translation + "\n" + "\t" + $3.translation + "\n"; }
       if(!$1.tempTranslation.empty() && !$3.tempTranslation.empty()){ $$.tempTranslation = "\t" + $1.tempTranslation + "\n" + "\t" + $3.tempTranslation + "\n"; }
     };
@@ -147,6 +143,10 @@
       if(!$1.translation.empty()){ $$.translation = "\t" + $1.translation + "\n"; }
       if(!$1.tempTranslation.empty()){ $$.tempTranslation = "\t" + $1.tempTranslation + "\n"; }
     };
+    | EXP { // EXP
+      if(!$1.translation.empty()){ $$.translation = "\t" + $1.translation + "\n"; }
+      if(!$1.tempTranslation.empty()){ $$.tempTranslation = "\t" + $1.tempTranslation + "\n"; }
+    }
     | END_LINE {};
   EXP:
     EXP COLON COLON EXPLICIT_TYPE { // EXP::EXPLICIT_TYPE
