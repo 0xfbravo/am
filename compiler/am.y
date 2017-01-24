@@ -71,9 +71,11 @@
 %}
 
 %token BLOCK_INIT BLOCK_END SEMI_COLON
+%token R_IF R_ELSE R_WHILE R_DO R_FOR R_SWITCH R_CASE R_BREAK R_CONTINUE
+%token R_IN R_OUT
 %token INTEGER FLOAT BOOLEAN CHARACTER STRING
 %token ARITHMETIC_1 ARITHMETIC_2 BOOLEAN_LOGIC EQUALITY_TEST ORDER_RELATION
-%token ASSIGNMENT NOT COLON QUESTION
+%token ASSIGNMENT NOT COLON QUESTION COMMA
 %token VAR CONST EXPLICIT_TYPE
 %token END_LINE
 
@@ -104,6 +106,7 @@
       "*/" << endl <<
       "#include <stdlib.h>" << endl <<
       "#include <stdio.h>" << endl <<
+      "#include <string.h>" << endl <<
       "#include <math.h>\n" << endl <<
       "#define TRUE 1" << endl <<
       "#define FALSE 0\n" << endl <<
@@ -116,11 +119,13 @@
       "}" << endl;
       ccode.close();
     };
+
   BLOCK:
     BLOCK_INIT CMDS BLOCK_END {
       $$.translation = "// Scope\n\t" + $2.translation;
       $$.tempTranslation = "// Scope\n\t" + $2.tempTranslation;
     };
+
   CMDS:
     CMD CMDS {
       $$.translation = $1.translation + $2.translation;
@@ -130,9 +135,11 @@
       $$.translation = "";
       $$.tempTranslation = "";
     };
+
   CMD:
     BLOCK;
     | END_LINE;
+    | OUT;
     | EXP { // EXP
       if(!$1.translation.empty()){ $$.translation = $1.translation + "\n\t"; }
       if(!$1.tempTranslation.empty()){ $$.tempTranslation = $1.tempTranslation + "\n\t"; }
@@ -141,6 +148,36 @@
       if(!$1.translation.empty()){ $$.translation = $1.translation + "\n\t"; }
       if(!$1.tempTranslation.empty()){ $$.tempTranslation = $1.tempTranslation + "\n\t"; }
     };
+
+  OUT:
+    R_OUT COLON EXP COMMA_OUT {
+      temp t = $3.tempVar;
+      switch(t.token){
+        case INTEGER: $$.translation = $3.translation + "\n\tprintf(\"%d \","+t.name+");" + $4.translation + "\n\tprintf(\"\\n\");"; break;
+        case FLOAT: $$.translation = $3.translation + "\n\tprintf(\"%f \","+t.name+");" + $4.translation + "\n\tprintf(\"\\n\");"; break;
+        case BOOLEAN: $$.translation = $3.translation + "\n\tprintf(\"%d \","+t.name+");" + $4.translation + "\n\tprintf(\"\\n\");"; break;
+        case CHARACTER: $$.translation = $3.translation + "\n\tprintf(\"%c \","+t.name+");" + $4.translation + "\n\tprintf(\"\\n\");"; break;
+        case STRING: $$.translation = $3.translation + "\n\tprintf(\"%s \","+t.name+");" + $4.translation + "\n\tprintf(\"\\n\");"; break;
+        default: $$.translation = $3.translation + "\n\tprintf(\"%s \","+$3.translation+");" + $4.translation + "\n\tprintf(\"\\n\");"; break;
+      }
+      $$.tempTranslation = $3.tempTranslation + "\n\t" + $4.tempTranslation;
+    };
+
+  COMMA_OUT:
+    COMMA EXP COMMA_OUT {
+      temp t = $2.tempVar;
+      switch(t.token){
+        case INTEGER: $$.translation = "\n\t" + $2.translation + "\n\tprintf(\"%d \","+t.name+");" + $3.translation; break;
+        case FLOAT: $$.translation = "\n\t" + $2.translation + "\n\tprintf(\"%f \","+t.name+");" + $3.translation; break;
+        case BOOLEAN: $$.translation = "\n\t" + $2.translation + "\n\tprintf(\"%d \","+t.name+");" + $3.translation; break;
+        case CHARACTER: $$.translation = "\n\t" + $2.translation + "\n\tprintf(\"%c \","+t.name+");" + $3.translation; break;
+        case STRING: $$.translation = "\n\t" + $2.translation + "\n\tprintf(\"%s \","+t.name+");" + $3.translation; break;
+        default: $$.translation = "\n\t" + $2.translation + "\n\tprintf(\"%s \","+$2.translation+");" + $3.translation; break;
+      }
+      $$.tempTranslation = $2.tempTranslation + "\n\t" + $3.tempTranslation;
+    };
+    |;
+
   EXP:
     EXP COLON COLON EXPLICIT_TYPE { // EXP::EXPLICIT_TYPE
       temp t;
@@ -260,7 +297,10 @@
         $1.tempVar = createTemp($3.token,$3.translation);
         addVar($1.tempVar,name, $1.isVar, $3.value, $3.token);
         $$.tempTranslation = $3.tempTranslation + "\n\t" + $1.tempVar.translation + " // " + name;
-        $$.translation = $3.translation + "\n\t" + $1.tempVar.name + " = " + $3.tempVar.name + ";";
+        $$.translation =
+          $3.token == STRING ?
+            $3.translation + "\n\tstrcpy("+$1.tempVar.name+","+$3.tempVar.name+");" :
+            $3.translation + "\n\t" + $1.tempVar.name + " = " + $3.tempVar.name + ";";
         $$.tempVar = $1.tempVar;
         $$.token = $1.tempVar.token;
       }
@@ -390,11 +430,12 @@
     };
     | STRING {
       $$.tempVar = createTemp($1.token,$1.value);
-      $$.translation = "strcpy("+$$.tempVar.name + "," + $1.value + ");";
+      $$.translation = $$.tempVar.name + " = " + $1.value + ";";
       $$.value = $1.value;
       $$.token = STRING;
       $$.tempTranslation = $$.tempVar.translation + " // " + $$.translation;
     };
+
   varConst:
     VAR { $$.id = $1.id; };
     | CONST { $$.id = $1.id; };

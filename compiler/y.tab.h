@@ -48,48 +48,72 @@ extern int yydebug;
     BLOCK_INIT = 258,
     BLOCK_END = 259,
     SEMI_COLON = 260,
-    INTEGER = 261,
-    FLOAT = 262,
-    BOOLEAN = 263,
-    CHARACTER = 264,
-    STRING = 265,
-    ARITHMETIC_1 = 266,
-    ARITHMETIC_2 = 267,
-    BOOLEAN_LOGIC = 268,
-    EQUALITY_TEST = 269,
-    ORDER_RELATION = 270,
-    ASSIGNMENT = 271,
-    NOT = 272,
-    COLON = 273,
-    QUESTION = 274,
-    VAR = 275,
-    CONST = 276,
-    EXPLICIT_TYPE = 277,
-    END_LINE = 278
+    R_IF = 261,
+    R_ELSE = 262,
+    R_WHILE = 263,
+    R_DO = 264,
+    R_FOR = 265,
+    R_SWITCH = 266,
+    R_CASE = 267,
+    R_BREAK = 268,
+    R_CONTINUE = 269,
+    R_IN = 270,
+    R_OUT = 271,
+    INTEGER = 272,
+    FLOAT = 273,
+    BOOLEAN = 274,
+    CHARACTER = 275,
+    STRING = 276,
+    ARITHMETIC_1 = 277,
+    ARITHMETIC_2 = 278,
+    BOOLEAN_LOGIC = 279,
+    EQUALITY_TEST = 280,
+    ORDER_RELATION = 281,
+    ASSIGNMENT = 282,
+    NOT = 283,
+    COLON = 284,
+    QUESTION = 285,
+    COMMA = 286,
+    VAR = 287,
+    CONST = 288,
+    EXPLICIT_TYPE = 289,
+    END_LINE = 290
   };
 #endif
 /* Tokens.  */
 #define BLOCK_INIT 258
 #define BLOCK_END 259
 #define SEMI_COLON 260
-#define INTEGER 261
-#define FLOAT 262
-#define BOOLEAN 263
-#define CHARACTER 264
-#define STRING 265
-#define ARITHMETIC_1 266
-#define ARITHMETIC_2 267
-#define BOOLEAN_LOGIC 268
-#define EQUALITY_TEST 269
-#define ORDER_RELATION 270
-#define ASSIGNMENT 271
-#define NOT 272
-#define COLON 273
-#define QUESTION 274
-#define VAR 275
-#define CONST 276
-#define EXPLICIT_TYPE 277
-#define END_LINE 278
+#define R_IF 261
+#define R_ELSE 262
+#define R_WHILE 263
+#define R_DO 264
+#define R_FOR 265
+#define R_SWITCH 266
+#define R_CASE 267
+#define R_BREAK 268
+#define R_CONTINUE 269
+#define R_IN 270
+#define R_OUT 271
+#define INTEGER 272
+#define FLOAT 273
+#define BOOLEAN 274
+#define CHARACTER 275
+#define STRING 276
+#define ARITHMETIC_1 277
+#define ARITHMETIC_2 278
+#define BOOLEAN_LOGIC 279
+#define EQUALITY_TEST 280
+#define ORDER_RELATION 281
+#define ASSIGNMENT 282
+#define NOT 283
+#define COLON 284
+#define QUESTION 285
+#define COMMA 286
+#define VAR 287
+#define CONST 288
+#define EXPLICIT_TYPE 289
+#define END_LINE 290
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED

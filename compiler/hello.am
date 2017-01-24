@@ -1,2 +1,2 @@
-a = "abc123"
-a = "bac"
+c = true && false
+out:5,2.3,"hello",c,false

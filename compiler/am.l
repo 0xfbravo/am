@@ -24,6 +24,7 @@
 BlockInit           \{
 BlockEnd            \}
 SemiColon           ;
+Comma               ,
 /* Types */
 ExplicitType        int|float
 Int                 [0-9]+
@@ -47,9 +48,21 @@ Colon               :
 Assignment          =
 
 %%
+"if"                { return R_IF; }
+"else"              { return R_ELSE; }
+"while"             { return R_WHILE; }
+"do"                { return R_DO; }
+"for"               { return R_FOR; }
+"switch"            { return R_SWITCH; }
+"case"              { return R_CASE; }
+"break"             { return R_BREAK; }
+"continue"          { return R_CONTINUE; }
+"in"                { return R_IN; }
+"out"               { return R_OUT; }
 {BlockInit}         { return BLOCK_INIT; }
 {BlockEnd}          { return BLOCK_END; }
 {SemiColon}         { return SEMI_COLON; }
+{Comma}             { return COMMA; }
 {Arithmetic1}       { yylval.operation = yytext; return ARITHMETIC_1; }
 {Arithmetic2}       { yylval.operation = yytext; return ARITHMETIC_2; }
 {BooleanLogic}      { yylval.operation = yytext; return BOOLEAN_LOGIC; }
