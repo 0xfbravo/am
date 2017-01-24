@@ -1,0 +1,17 @@
+| EXP QUESTION EXP COLON EXP { // EXP ? EXP : EXP
+  temp t;
+
+  if($1.token != BOOLEAN){ wrongOperation("? :",checkType($1.token)); }
+  if($1.tempVar.value == "TRUE"){
+    t = createTemp($3.token, $3.tempVar.name);
+    $$.tempTranslation = $1.tempTranslation + "\n\t" + $3.tempTranslation + "\n\t" + t.translation + " // " + t.value + "\n\t";
+    $$.translation = $1.translation + "\n\t" + $3.translation + "\n\t" + t.name + " = " + t.value + ";";
+  }
+  else {
+    t = createTemp($5.token, $5.tempVar.name);
+    $$.tempTranslation = $1.tempTranslation + "\n\t" + $5.tempTranslation + "\n\t" + t.translation + " // " + t.value + "\n\t";
+    $$.translation = $1.translation + "\n\t" + $5.translation + "\n\t" + t.name + " = " + t.value + ";";
+  }
+  $$.token = t.token;
+  $$.tempVar = t;
+};

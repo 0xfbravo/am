@@ -34,7 +34,7 @@
 # define YY_YY_Y_TAB_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
-# define YYDEBUG 0
+# define YYDEBUG 1
 #endif
 #if YYDEBUG
 extern int yydebug;
@@ -52,18 +52,19 @@ extern int yydebug;
     FLOAT = 262,
     BOOLEAN = 263,
     CHARACTER = 264,
-    ARITHMETIC = 265,
-    BOOLEAN_LOGIC = 266,
-    EQUALITY_TEST = 267,
-    ORDER_RELATION = 268,
-    ASSIGNMENT = 269,
-    NOT = 270,
-    COLON = 271,
-    QUESTION = 272,
-    VAR = 273,
-    CONST = 274,
-    EXPLICIT_TYPE = 275,
-    END_LINE = 276
+    ARITHMETIC_1 = 265,
+    ARITHMETIC_2 = 266,
+    BOOLEAN_LOGIC = 267,
+    EQUALITY_TEST = 268,
+    ORDER_RELATION = 269,
+    ASSIGNMENT = 270,
+    NOT = 271,
+    COLON = 272,
+    QUESTION = 273,
+    VAR = 274,
+    CONST = 275,
+    EXPLICIT_TYPE = 276,
+    END_LINE = 277
   };
 #endif
 /* Tokens.  */
@@ -74,18 +75,19 @@ extern int yydebug;
 #define FLOAT 262
 #define BOOLEAN 263
 #define CHARACTER 264
-#define ARITHMETIC 265
-#define BOOLEAN_LOGIC 266
-#define EQUALITY_TEST 267
-#define ORDER_RELATION 268
-#define ASSIGNMENT 269
-#define NOT 270
-#define COLON 271
-#define QUESTION 272
-#define VAR 273
-#define CONST 274
-#define EXPLICIT_TYPE 275
-#define END_LINE 276
+#define ARITHMETIC_1 265
+#define ARITHMETIC_2 266
+#define BOOLEAN_LOGIC 267
+#define EQUALITY_TEST 268
+#define ORDER_RELATION 269
+#define ASSIGNMENT 270
+#define NOT 271
+#define COLON 272
+#define QUESTION 273
+#define VAR 274
+#define CONST 275
+#define EXPLICIT_TYPE 276
+#define END_LINE 277
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED

@@ -72,24 +72,26 @@
 
 %token BLOCK_INIT BLOCK_END SEMI_COLON
 %token INTEGER FLOAT BOOLEAN CHARACTER
-%token ARITHMETIC BOOLEAN_LOGIC EQUALITY_TEST ORDER_RELATION
+%token ARITHMETIC_1 ARITHMETIC_2 BOOLEAN_LOGIC EQUALITY_TEST ORDER_RELATION
 %token ASSIGNMENT NOT COLON QUESTION
 %token VAR CONST EXPLICIT_TYPE
 %token END_LINE
 
-%left '='
-%left "||" "&&" '!' '?' ':' "==" "!=" "===" "!==" '<' '>' "<=" ">="
-%left '+' '-'
-%left '*' '/'
-%left '^'
+%left ASSIGNMENT                        // "="
+%left BOOLEAN_LOGIC                     // "||" "&&"
+%left EQUALITY_TEST ORDER_RELATION      // "==" "===" "!==" "!=" "<" "<=" ">" ">="
+%left QUESTION COLON                    // "?" ":"
+%left NOT                               // "!"
+%left ARITHMETIC_1                      // "+" "-"
+%left ARITHMETIC_2                      // "*" "/"
 %left '(' ')'
+%left BLOCK_INIT BLOCK_END              // "{" "}"
 
 %start BEFORE_THE_BEGINNING
 
 %%
   BEFORE_THE_BEGINNING:
-    CMDS
-    | BLOCK {
+    CMDS {
       ofstream ccode;
       ccode.open("am-ccode.c");
       ccode <<
@@ -107,17 +109,17 @@
       "#define FALSE 0\n" << endl <<
       "int main() {" << endl <<
       "\t/* Declarations */" << endl <<
-      $$.tempTranslation << endl <<
+      "\t" << $$.tempTranslation << endl <<
       "\t/* Operations */" << endl <<
-      $$.translation << endl <<
+      "\t" << $$.translation << endl <<
       "\treturn 0;" << endl <<
       "}" << endl;
       ccode.close();
     };
   BLOCK:
     BLOCK_INIT CMDS BLOCK_END {
-      $$.translation = "\t// Scope\n" + $1.translation;
-      $$.tempTranslation = "\t// Scope\n" + $1.tempTranslation;
+      $$.translation = "// Scope\n\t" + $2.translation;
+      $$.tempTranslation = "// Scope\n\t" + $2.tempTranslation;
     };
   CMDS:
     CMD CMDS {
@@ -127,27 +129,15 @@
     |;
   CMD:
     BLOCK {};
-    | EXP SEMI_COLON EXP { // EXP;EXP
-      if(!$1.translation.empty() && !$3.translation.empty()){ $$.translation = "\t" + $1.translation + "\n" + "\t" + $3.translation + "\n"; }
-      if(!$1.tempTranslation.empty() && !$3.tempTranslation.empty()){ $$.tempTranslation = "\t" + $1.tempTranslation + "\n" + "\t" + $3.tempTranslation + "\n"; }
-    };
-    | EXP SEMI_COLON EXP SEMI_COLON { // EXP;EXP;
-      if(!$1.translation.empty() && !$3.translation.empty()){ $$.translation = "\t" + $1.translation + "\n" + "\t" + $3.translation + "\n"; }
-      if(!$1.tempTranslation.empty() && !$3.tempTranslation.empty()){ $$.tempTranslation = "\t" + $1.tempTranslation + "\n" + "\t" + $3.tempTranslation + "\n"; }
-    };
-    | EXP END_LINE { // EXP \n
-      if(!$1.translation.empty()){ $$.translation = "\t" + $1.translation + "\n"; }
-      if(!$1.tempTranslation.empty()){ $$.tempTranslation = "\t" + $1.tempTranslation + "\n"; }
-    };
-    | EXP SEMI_COLON END_LINE { // EXP;\n
-      if(!$1.translation.empty()){ $$.translation = "\t" + $1.translation + "\n"; }
-      if(!$1.tempTranslation.empty()){ $$.tempTranslation = "\t" + $1.tempTranslation + "\n"; }
-    };
-    | EXP { // EXP
-      if(!$1.translation.empty()){ $$.translation = "\t" + $1.translation + "\n"; }
-      if(!$1.tempTranslation.empty()){ $$.tempTranslation = "\t" + $1.tempTranslation + "\n"; }
-    }
     | END_LINE {};
+    | EXP { // EXP
+      if(!$1.translation.empty()){ $$.translation = $1.translation + "\n\t"; }
+      if(!$1.tempTranslation.empty()){ $$.tempTranslation = $1.tempTranslation + "\n\t"; }
+    };
+    | EXP SEMI_COLON {
+      if(!$1.translation.empty()){ $$.translation = $1.translation + "\n\t"; }
+      if(!$1.tempTranslation.empty()){ $$.tempTranslation = $1.tempTranslation + "\n\t"; }
+    };
   EXP:
     EXP COLON COLON EXPLICIT_TYPE { // EXP::EXPLICIT_TYPE
       temp t;
@@ -184,7 +174,7 @@
       $$.tempVar = t;
     };
     | NOT EXP { // !EXP
-      if($2.token != BOOLEAN){ wrongOperation($1.operation,checkType($2.token)); }
+      if($2.token != BOOLEAN){ wrongOperation("!",checkType($2.token)); }
       temp t = createTemp($2.token,$2.translation);
       $$.tempTranslation = $2.tempTranslation + "\n\t" + t.translation + " // " + $1.operation + $2.tempVar.name;
       $$.translation = $2.translation + "\n\t" + t.name + " = " + $1.operation + $2.tempVar.name + ";";
@@ -285,12 +275,47 @@
       }
       else { // Var/Const Already Declared
         if(!getVar(name).isVar){ constWontChangeValue(name); }
+        if(getVar(name).token != $3.token) { alreadyDeclared(name,checkType(name)); }
         $$.tempTranslation = $3.tempTranslation;
         $$.translation = $3.translation + "\n\t" + getVar(name).tempVar.name + " = " + $3.tempVar.name + ";";
         getVar(name).value = $3.value;
       }
     };
-    | EXP ARITHMETIC EXP {
+    | EXP ARITHMETIC_1 EXP {
+      temp t;
+      temp op;
+
+      $$.tempTranslation = $1.tempTranslation + "\n\t" + $3.tempTranslation + "\n\t";
+      $$.translation = $1.translation + "\n\t" + $3.translation + "\n\t";
+
+      if($1.token == BOOLEAN || $3.token == BOOLEAN){ wrongOperation($2.operation,"bool"); }
+      if($1.token == INTEGER && $3.token == FLOAT){ // int ARITHMETIC float -> float
+        $$.token = FLOAT;
+        t = createTemp(FLOAT, "(float) " + $1.tempVar.name);
+        op = createTemp(FLOAT,t.name + " "+ $2.operation +" " + $3.tempVar.name);
+        $$.tempTranslation = $$.tempTranslation + t.translation + " // " + t.value + "\n\t";
+        $$.translation = $$.translation + t.name + " = " + t.value + ";\n\t";
+      }
+      else if($1.token == FLOAT && $3.token == INTEGER){ // float ARITHMETIC int -> float
+        $$.token = FLOAT;
+        t = createTemp(FLOAT, "(float) " + $3.tempVar.name);
+        op = createTemp(FLOAT,t.name + " "+ $2.operation +" " + $1.tempVar.name);
+        $$.tempTranslation = $$.tempTranslation + t.translation + " // " + t.value + "\n\t";
+        $$.translation = $$.translation + t.name + " = " + t.value + ";\n\t";
+      }
+      else if($1.token == INTEGER && $3.token == INTEGER){ // int ARITHMETIC int -> int
+        $$.token = INTEGER;
+        op = createTemp(INTEGER, $1.tempVar.name + " "+ $2.operation +" " + $3.tempVar.name);
+      }
+      else if($1.token == FLOAT && $3.token == FLOAT){ // float ARITHMETIC float -> float
+        $$.token = FLOAT;
+        op = createTemp(FLOAT, $1.tempVar.name + " "+ $2.operation +" " + $3.tempVar.name);
+      }
+      $$.tempTranslation = $$.tempTranslation + op.translation + " // " + op.value;
+      $$.translation = $$.translation + op.name + " = " + op.value + ";";
+      $$.tempVar = op;
+    };
+    | EXP ARITHMETIC_2 EXP {
       temp t;
       temp op;
 

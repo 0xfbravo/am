@@ -14,26 +14,22 @@
 
 int main() {
 	/* Declarations */
+	int temp1; // temp1 = 10;
+	int temp2; // a
+	float temp3; // temp3 = 22.2;
+	float temp4; // b
 	// Scope
-	int temp1; // temp1 = 3;
-	int temp2; // b
-	// Scope
-	int temp3; // temp3 = 3;
-	int temp4; // a
-	// Scope
-	int temp5; // temp5 = 4;
-	int temp6; // c
-
+	char temp5; // temp5 = 's';
+	char temp6; // d
+	
 	/* Operations */
-	// Scope
-	temp1 = 3;
+	temp1 = 10;
 	temp2 = temp1;
-	// Scope
-	temp3 = 3;
+	temp3 = 22.2;
 	temp4 = temp3;
 	// Scope
-	temp5 = 4;
+	temp5 = 's';
 	temp6 = temp5;
-
+	
 	return 0;
 }

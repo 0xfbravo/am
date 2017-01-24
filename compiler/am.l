@@ -38,7 +38,8 @@ Const               @{Var}
 BooleanLogic        (\|\||&&)
 EqualityTest        ==|!=|===|!==
 OrderRelation       <|<=|>|>=
-Arithmetic          [*+\-/\^]
+Arithmetic1         [+\-]
+Arithmetic2         [*\/]
 Not                 !
 Question            \?
 Colon               :
@@ -48,7 +49,8 @@ Assignment          =
 {BlockInit}         { return BLOCK_INIT; }
 {BlockEnd}          { return BLOCK_END; }
 {SemiColon}         { return SEMI_COLON; }
-{Arithmetic}        { yylval.operation = yytext; return ARITHMETIC; }
+{Arithmetic1}       { yylval.operation = yytext; return ARITHMETIC_1; }
+{Arithmetic2}       { yylval.operation = yytext; return ARITHMETIC_2; }
 {BooleanLogic}      { yylval.operation = yytext; return BOOLEAN_LOGIC; }
 {EqualityTest}      { yylval.operation = yytext; return EQUALITY_TEST; }
 {OrderRelation}     { yylval.operation = yytext; return ORDER_RELATION; }
