@@ -1,2 +1,4 @@
-c = true && false
-out:5,2.3,"hello",c,false
+c = 2.2
+a is String
+in:a
+out:a,c

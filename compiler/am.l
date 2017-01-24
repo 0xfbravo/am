@@ -57,6 +57,12 @@ Assignment          =
 "case"              { return R_CASE; }
 "break"             { return R_BREAK; }
 "continue"          { return R_CONTINUE; }
+"String"            { yylval.token = STRING; return STRING; }
+"Float"             { yylval.token = FLOAT; return FLOAT; }
+"Int"               { yylval.token = INTEGER; return INTEGER; }
+"Bool"              { yylval.token = BOOLEAN; return BOOLEAN; }
+"Char"              { yylval.token = CHARACTER; return CHARACTER; }
+"is"                { return R_IS; }
 "in"                { return R_IN; }
 "out"               { return R_OUT; }
 {BlockInit}         { return BLOCK_INIT; }

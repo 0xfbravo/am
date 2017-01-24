@@ -15,31 +15,26 @@
 
 int main() {
 	/* Declarations */
-	int temp1; // temp1 = TRUE;
-	int temp2; // temp2 = FALSE;
-	int temp3; // temp1 && temp2
-	int temp4; // c
-	int temp5; // temp5 = 5;
-	float temp6; // temp6 = 2.3;
-	char* temp7; // temp7 = "hello";
+	float temp1; // temp1 = 2.2;
+	float temp2; // c
 	
-	int temp8; // temp8 = FALSE;
+	char* temp3; // Pre-declaration
+	
+	
 	
 	/* Operations */
-	temp1 = TRUE;
-	temp2 = FALSE;
-	temp3 = temp1 && temp2;
-	temp4 = temp3;
-	temp5 = 5;
-	printf("%d ",temp5);
-	temp6 = 2.3;
-	printf("%f ",temp6);
-	temp7 = "hello";
-	printf("%s ",temp7);
+	temp1 = 2.2;
+	temp2 = temp1;
 	
-	printf("%d ",temp4);
-	temp8 = FALSE;
-	printf("%d ",temp8);
+	temp3 = malloc(100 * sizeof(char));
+	scanf("%s",temp3);
+	printf("%s ",temp3);
+	
+	printf("%f ",temp2);
 	printf("\n");
+	/* Free memory */
+	
+	
+	free(temp3);
 	return 0;
 }

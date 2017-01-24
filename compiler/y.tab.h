@@ -59,25 +59,26 @@ extern int yydebug;
     R_CONTINUE = 269,
     R_IN = 270,
     R_OUT = 271,
-    INTEGER = 272,
-    FLOAT = 273,
-    BOOLEAN = 274,
-    CHARACTER = 275,
-    STRING = 276,
-    ARITHMETIC_1 = 277,
-    ARITHMETIC_2 = 278,
-    BOOLEAN_LOGIC = 279,
-    EQUALITY_TEST = 280,
-    ORDER_RELATION = 281,
-    ASSIGNMENT = 282,
-    NOT = 283,
-    COLON = 284,
-    QUESTION = 285,
-    COMMA = 286,
-    VAR = 287,
-    CONST = 288,
-    EXPLICIT_TYPE = 289,
-    END_LINE = 290
+    R_IS = 272,
+    INTEGER = 273,
+    FLOAT = 274,
+    BOOLEAN = 275,
+    CHARACTER = 276,
+    STRING = 277,
+    ARITHMETIC_1 = 278,
+    ARITHMETIC_2 = 279,
+    BOOLEAN_LOGIC = 280,
+    EQUALITY_TEST = 281,
+    ORDER_RELATION = 282,
+    ASSIGNMENT = 283,
+    NOT = 284,
+    COLON = 285,
+    QUESTION = 286,
+    COMMA = 287,
+    VAR = 288,
+    CONST = 289,
+    EXPLICIT_TYPE = 290,
+    END_LINE = 291
   };
 #endif
 /* Tokens.  */
@@ -95,25 +96,26 @@ extern int yydebug;
 #define R_CONTINUE 269
 #define R_IN 270
 #define R_OUT 271
-#define INTEGER 272
-#define FLOAT 273
-#define BOOLEAN 274
-#define CHARACTER 275
-#define STRING 276
-#define ARITHMETIC_1 277
-#define ARITHMETIC_2 278
-#define BOOLEAN_LOGIC 279
-#define EQUALITY_TEST 280
-#define ORDER_RELATION 281
-#define ASSIGNMENT 282
-#define NOT 283
-#define COLON 284
-#define QUESTION 285
-#define COMMA 286
-#define VAR 287
-#define CONST 288
-#define EXPLICIT_TYPE 289
-#define END_LINE 290
+#define R_IS 272
+#define INTEGER 273
+#define FLOAT 274
+#define BOOLEAN 275
+#define CHARACTER 276
+#define STRING 277
+#define ARITHMETIC_1 278
+#define ARITHMETIC_2 279
+#define BOOLEAN_LOGIC 280
+#define EQUALITY_TEST 281
+#define ORDER_RELATION 282
+#define ASSIGNMENT 283
+#define NOT 284
+#define COLON 285
+#define QUESTION 286
+#define COMMA 287
+#define VAR 288
+#define CONST 289
+#define EXPLICIT_TYPE 290
+#define END_LINE 291
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED

@@ -66,13 +66,14 @@
   map<string,attr>::iterator varInfoIt;
 
   /* Useful Functions */
+  string clearMemory();
   string toUpper(const string&);
   string actualLine();
 %}
 
 %token BLOCK_INIT BLOCK_END SEMI_COLON
 %token R_IF R_ELSE R_WHILE R_DO R_FOR R_SWITCH R_CASE R_BREAK R_CONTINUE
-%token R_IN R_OUT
+%token R_IN R_OUT R_IS
 %token INTEGER FLOAT BOOLEAN CHARACTER STRING
 %token ARITHMETIC_1 ARITHMETIC_2 BOOLEAN_LOGIC EQUALITY_TEST ORDER_RELATION
 %token ASSIGNMENT NOT COLON QUESTION COMMA
@@ -115,6 +116,8 @@
       "\t" << $$.tempTranslation << endl <<
       "\t/* Operations */" << endl <<
       "\t" << $$.translation << endl <<
+      "\t/* Free memory */" << endl <<
+      "\t" << clearMemory() << endl <<
       "\treturn 0;" << endl <<
       "}" << endl;
       ccode.close();
@@ -139,6 +142,8 @@
   CMD:
     BLOCK;
     | END_LINE;
+    | IS;
+    | IN;
     | OUT;
     | EXP { // EXP
       if(!$1.translation.empty()){ $$.translation = $1.translation + "\n\t"; }
@@ -147,6 +152,39 @@
     | EXP SEMI_COLON { // EXP;
       if(!$1.translation.empty()){ $$.translation = $1.translation + "\n\t"; }
       if(!$1.tempTranslation.empty()){ $$.tempTranslation = $1.tempTranslation + "\n\t"; }
+    };
+
+  IS:
+    varConst R_IS TYPE {
+      if(exists($1.id)){ alreadyDeclared($1.id, checkType($1.id)); }
+      temp t = createTemp($3.token,"");
+      addVar(t,$1.id, $1.isVar, "", $3.token);
+      $$.tempTranslation = "\n\t" + t.translation + " // Pre-declaration\n\t";
+    };
+
+  TYPE:
+    INTEGER;
+    | FLOAT;
+    | BOOLEAN;
+    | CHARACTER;
+    | STRING;
+
+  IN:
+    R_IN COLON varConst {
+      if(!(exists($3.id))){ notDeclared($3.id); }
+      if(!getVar($3.id).isVar){ constWontChangeValue($3.id); }
+      attr t = getVar($3.id);
+      switch(t.token){
+        case INTEGER: $$.translation = "\n\tscanf(\"%d\",&"+t.tempVar.name+");"; break;
+        case FLOAT: $$.translation = "\n\tscanf(\"%f\",&"+t.tempVar.name+");"; break;
+        case CHARACTER: $$.translation = "\n\tscanf(\"%c\",&"+t.tempVar.name+");"; break;
+        case STRING:
+          $$.translation =
+            "\n\t" + t.tempVar.name + " = malloc(100 * sizeof(char));" +
+            "\n\tscanf(\"%s\","+t.tempVar.name+");";
+        break;
+        default: wrongOperation("in:",checkType(t.token)); break;
+      }
     };
 
   OUT:
@@ -241,13 +279,13 @@
         $$.translation = $$.translation + t.name + " = " + t.value + ";";
       }
       else {
-        if($1.token == INTEGER && $3.token == FLOAT){ // int ORDER_RELATION float -> float
+        if($1.token == INTEGER && $3.token == FLOAT){ // int EQUALITY_TEST float -> float
           t = createTemp(FLOAT, "(float) " + $1.tempVar.name);
           op = createTemp(BOOLEAN,t.name + " "+ $2.operation +" " + $3.tempVar.name);
           $$.tempTranslation = $$.tempTranslation + t.translation + " // " + t.value + "\n\t";
           $$.translation = $$.translation + t.name + " = " + t.value + ";\n\t";
         }
-        else if($1.token == FLOAT && $3.token == INTEGER){ // float ORDER_RELATION int -> float
+        else if($1.token == FLOAT && $3.token == INTEGER){ // float EQUALITY_TEST int -> float
           t = createTemp(FLOAT, "(float) " + $3.tempVar.name);
           op = createTemp(BOOLEAN,t.name + " "+ $2.operation +" " + $1.tempVar.name);
           $$.tempTranslation = $$.tempTranslation + t.translation + " // " + t.value + "\n\t";
@@ -259,7 +297,7 @@
         $$.translation = $$.translation + op.name + " = " + op.value + ";";
       }
 
-      $$.tempVar = t;
+      $$.tempVar = op;
       $$.token = BOOLEAN;
     };
     | EXP ORDER_RELATION EXP {
@@ -437,8 +475,8 @@
     };
 
   varConst:
-    VAR { $$.id = $1.id; };
-    | CONST { $$.id = $1.id; };
+    VAR { $$.id = $1.id; $$.isVar = true; };
+    | CONST { $$.id = $1.id; $$.isVar = false; };
 %%
 
 #include "lex.yy.c"
@@ -461,6 +499,16 @@ void yyerror(string msg){
           Useful
   ------------------------
 */
+string clearMemory(){
+  string result = "\n\t";
+  for(varInfoIt = varInfo.begin(); varInfoIt != varInfo.end(); ++varInfoIt){
+    if(varInfoIt->second.tempVar.token == STRING){
+      result += "\n\tfree("+varInfoIt->second.tempVar.name+");";
+    }
+  }
+  return result;
+}
+
 string toUpper(const string& s){
   string result; locale l;
   for(int i = 0; i < s.length(); i++){ result += toupper(s.at(i),l); }
@@ -482,7 +530,7 @@ void notDeclared(string name){
 }
 
 void constWontChangeValue(string name){
-  cout << colorText("error:"+actualLine()+": ",hexToRGB(RED)) << "You're a dumbass... The Const " << colorText("'"+name+"'",hexToRGB(AQUA)) << " won't chage value, because " << colorText("IS A FUCKIN' CONST!!!",hexToRGB(ORANGE_RED)) << "." << endl;
+  cout << colorText("error:"+actualLine()+": ",hexToRGB(RED)) << "You're a dumbass... The Const " << colorText("'"+name+"'",hexToRGB(AQUA)) << " won't change value, because " << colorText("IS A FUCKIN' CONST!!!",hexToRGB(ORANGE_RED)) << "." << endl;
   exit(1);
 }
 
