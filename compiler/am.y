@@ -71,7 +71,7 @@
 %}
 
 %token BLOCK_INIT BLOCK_END SEMI_COLON
-%token INTEGER FLOAT BOOLEAN CHARACTER
+%token INTEGER FLOAT BOOLEAN CHARACTER STRING
 %token ARITHMETIC_1 ARITHMETIC_2 BOOLEAN_LOGIC EQUALITY_TEST ORDER_RELATION
 %token ASSIGNMENT NOT COLON QUESTION
 %token VAR CONST EXPLICIT_TYPE
@@ -126,15 +126,18 @@
       $$.translation = $1.translation + $2.translation;
       $$.tempTranslation = $1.tempTranslation + $2.tempTranslation;
     };
-    |;
+    | {
+      $$.translation = "";
+      $$.tempTranslation = "";
+    };
   CMD:
-    BLOCK {};
-    | END_LINE {};
+    BLOCK;
+    | END_LINE;
     | EXP { // EXP
       if(!$1.translation.empty()){ $$.translation = $1.translation + "\n\t"; }
       if(!$1.tempTranslation.empty()){ $$.tempTranslation = $1.tempTranslation + "\n\t"; }
     };
-    | EXP SEMI_COLON {
+    | EXP SEMI_COLON { // EXP;
       if(!$1.translation.empty()){ $$.translation = $1.translation + "\n\t"; }
       if(!$1.tempTranslation.empty()){ $$.tempTranslation = $1.tempTranslation + "\n\t"; }
     };
@@ -182,21 +185,9 @@
       $$.tempVar = t;
     };
     | EXP QUESTION EXP COLON EXP { // EXP ? EXP : EXP
-      temp t;
-
       if($1.token != BOOLEAN){ wrongOperation("? :",checkType($1.token)); }
-      if($1.tempVar.value == "TRUE"){
-        t = createTemp($3.token, $3.tempVar.name);
-        $$.tempTranslation = $1.tempTranslation + "\n\t" + $3.tempTranslation + "\n\t" + t.translation + " // " + t.value + "\n\t";
-        $$.translation = $1.translation + "\n\t" + $3.translation + "\n\t" + t.name + " = " + t.value + ";";
-      }
-      else {
-        t = createTemp($5.token, $5.tempVar.name);
-        $$.tempTranslation = $1.tempTranslation + "\n\t" + $5.tempTranslation + "\n\t" + t.translation + " // " + t.value + "\n\t";
-        $$.translation = $1.translation + "\n\t" + $5.translation + "\n\t" + t.name + " = " + t.value + ";";
-      }
-      $$.token = t.token;
-      $$.tempVar = t;
+      temp t = createTemp($1.token,$1.translation);
+      $$.tempTranslation = t.translation;
     };
     | EXP EQUALITY_TEST EXP {
       temp t;
@@ -397,6 +388,13 @@
       $$.token = CHARACTER;
       $$.tempTranslation = $$.tempVar.translation + " // " + $$.translation;
     };
+    | STRING {
+      $$.tempVar = createTemp($1.token,$1.value);
+      $$.translation = "strcpy("+$$.tempVar.name + "," + $1.value + ");";
+      $$.value = $1.value;
+      $$.token = STRING;
+      $$.tempTranslation = $$.tempVar.translation + " // " + $$.translation;
+    };
   varConst:
     VAR { $$.id = $1.id; };
     | CONST { $$.id = $1.id; };
@@ -477,7 +475,14 @@ temp createTemp(int token, string value){
   t.token = token;
   t.value = value;
   t.name = "temp" + to_string(tempCount);
-  t.translation = checkType(t.token) + " " + t.name + ";";
+  switch (token) {
+    case STRING:
+      t.translation = checkType(CHARACTER) + "* " + t.name + ";";
+    break;
+    default:
+      t.translation = checkType(t.token) + " " + t.name + ";";
+    break;
+  }
   return t;
 }
 

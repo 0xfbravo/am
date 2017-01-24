@@ -27,6 +27,7 @@ SemiColon           ;
 /* Types */
 ExplicitType        int|float
 Int                 [0-9]+
+String              \"(\\.|[^\\"])*\"
 Char                '.'
 Bool                true|false
 FloatZero           (\.[0-9]+)
@@ -87,6 +88,13 @@ Assignment          =
   yylval.value = yytext;
   yylval.token = BOOLEAN;
   return BOOLEAN;
+}
+{String} {
+  /* String */
+  //cout << colorText("String ",hexToRGB(GREEN)) << "Found: " << yytext << endl;
+  yylval.value = yytext;
+  yylval.token = STRING;
+  return STRING;
 }
 {Char} {
   /* Character */
