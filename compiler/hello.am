@@ -1,4 +1,5 @@
-c = 2.2
-a is String
+a is String; b is String
 in:a
-out:a,c
+out:a
+in:b
+out:b

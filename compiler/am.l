@@ -27,7 +27,7 @@ SemiColon           ;
 Comma               ,
 /* Types */
 ExplicitType        int|float
-Int                 [0-9]+
+Int                 [0-9]+|-[0-9]+
 String              \"(\\.|[^\\"])*\"
 Char                '.'
 Bool                true|false

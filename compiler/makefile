@@ -5,5 +5,5 @@ all:
 	g++ -std=c++11 y.tab.c -o am -lfl
 	rm -rf y.tab.c lex.yy.c
 	./am < hello.am
-	gcc am-ccode.c
+	g++ -std=c++11 am-ccode.cpp
 	./a.out
