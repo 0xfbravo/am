@@ -1,5 +1,4 @@
-a is String; b is String
+a = "abc123"
+out:a
 in:a
 out:a
-in:b
-out:b

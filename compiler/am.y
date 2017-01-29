@@ -70,6 +70,7 @@
   map<string,attr>::iterator varInfoIt;
 
   /* Useful Functions */
+  bool onMemory(temp);
   string clearMemory();
   string toUpper(const string&);
   string actualLine();
@@ -113,7 +114,8 @@
       "#include <string.h>" << endl <<
       "using namespace std;\n" << endl <<
       "#define TRUE 1" << endl <<
-      "#define FALSE 0\n" << endl <<
+      "#define FALSE 0" << endl <<
+      "#define MAX_BUFFER_SIZE 300\n" << endl <<
       "int main() {" << endl <<
       "\t/* Declarations */" << endl <<
       "\t" << $$.tempTranslation << endl <<
@@ -183,19 +185,35 @@
       if(!(exists("inBuffer"))){
         temp inBuffer = createTemp(t.token,"");
         addVar(inBuffer,"inBuffer", "true", "", $3.token);
-        $$.translation = inBuffer.name + " = (char*) malloc(300 * sizeof(char));";
+        $$.translation =
+          "// String Buffer Init\n\t" +
+          inBuffer.name + " = (char*) malloc(MAX_BUFFER_SIZE * sizeof(char));";
         $$.tempTranslation = inBuffer.translation + " // String Input Buffer\n\t";
         tempsOnMemory.push_back(inBuffer);
       }
       attr inBuffer = getVar("inBuffer");
       switch(t.token){
         case STRING:
-          $$.translation =
-            $$.translation + "\n\t" +
-            "fgets(" + inBuffer.tempVar.name + ",300,stdin);\n\t" +
-            inBuffer.tempVar.name + "[strlen(" + inBuffer.tempVar.name + ")-1] = 0;\n\t" +
-            "strcpy(" + t.tempVar.name + "," + inBuffer.tempVar.name + ");\n\t" +
-            "cout << strlen(" + t.tempVar.name + ") << endl;\n\t";
+          if(onMemory(t.tempVar)){
+            $$.translation =
+              $$.translation + "\n\t" +
+              "// Input: "+ t.id +"\n\t" +
+              "free(" + t.tempVar.name + ");\n\t" +
+              "fgets(" + inBuffer.tempVar.name + ",MAX_BUFFER_SIZE,stdin);\n\t" +
+              inBuffer.tempVar.name + "[strlen(" + inBuffer.tempVar.name + ")-1] = 0;\n\t" +
+              t.tempVar.name + " = (char*) malloc(strlen(" + inBuffer.tempVar.name + ") * sizeof(char));\n\t" +
+              "strcpy(" + t.tempVar.name + "," + inBuffer.tempVar.name + ");\n\t";
+          }
+          else {
+            $$.translation =
+              $$.translation + "\n\t" +
+              "// Input: "+ t.id +"\n\t" +
+              "fgets(" + inBuffer.tempVar.name + ",MAX_BUFFER_SIZE,stdin);\n\t" +
+              inBuffer.tempVar.name + "[strlen(" + inBuffer.tempVar.name + ")-1] = 0;\n\t" +
+              t.tempVar.name + " = (char*) malloc(strlen(" + inBuffer.tempVar.name + ") * sizeof(char));\n\t" +
+              "strcpy(" + t.tempVar.name + "," + inBuffer.tempVar.name + ");\n\t";
+              tempsOnMemory.push_back(t.tempVar);
+          }
         break;
         default:
           $$.translation = "cin >> " + t.tempVar.name + ";\n\t";
@@ -207,7 +225,9 @@
     R_OUT COLON EXP COMMA_OUT {
       temp t = $3.tempVar;
       $$.tempTranslation = $3.tempTranslation + $4.tempTranslation;
-      $$.translation = $3.translation + "cout << " + t.name + " << \" \";" + $4.translation + "\n\tcout << endl;";
+      $$.translation =
+        "// Output \n\t" +
+        $3.translation + "cout << " + t.name + " << \" \";" + $4.translation + "\n\tcout << endl;\n\t";
     };
 
   COMMA_OUT:
@@ -338,18 +358,35 @@
         $1.tempVar = createTemp($3.token,$3.translation);
         addVar($1.tempVar,name, $1.isVar, $3.value, $3.token);
         $$.tempTranslation = $3.tempTranslation + "\n\t" + $1.tempVar.translation + " // " + name + "\n\t";
-        $$.translation =
-          $3.token == STRING ?
-            $3.translation + "\n\tstrcpy(" + $1.tempVar.name + "," + $3.tempVar.name + ");\n\t" :
-            $3.translation + "\n\t" + $1.tempVar.name + " = " + $3.tempVar.name + ";\n\t";
+        if($3.token == STRING){
+          $$.translation =
+            $3.translation + "\n\t" +
+            $1.tempVar.name + " = (char*) malloc(strlen(" + $3.tempVar.name + ") * sizeof(char));\n\t" +
+            "strcpy(" + $1.tempVar.name + "," + $3.tempVar.name + ");\n\t";
+            tempsOnMemory.push_back($1.tempVar);
+        }
+        else {
+            $$.translation = $3.translation + "\n\t" + $1.tempVar.name + " = " + $3.tempVar.name + ";\n\t";
+        }
         $$.tempVar = $1.tempVar;
         $$.token = $1.tempVar.token;
       }
       else { // Var/Const Already Declared
-        if(!getVar(name).isVar){ constWontChangeValue(name); }
-        if(getVar(name).token != $3.token) { alreadyDeclared(name,checkType(name)); }
-        $$.tempTranslation = $3.tempTranslation + "\n\t";
-        $$.translation = $3.translation + "\n\t" + getVar(name).tempVar.name + " = " + $3.tempVar.name + ";\n\t";
+        attr varConst = getVar(name);
+        if(!varConst.isVar){ constWontChangeValue(name); }
+        if(varConst.token != $3.token) { alreadyDeclared(name,checkType(name)); }
+        $$.tempTranslation = $3.tempTranslation;
+        switch(varConst.token){
+          case STRING:
+            $$.translation =
+              "free(" + varConst.tempVar.name + ");\n\t" +
+              varConst.tempVar.name + " = (char*) malloc(strlen(" + $3.tempVar.name + ") * sizeof(char));\n\t" +
+              "strcpy(" + varConst.tempVar.name + "," + $3.tempVar.name + ");\n\t";
+          break;
+          default:
+            $$.translation = $3.translation + "\n\t" + varConst.tempVar.name + " = " + $3.tempVar.name + ";\n\t";
+          break;
+        }
         getVar(name).value = $3.value;
       }
     };
@@ -471,7 +508,7 @@
     };
     | STRING {
       $$.tempVar = createTemp($1.token,$1.value);
-      $$.translation = $$.tempVar.name + " = " + $1.value + ";";
+      $$.translation = $$.tempVar.name + " = (char*) " + $1.value + ";";
       $$.value = $1.value;
       $$.token = STRING;
       $$.tempTranslation = $$.tempVar.translation + " // " + $$.translation;
@@ -502,6 +539,14 @@ void yyerror(string msg){
           Useful
   ------------------------
 */
+bool onMemory(temp tempVar){
+  bool onMemory;
+  for(temp t : tempsOnMemory){
+    if(t.name == tempVar.name){ onMemory = true; break; }
+  }
+  return onMemory;
+}
+
 string clearMemory(){
   string result = "";
   for(temp t : tempsOnMemory){ result += "free("+t.name+");\n\t"; }
