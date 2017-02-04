@@ -20,7 +20,7 @@
   using namespace std;
 
   long long tempCount = 0;
-  long long scopeCount = 0;
+  long long scopesCount = 0;
 
   /* Structs */
   struct temp {
@@ -42,9 +42,6 @@
     string operation;           // Operation
   };
 
-  /* Heap */
-  vector<temp> tempsOnMemory = {};
-
   /* Flex/Yacc Functions */
   int yylex(void);
   void yyerror(string);
@@ -58,7 +55,6 @@
 
   /* VarMap Functions */
   bool exists(string);
-  bool exists(temp);
   void addVar(temp,string,bool,string,int);
   attr getVar(string);
   string checkType(int);
@@ -66,8 +62,12 @@
   temp createTemp(int,string);
 
   /* VarMap */
-  map<string,attr> varInfo;
-  map<string,attr>::iterator varInfoIt;
+  map<string,attr> globalScope;
+  map<string,attr>::iterator scopeIterator;
+
+  /* Heap */
+  vector<temp> tempsOnMemory = {};
+  vector<map<string,attr>> scopes = {};
 
   /* Useful Functions */
   bool onMemory(temp);
@@ -129,9 +129,24 @@
     };
 
   BLOCK:
-    BLOCK_INIT CMDS BLOCK_END {
-      $$.translation = "// Scope\n\t" + $2.translation;
-      $$.tempTranslation = "// Scope\n\t" + $2.tempTranslation;
+    START_SCOPE BLOCK_INIT CMDS BLOCK_END END_SCOPE {
+      $$.translation = "// Scope "+to_string(scopesCount)+"\n\t"+ $3.tempTranslation + $3.translation + "// -- End Scope\n\t";
+    };
+
+  START_SCOPE:
+    {
+      map<string,attr> newScope;
+      scopes.push_back(newScope);
+      scopesCount++;
+      $$.tempTranslation = "";
+      $$.translation = "";
+    };
+
+  END_SCOPE:
+    {
+      scopes.pop_back();
+      $$.tempTranslation = "";
+      $$.translation = "";
     };
 
   CMDS:
@@ -388,7 +403,7 @@
             $$.translation = $3.translation + varConst.tempVar.name + " = " + $3.tempVar.name + ";\n\t";
           break;
         }
-        getVar(name).value = $3.value;
+        varConst.value = $3.value;
       }
     };
     | EXP ARITHMETIC_1 EXP {
@@ -607,8 +622,12 @@ void warningExplicitType(string value, string type){
   ------------------------
 */
 attr getVar(string name){
-  varInfoIt = varInfo.find(name);
-  return varInfoIt->second;
+  for(int i = 0; i < scopes.size(); i++){
+      scopeIterator = scopes[i].find(name);
+      if(scopeIterator != scopes[i].end()){ return scopeIterator->second; }
+  }
+  scopeIterator = globalScope.find(name);
+  return scopeIterator->second;
 }
 
 temp createTemp(int token, string value){
@@ -629,14 +648,16 @@ temp createTemp(int token, string value){
 }
 
 void addVar(temp tempVar, string name, bool isVar, string value, int token){
-  varInfoIt = varInfo.find(name);
+  /* new Var */
   attr v;
   v.id = name;
   v.isVar = isVar;
   v.value = value;
   v.token = token;
   v.tempVar = tempVar;
-  varInfo[name] = v;
+
+  if(scopes.size() >= 1){ scopes.back()[name] = v; }
+  else { globalScope[name] = v; }
 }
 
 string checkType(int token){
@@ -651,8 +672,9 @@ string checkType(int token){
 }
 
 string checkType(string name){
-  varInfoIt = varInfo.find(name);
-  attr v = varInfoIt->second;
+  map<string,attr> scope = scopes.size() >= 1 ? scopes.back() : globalScope;
+  scopeIterator = scope.find(name);
+  attr v = scopeIterator->second;
   switch (v.token) {
     case INTEGER: return "int";
     case FLOAT: return "float";
@@ -664,11 +686,10 @@ string checkType(string name){
 }
 
 bool exists(string varName){
-  varInfoIt = varInfo.find(varName);
-  return !(varInfoIt == varInfo.end());
-}
-
-bool exists(temp tempVar){
-  for(varInfoIt = varInfo.begin(); varInfoIt != varInfo.end(); ++varInfoIt){ if(varInfoIt->second.tempVar.name == tempVar.name){ return true; } }
-  return false;
+  for(int i = 0; i < scopes.size(); i++){
+      scopeIterator = scopes[i].find(varName);
+      if(scopeIterator != scopes[i].end()){ return true; }
+  }
+  scopeIterator = globalScope.find(varName);
+  return !(scopeIterator == globalScope.end());
 }

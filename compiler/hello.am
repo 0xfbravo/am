@@ -1,22 +1,4 @@
-a = "abc123"
-b = 10
-c = 20.2
-d = true
-e = true || false
-f = true || e
-g = f && e
-h = b > 2
-i = b <= c
-j = 1 == 2
-j = 2.0::int == 2
-k = 40
-in:a
-out:a
-teste is String
-bibi is Int
-in:bibi
-out:"teste",1,22.3,true && false
-out:!d
-@constante = 10
-out:constante
-out:"abc123" === "a"
+a = 10
+{a = 20}
+{b = 30}
+b = "string"
