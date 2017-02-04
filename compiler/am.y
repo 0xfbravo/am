@@ -39,6 +39,7 @@
     bool isVar;                 // Var||Const
     string translation;         // C Translation
     string tempTranslation;     // Var declaration - C Translation
+    string scopesLabels;         // Scopes Labels
     string operation;           // Operation
   };
 
@@ -123,21 +124,22 @@
       "\t" << $$.translation << endl <<
       "\t/* Free memory */" << endl <<
       "\t" << clearMemory() << endl <<
-      "\treturn 0;" << endl <<
+      "\treturn 0;\n" << endl <<
+      "\t/* Scopes Labels */" << endl <<
+      "\t" << $$.scopesLabels << endl <<
       "}" << endl;
       ccode.close();
     };
 
   BLOCK:
     START_SCOPE BLOCK_INIT CMDS BLOCK_END END_SCOPE {
-      $$.translation = "// Scope "+to_string(scopesCount)+"\n\t"+ $3.tempTranslation + $3.translation + "// -- End Scope\n\t";
+      $$.translation = $3.tempTranslation + $3.translation;
     };
 
   START_SCOPE:
     {
       map<string,attr> newScope;
       scopes.push_back(newScope);
-      scopesCount++;
       $$.tempTranslation = "";
       $$.translation = "";
     };
@@ -153,14 +155,53 @@
     CMD CMDS {
       $$.translation = $1.translation + $2.translation;
       $$.tempTranslation = $1.tempTranslation + $2.tempTranslation;
+      $$.scopesLabels = $1.scopesLabels + $2.scopesLabels;
     };
     | {
       $$.translation = "";
       $$.tempTranslation = "";
     };
 
+  IF:
+    R_IF EXP BLOCK ELSE {
+      scopesCount++;
+      $$.translation =
+        $2.translation +
+        "if (" + $2.tempVar.name + ") { goto BLOCK_LABEL_" + to_string(scopesCount) + "; }\n\t" +
+        $4.translation +
+        "BLOCK_LABEL_" + to_string(scopesCount) + "_EXIT:\n\t";
+      $$.tempTranslation = $2.tempTranslation + $4.tempTranslation;
+      $$.scopesLabels =
+        $4.scopesLabels +
+        "BLOCK_LABEL_" + to_string(scopesCount) + ":\n\t" +
+        $3.translation +
+        "goto BLOCK_LABEL_" + to_string(scopesCount) + "_EXIT;\n\t";
+    };
+
+  ELSE:
+    R_ELSE ELSEIF {
+      $$.translation = $2.translation;
+      $$.tempTranslation = $2.tempTranslation;
+      $$.scopesLabels = $2.scopesLabels;
+    };
+    |;
+
+  ELSEIF:
+    IF;
+    | BLOCK {
+      scopesCount++;
+      $$.tempTranslation = $1.tempTranslation;
+      $$.translation =
+        "else { goto BLOCK_LABEL_"+ to_string(scopesCount) +"; }\n\t" +
+        "BLOCK_LABEL_" + to_string(scopesCount) + "_EXIT:\n\t";
+      $$.scopesLabels =
+        "BLOCK_LABEL_" + to_string(scopesCount) + ":\n\t" +
+        $1.translation +
+        "goto BLOCK_LABEL_" + to_string(scopesCount) + "_EXIT;\n\t";
+    };
+
   CMD:
-    BLOCK;
+    IF;
     | END_LINE;
     | IS;
     | IN;
