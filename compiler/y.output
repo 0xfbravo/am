@@ -58,33 +58,34 @@ Grammar
    30 COMMA_OUT: COMMA EXP COMMA_OUT
    31          | %empty
 
-   32 EXP: EXP COLON COLON EXPLICIT_TYPE
-   33    | EXP BOOLEAN_LOGIC EXP
-   34    | NOT EXP
-   35    | EXP QUESTION EXP COLON EXP
-   36    | EXP EQUALITY_TEST EXP
-   37    | EXP ORDER_RELATION EXP
-   38    | varConst ASSIGNMENT EXP
-   39    | EXP ARITHMETIC_1 EXP
-   40    | EXP ARITHMETIC_2 EXP
-   41    | '(' EXP ')'
-   42    | VAR
-   43    | CONST
-   44    | INTEGER
-   45    | FLOAT
-   46    | BOOLEAN
-   47    | CHARACTER
-   48    | STRING
+   32 EXP: EXP R_DOT EXP
+   33    | EXP COLON COLON EXPLICIT_TYPE
+   34    | EXP BOOLEAN_LOGIC EXP
+   35    | NOT EXP
+   36    | EXP QUESTION EXP COLON EXP
+   37    | EXP EQUALITY_TEST EXP
+   38    | EXP ORDER_RELATION EXP
+   39    | varConst ASSIGNMENT EXP
+   40    | EXP ARITHMETIC_1 EXP
+   41    | EXP ARITHMETIC_2 EXP
+   42    | '(' EXP ')'
+   43    | VAR
+   44    | CONST
+   45    | INTEGER
+   46    | FLOAT
+   47    | BOOLEAN
+   48    | CHARACTER
+   49    | STRING
 
-   49 varConst: VAR
-   50         | CONST
+   50 varConst: VAR
+   51         | CONST
 
 
 Terminals, with rules where they appear
 
 $end (0) 0
-'(' (40) 41
-')' (41) 41
+'(' (40) 42
+')' (41) 42
 error (256)
 BLOCK_INIT (258) 2
 BLOCK_END (259) 2
@@ -101,64 +102,65 @@ R_CONTINUE (269)
 R_IN (270) 28
 R_OUT (271) 29
 R_IS (272) 22
-INTEGER (273) 23 44
-FLOAT (274) 24 45
-BOOLEAN (275) 25 46
-CHARACTER (276) 26 47
-STRING (277) 27 48
-ARITHMETIC_1 (278) 39
-ARITHMETIC_2 (279) 40
-BOOLEAN_LOGIC (280) 33
-EQUALITY_TEST (281) 36
-ORDER_RELATION (282) 37
-ASSIGNMENT (283) 38
-NOT (284) 34
-COLON (285) 28 29 32 35
-QUESTION (286) 35
-COMMA (287) 30
-VAR (288) 42 49
-CONST (289) 43 50
-EXPLICIT_TYPE (290) 32
-END_LINE (291) 13
+R_DOT (273) 32
+INTEGER (274) 23 45
+FLOAT (275) 24 46
+BOOLEAN (276) 25 47
+CHARACTER (277) 26 48
+STRING (278) 27 49
+ARITHMETIC_1 (279) 40
+ARITHMETIC_2 (280) 41
+BOOLEAN_LOGIC (281) 34
+EQUALITY_TEST (282) 37
+ORDER_RELATION (283) 38
+ASSIGNMENT (284) 39
+NOT (285) 35
+COLON (286) 28 29 33 36
+QUESTION (287) 36
+COMMA (288) 30
+VAR (289) 43 50
+CONST (290) 44 51
+EXPLICIT_TYPE (291) 33
+END_LINE (292) 13
 
 
 Nonterminals, with rules where they appear
 
-$accept (39)
+$accept (40)
     on left: 0
-BEFORE_THE_BEGINNING (40)
+BEFORE_THE_BEGINNING (41)
     on left: 1, on right: 0
-BLOCK (41)
+BLOCK (42)
     on left: 2, on right: 7 11
-START_SCOPE (42)
+START_SCOPE (43)
     on left: 3, on right: 2
-END_SCOPE (43)
+END_SCOPE (44)
     on left: 4, on right: 2
-CMDS (44)
+CMDS (45)
     on left: 5 6, on right: 1 2 5
-IF (45)
+IF (46)
     on left: 7, on right: 10 12
-ELSE (46)
+ELSE (47)
     on left: 8 9, on right: 7
-ELSEIF (47)
+ELSEIF (48)
     on left: 10 11, on right: 8
-CMD (48)
+CMD (49)
     on left: 12 13 14 15 16 17 18 19 20 21, on right: 5
-IS (49)
+IS (50)
     on left: 22, on right: 14 17
-TYPE (50)
+TYPE (51)
     on left: 23 24 25 26 27, on right: 22
-IN (51)
+IN (52)
     on left: 28, on right: 15 18
-OUT (52)
+OUT (53)
     on left: 29, on right: 16 19
-COMMA_OUT (53)
+COMMA_OUT (54)
     on left: 30 31, on right: 29 30
-EXP (54)
-    on left: 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48, on right:
-    7 20 21 29 30 32 33 34 35 36 37 38 39 40 41
-varConst (55)
-    on left: 49 50, on right: 22 28 38
+EXP (55)
+    on left: 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49,
+    on right: 7 20 21 29 30 32 33 34 35 36 37 38 39 40 41 42
+varConst (56)
+    on left: 50 51, on right: 22 28 39
 
 
 State 0
@@ -226,42 +228,42 @@ State 3
 
 State 4
 
-   44 EXP: INTEGER .
-
-    $default  reduce using rule 44 (EXP)
-
-
-State 5
-
-   45 EXP: FLOAT .
+   45 EXP: INTEGER .
 
     $default  reduce using rule 45 (EXP)
 
 
-State 6
+State 5
 
-   46 EXP: BOOLEAN .
+   46 EXP: FLOAT .
 
     $default  reduce using rule 46 (EXP)
 
 
-State 7
+State 6
 
-   47 EXP: CHARACTER .
+   47 EXP: BOOLEAN .
 
     $default  reduce using rule 47 (EXP)
 
 
-State 8
+State 7
 
-   48 EXP: STRING .
+   48 EXP: CHARACTER .
 
     $default  reduce using rule 48 (EXP)
 
 
+State 8
+
+   49 EXP: STRING .
+
+    $default  reduce using rule 49 (EXP)
+
+
 State 9
 
-   34 EXP: NOT . EXP
+   35 EXP: NOT . EXP
 
     INTEGER    shift, and go to state 4
     FLOAT      shift, and go to state 5
@@ -279,22 +281,22 @@ State 9
 
 State 10
 
-   42 EXP: VAR .
-   49 varConst: VAR .
-
-    R_IS        reduce using rule 49 (varConst)
-    ASSIGNMENT  reduce using rule 49 (varConst)
-    $default    reduce using rule 42 (EXP)
-
-
-State 11
-
-   43 EXP: CONST .
-   50 varConst: CONST .
+   43 EXP: VAR .
+   50 varConst: VAR .
 
     R_IS        reduce using rule 50 (varConst)
     ASSIGNMENT  reduce using rule 50 (varConst)
     $default    reduce using rule 43 (EXP)
+
+
+State 11
+
+   44 EXP: CONST .
+   51 varConst: CONST .
+
+    R_IS        reduce using rule 51 (varConst)
+    ASSIGNMENT  reduce using rule 51 (varConst)
+    $default    reduce using rule 44 (EXP)
 
 
 State 12
@@ -306,7 +308,7 @@ State 12
 
 State 13
 
-   41 EXP: '(' . EXP ')'
+   42 EXP: '(' . EXP ')'
 
     INTEGER    shift, and go to state 4
     FLOAT      shift, and go to state 5
@@ -407,22 +409,24 @@ State 21
 
    20 CMD: EXP .
    21    | EXP . SEMI_COLON
-   32 EXP: EXP . COLON COLON EXPLICIT_TYPE
-   33    | EXP . BOOLEAN_LOGIC EXP
-   35    | EXP . QUESTION EXP COLON EXP
-   36    | EXP . EQUALITY_TEST EXP
-   37    | EXP . ORDER_RELATION EXP
-   39    | EXP . ARITHMETIC_1 EXP
-   40    | EXP . ARITHMETIC_2 EXP
+   32 EXP: EXP . R_DOT EXP
+   33    | EXP . COLON COLON EXPLICIT_TYPE
+   34    | EXP . BOOLEAN_LOGIC EXP
+   36    | EXP . QUESTION EXP COLON EXP
+   37    | EXP . EQUALITY_TEST EXP
+   38    | EXP . ORDER_RELATION EXP
+   40    | EXP . ARITHMETIC_1 EXP
+   41    | EXP . ARITHMETIC_2 EXP
 
     SEMI_COLON      shift, and go to state 34
-    ARITHMETIC_1    shift, and go to state 35
-    ARITHMETIC_2    shift, and go to state 36
-    BOOLEAN_LOGIC   shift, and go to state 37
-    EQUALITY_TEST   shift, and go to state 38
-    ORDER_RELATION  shift, and go to state 39
-    COLON           shift, and go to state 40
-    QUESTION        shift, and go to state 41
+    R_DOT           shift, and go to state 35
+    ARITHMETIC_1    shift, and go to state 36
+    ARITHMETIC_2    shift, and go to state 37
+    BOOLEAN_LOGIC   shift, and go to state 38
+    EQUALITY_TEST   shift, and go to state 39
+    ORDER_RELATION  shift, and go to state 40
+    COLON           shift, and go to state 41
+    QUESTION        shift, and go to state 42
 
     $default  reduce using rule 20 (CMD)
 
@@ -430,52 +434,54 @@ State 21
 State 22
 
    22 IS: varConst . R_IS TYPE
-   38 EXP: varConst . ASSIGNMENT EXP
+   39 EXP: varConst . ASSIGNMENT EXP
 
-    R_IS        shift, and go to state 42
-    ASSIGNMENT  shift, and go to state 43
+    R_IS        shift, and go to state 43
+    ASSIGNMENT  shift, and go to state 44
 
 
 State 23
 
     7 IF: R_IF EXP . BLOCK ELSE
-   32 EXP: EXP . COLON COLON EXPLICIT_TYPE
-   33    | EXP . BOOLEAN_LOGIC EXP
-   35    | EXP . QUESTION EXP COLON EXP
-   36    | EXP . EQUALITY_TEST EXP
-   37    | EXP . ORDER_RELATION EXP
-   39    | EXP . ARITHMETIC_1 EXP
-   40    | EXP . ARITHMETIC_2 EXP
+   32 EXP: EXP . R_DOT EXP
+   33    | EXP . COLON COLON EXPLICIT_TYPE
+   34    | EXP . BOOLEAN_LOGIC EXP
+   36    | EXP . QUESTION EXP COLON EXP
+   37    | EXP . EQUALITY_TEST EXP
+   38    | EXP . ORDER_RELATION EXP
+   40    | EXP . ARITHMETIC_1 EXP
+   41    | EXP . ARITHMETIC_2 EXP
 
-    ARITHMETIC_1    shift, and go to state 35
-    ARITHMETIC_2    shift, and go to state 36
-    BOOLEAN_LOGIC   shift, and go to state 37
-    EQUALITY_TEST   shift, and go to state 38
-    ORDER_RELATION  shift, and go to state 39
-    COLON           shift, and go to state 40
-    QUESTION        shift, and go to state 41
+    R_DOT           shift, and go to state 35
+    ARITHMETIC_1    shift, and go to state 36
+    ARITHMETIC_2    shift, and go to state 37
+    BOOLEAN_LOGIC   shift, and go to state 38
+    EQUALITY_TEST   shift, and go to state 39
+    ORDER_RELATION  shift, and go to state 40
+    COLON           shift, and go to state 41
+    QUESTION        shift, and go to state 42
 
     $default  reduce using rule 3 (START_SCOPE)
 
-    BLOCK        go to state 44
-    START_SCOPE  go to state 45
+    BLOCK        go to state 45
+    START_SCOPE  go to state 46
 
 
 State 24
 
-   38 EXP: varConst . ASSIGNMENT EXP
+   39 EXP: varConst . ASSIGNMENT EXP
 
-    ASSIGNMENT  shift, and go to state 43
+    ASSIGNMENT  shift, and go to state 44
 
 
 State 25
 
    28 IN: R_IN COLON . varConst
 
-    VAR    shift, and go to state 46
-    CONST  shift, and go to state 47
+    VAR    shift, and go to state 47
+    CONST  shift, and go to state 48
 
-    varConst  go to state 48
+    varConst  go to state 49
 
 
 State 26
@@ -492,46 +498,50 @@ State 26
     CONST      shift, and go to state 11
     '('        shift, and go to state 13
 
-    EXP       go to state 49
+    EXP       go to state 50
     varConst  go to state 24
 
 
 State 27
 
-   32 EXP: EXP . COLON COLON EXPLICIT_TYPE
-   33    | EXP . BOOLEAN_LOGIC EXP
-   34    | NOT EXP .
-   35    | EXP . QUESTION EXP COLON EXP
-   36    | EXP . EQUALITY_TEST EXP
-   37    | EXP . ORDER_RELATION EXP
-   39    | EXP . ARITHMETIC_1 EXP
-   40    | EXP . ARITHMETIC_2 EXP
+   32 EXP: EXP . R_DOT EXP
+   33    | EXP . COLON COLON EXPLICIT_TYPE
+   34    | EXP . BOOLEAN_LOGIC EXP
+   35    | NOT EXP .
+   36    | EXP . QUESTION EXP COLON EXP
+   37    | EXP . EQUALITY_TEST EXP
+   38    | EXP . ORDER_RELATION EXP
+   40    | EXP . ARITHMETIC_1 EXP
+   41    | EXP . ARITHMETIC_2 EXP
 
-    ARITHMETIC_1  shift, and go to state 35
-    ARITHMETIC_2  shift, and go to state 36
+    R_DOT         shift, and go to state 35
+    ARITHMETIC_1  shift, and go to state 36
+    ARITHMETIC_2  shift, and go to state 37
 
-    $default  reduce using rule 34 (EXP)
+    $default  reduce using rule 35 (EXP)
 
 
 State 28
 
-   32 EXP: EXP . COLON COLON EXPLICIT_TYPE
-   33    | EXP . BOOLEAN_LOGIC EXP
-   35    | EXP . QUESTION EXP COLON EXP
-   36    | EXP . EQUALITY_TEST EXP
-   37    | EXP . ORDER_RELATION EXP
-   39    | EXP . ARITHMETIC_1 EXP
-   40    | EXP . ARITHMETIC_2 EXP
-   41    | '(' EXP . ')'
+   32 EXP: EXP . R_DOT EXP
+   33    | EXP . COLON COLON EXPLICIT_TYPE
+   34    | EXP . BOOLEAN_LOGIC EXP
+   36    | EXP . QUESTION EXP COLON EXP
+   37    | EXP . EQUALITY_TEST EXP
+   38    | EXP . ORDER_RELATION EXP
+   40    | EXP . ARITHMETIC_1 EXP
+   41    | EXP . ARITHMETIC_2 EXP
+   42    | '(' EXP . ')'
 
-    ARITHMETIC_1    shift, and go to state 35
-    ARITHMETIC_2    shift, and go to state 36
-    BOOLEAN_LOGIC   shift, and go to state 37
-    EQUALITY_TEST   shift, and go to state 38
-    ORDER_RELATION  shift, and go to state 39
-    COLON           shift, and go to state 40
-    QUESTION        shift, and go to state 41
-    ')'             shift, and go to state 50
+    R_DOT           shift, and go to state 35
+    ARITHMETIC_1    shift, and go to state 36
+    ARITHMETIC_2    shift, and go to state 37
+    BOOLEAN_LOGIC   shift, and go to state 38
+    EQUALITY_TEST   shift, and go to state 39
+    ORDER_RELATION  shift, and go to state 40
+    COLON           shift, and go to state 41
+    QUESTION        shift, and go to state 42
+    ')'             shift, and go to state 51
 
 
 State 29
@@ -578,25 +588,7 @@ State 34
 
 State 35
 
-   39 EXP: EXP ARITHMETIC_1 . EXP
-
-    INTEGER    shift, and go to state 4
-    FLOAT      shift, and go to state 5
-    BOOLEAN    shift, and go to state 6
-    CHARACTER  shift, and go to state 7
-    STRING     shift, and go to state 8
-    NOT        shift, and go to state 9
-    VAR        shift, and go to state 10
-    CONST      shift, and go to state 11
-    '('        shift, and go to state 13
-
-    EXP       go to state 51
-    varConst  go to state 24
-
-
-State 36
-
-   40 EXP: EXP ARITHMETIC_2 . EXP
+   32 EXP: EXP R_DOT . EXP
 
     INTEGER    shift, and go to state 4
     FLOAT      shift, and go to state 5
@@ -612,9 +604,9 @@ State 36
     varConst  go to state 24
 
 
-State 37
+State 36
 
-   33 EXP: EXP BOOLEAN_LOGIC . EXP
+   40 EXP: EXP ARITHMETIC_1 . EXP
 
     INTEGER    shift, and go to state 4
     FLOAT      shift, and go to state 5
@@ -630,9 +622,9 @@ State 37
     varConst  go to state 24
 
 
-State 38
+State 37
 
-   36 EXP: EXP EQUALITY_TEST . EXP
+   41 EXP: EXP ARITHMETIC_2 . EXP
 
     INTEGER    shift, and go to state 4
     FLOAT      shift, and go to state 5
@@ -648,9 +640,9 @@ State 38
     varConst  go to state 24
 
 
-State 39
+State 38
 
-   37 EXP: EXP ORDER_RELATION . EXP
+   34 EXP: EXP BOOLEAN_LOGIC . EXP
 
     INTEGER    shift, and go to state 4
     FLOAT      shift, and go to state 5
@@ -666,16 +658,27 @@ State 39
     varConst  go to state 24
 
 
+State 39
+
+   37 EXP: EXP EQUALITY_TEST . EXP
+
+    INTEGER    shift, and go to state 4
+    FLOAT      shift, and go to state 5
+    BOOLEAN    shift, and go to state 6
+    CHARACTER  shift, and go to state 7
+    STRING     shift, and go to state 8
+    NOT        shift, and go to state 9
+    VAR        shift, and go to state 10
+    CONST      shift, and go to state 11
+    '('        shift, and go to state 13
+
+    EXP       go to state 56
+    varConst  go to state 24
+
+
 State 40
 
-   32 EXP: EXP COLON . COLON EXPLICIT_TYPE
-
-    COLON  shift, and go to state 56
-
-
-State 41
-
-   35 EXP: EXP QUESTION . EXP COLON EXP
+   38 EXP: EXP ORDER_RELATION . EXP
 
     INTEGER    shift, and go to state 4
     FLOAT      shift, and go to state 5
@@ -691,22 +694,16 @@ State 41
     varConst  go to state 24
 
 
+State 41
+
+   33 EXP: EXP COLON . COLON EXPLICIT_TYPE
+
+    COLON  shift, and go to state 58
+
+
 State 42
 
-   22 IS: varConst R_IS . TYPE
-
-    INTEGER    shift, and go to state 58
-    FLOAT      shift, and go to state 59
-    BOOLEAN    shift, and go to state 60
-    CHARACTER  shift, and go to state 61
-    STRING     shift, and go to state 62
-
-    TYPE  go to state 63
-
-
-State 43
-
-   38 EXP: varConst ASSIGNMENT . EXP
+   36 EXP: EXP QUESTION . EXP COLON EXP
 
     INTEGER    shift, and go to state 4
     FLOAT      shift, and go to state 5
@@ -718,262 +715,325 @@ State 43
     CONST      shift, and go to state 11
     '('        shift, and go to state 13
 
-    EXP       go to state 64
+    EXP       go to state 59
     varConst  go to state 24
+
+
+State 43
+
+   22 IS: varConst R_IS . TYPE
+
+    INTEGER    shift, and go to state 60
+    FLOAT      shift, and go to state 61
+    BOOLEAN    shift, and go to state 62
+    CHARACTER  shift, and go to state 63
+    STRING     shift, and go to state 64
+
+    TYPE  go to state 65
 
 
 State 44
 
-    7 IF: R_IF EXP BLOCK . ELSE
+   39 EXP: varConst ASSIGNMENT . EXP
 
-    R_ELSE  shift, and go to state 65
+    INTEGER    shift, and go to state 4
+    FLOAT      shift, and go to state 5
+    BOOLEAN    shift, and go to state 6
+    CHARACTER  shift, and go to state 7
+    STRING     shift, and go to state 8
+    NOT        shift, and go to state 9
+    VAR        shift, and go to state 10
+    CONST      shift, and go to state 11
+    '('        shift, and go to state 13
 
-    $default  reduce using rule 9 (ELSE)
-
-    ELSE  go to state 66
+    EXP       go to state 66
+    varConst  go to state 24
 
 
 State 45
 
-    2 BLOCK: START_SCOPE . BLOCK_INIT CMDS BLOCK_END END_SCOPE
+    7 IF: R_IF EXP BLOCK . ELSE
 
-    BLOCK_INIT  shift, and go to state 67
+    R_ELSE  shift, and go to state 67
+
+    $default  reduce using rule 9 (ELSE)
+
+    ELSE  go to state 68
 
 
 State 46
 
-   49 varConst: VAR .
+    2 BLOCK: START_SCOPE . BLOCK_INIT CMDS BLOCK_END END_SCOPE
 
-    $default  reduce using rule 49 (varConst)
+    BLOCK_INIT  shift, and go to state 69
 
 
 State 47
 
-   50 varConst: CONST .
+   50 varConst: VAR .
 
     $default  reduce using rule 50 (varConst)
 
 
 State 48
 
+   51 varConst: CONST .
+
+    $default  reduce using rule 51 (varConst)
+
+
+State 49
+
    28 IN: R_IN COLON varConst .
 
     $default  reduce using rule 28 (IN)
 
 
-State 49
+State 50
 
    29 OUT: R_OUT COLON EXP . COMMA_OUT
-   32 EXP: EXP . COLON COLON EXPLICIT_TYPE
-   33    | EXP . BOOLEAN_LOGIC EXP
-   35    | EXP . QUESTION EXP COLON EXP
-   36    | EXP . EQUALITY_TEST EXP
-   37    | EXP . ORDER_RELATION EXP
-   39    | EXP . ARITHMETIC_1 EXP
-   40    | EXP . ARITHMETIC_2 EXP
+   32 EXP: EXP . R_DOT EXP
+   33    | EXP . COLON COLON EXPLICIT_TYPE
+   34    | EXP . BOOLEAN_LOGIC EXP
+   36    | EXP . QUESTION EXP COLON EXP
+   37    | EXP . EQUALITY_TEST EXP
+   38    | EXP . ORDER_RELATION EXP
+   40    | EXP . ARITHMETIC_1 EXP
+   41    | EXP . ARITHMETIC_2 EXP
 
-    ARITHMETIC_1    shift, and go to state 35
-    ARITHMETIC_2    shift, and go to state 36
-    BOOLEAN_LOGIC   shift, and go to state 37
-    EQUALITY_TEST   shift, and go to state 38
-    ORDER_RELATION  shift, and go to state 39
-    COLON           shift, and go to state 40
-    QUESTION        shift, and go to state 41
-    COMMA           shift, and go to state 68
+    R_DOT           shift, and go to state 35
+    ARITHMETIC_1    shift, and go to state 36
+    ARITHMETIC_2    shift, and go to state 37
+    BOOLEAN_LOGIC   shift, and go to state 38
+    EQUALITY_TEST   shift, and go to state 39
+    ORDER_RELATION  shift, and go to state 40
+    COLON           shift, and go to state 41
+    QUESTION        shift, and go to state 42
+    COMMA           shift, and go to state 70
 
     $default  reduce using rule 31 (COMMA_OUT)
 
-    COMMA_OUT  go to state 69
-
-
-State 50
-
-   41 EXP: '(' EXP ')' .
-
-    $default  reduce using rule 41 (EXP)
+    COMMA_OUT  go to state 71
 
 
 State 51
 
-   32 EXP: EXP . COLON COLON EXPLICIT_TYPE
-   33    | EXP . BOOLEAN_LOGIC EXP
-   35    | EXP . QUESTION EXP COLON EXP
-   36    | EXP . EQUALITY_TEST EXP
-   37    | EXP . ORDER_RELATION EXP
-   39    | EXP . ARITHMETIC_1 EXP
-   39    | EXP ARITHMETIC_1 EXP .
-   40    | EXP . ARITHMETIC_2 EXP
+   42 EXP: '(' EXP ')' .
 
-    ARITHMETIC_2  shift, and go to state 36
-
-    $default  reduce using rule 39 (EXP)
+    $default  reduce using rule 42 (EXP)
 
 
 State 52
 
-   32 EXP: EXP . COLON COLON EXPLICIT_TYPE
-   33    | EXP . BOOLEAN_LOGIC EXP
-   35    | EXP . QUESTION EXP COLON EXP
-   36    | EXP . EQUALITY_TEST EXP
-   37    | EXP . ORDER_RELATION EXP
-   39    | EXP . ARITHMETIC_1 EXP
-   40    | EXP . ARITHMETIC_2 EXP
-   40    | EXP ARITHMETIC_2 EXP .
+   32 EXP: EXP . R_DOT EXP
+   32    | EXP R_DOT EXP .
+   33    | EXP . COLON COLON EXPLICIT_TYPE
+   34    | EXP . BOOLEAN_LOGIC EXP
+   36    | EXP . QUESTION EXP COLON EXP
+   37    | EXP . EQUALITY_TEST EXP
+   38    | EXP . ORDER_RELATION EXP
+   40    | EXP . ARITHMETIC_1 EXP
+   41    | EXP . ARITHMETIC_2 EXP
 
-    $default  reduce using rule 40 (EXP)
+    ARITHMETIC_1  shift, and go to state 36
+    ARITHMETIC_2  shift, and go to state 37
+
+    $default  reduce using rule 32 (EXP)
 
 
 State 53
 
-   32 EXP: EXP . COLON COLON EXPLICIT_TYPE
-   33    | EXP . BOOLEAN_LOGIC EXP
-   33    | EXP BOOLEAN_LOGIC EXP .
-   35    | EXP . QUESTION EXP COLON EXP
-   36    | EXP . EQUALITY_TEST EXP
-   37    | EXP . ORDER_RELATION EXP
-   39    | EXP . ARITHMETIC_1 EXP
-   40    | EXP . ARITHMETIC_2 EXP
+   32 EXP: EXP . R_DOT EXP
+   33    | EXP . COLON COLON EXPLICIT_TYPE
+   34    | EXP . BOOLEAN_LOGIC EXP
+   36    | EXP . QUESTION EXP COLON EXP
+   37    | EXP . EQUALITY_TEST EXP
+   38    | EXP . ORDER_RELATION EXP
+   40    | EXP . ARITHMETIC_1 EXP
+   40    | EXP ARITHMETIC_1 EXP .
+   41    | EXP . ARITHMETIC_2 EXP
 
-    ARITHMETIC_1    shift, and go to state 35
-    ARITHMETIC_2    shift, and go to state 36
-    EQUALITY_TEST   shift, and go to state 38
-    ORDER_RELATION  shift, and go to state 39
-    COLON           shift, and go to state 40
-    QUESTION        shift, and go to state 41
+    ARITHMETIC_2  shift, and go to state 37
 
-    $default  reduce using rule 33 (EXP)
+    $default  reduce using rule 40 (EXP)
 
 
 State 54
 
-   32 EXP: EXP . COLON COLON EXPLICIT_TYPE
-   33    | EXP . BOOLEAN_LOGIC EXP
-   35    | EXP . QUESTION EXP COLON EXP
-   36    | EXP . EQUALITY_TEST EXP
-   36    | EXP EQUALITY_TEST EXP .
-   37    | EXP . ORDER_RELATION EXP
-   39    | EXP . ARITHMETIC_1 EXP
-   40    | EXP . ARITHMETIC_2 EXP
+   32 EXP: EXP . R_DOT EXP
+   33    | EXP . COLON COLON EXPLICIT_TYPE
+   34    | EXP . BOOLEAN_LOGIC EXP
+   36    | EXP . QUESTION EXP COLON EXP
+   37    | EXP . EQUALITY_TEST EXP
+   38    | EXP . ORDER_RELATION EXP
+   40    | EXP . ARITHMETIC_1 EXP
+   41    | EXP . ARITHMETIC_2 EXP
+   41    | EXP ARITHMETIC_2 EXP .
 
-    ARITHMETIC_1  shift, and go to state 35
-    ARITHMETIC_2  shift, and go to state 36
-    COLON         shift, and go to state 40
-    QUESTION      shift, and go to state 41
-
-    $default  reduce using rule 36 (EXP)
+    $default  reduce using rule 41 (EXP)
 
 
 State 55
 
-   32 EXP: EXP . COLON COLON EXPLICIT_TYPE
-   33    | EXP . BOOLEAN_LOGIC EXP
-   35    | EXP . QUESTION EXP COLON EXP
-   36    | EXP . EQUALITY_TEST EXP
-   37    | EXP . ORDER_RELATION EXP
-   37    | EXP ORDER_RELATION EXP .
-   39    | EXP . ARITHMETIC_1 EXP
-   40    | EXP . ARITHMETIC_2 EXP
+   32 EXP: EXP . R_DOT EXP
+   33    | EXP . COLON COLON EXPLICIT_TYPE
+   34    | EXP . BOOLEAN_LOGIC EXP
+   34    | EXP BOOLEAN_LOGIC EXP .
+   36    | EXP . QUESTION EXP COLON EXP
+   37    | EXP . EQUALITY_TEST EXP
+   38    | EXP . ORDER_RELATION EXP
+   40    | EXP . ARITHMETIC_1 EXP
+   41    | EXP . ARITHMETIC_2 EXP
 
-    ARITHMETIC_1  shift, and go to state 35
-    ARITHMETIC_2  shift, and go to state 36
-    COLON         shift, and go to state 40
-    QUESTION      shift, and go to state 41
+    R_DOT           shift, and go to state 35
+    ARITHMETIC_1    shift, and go to state 36
+    ARITHMETIC_2    shift, and go to state 37
+    EQUALITY_TEST   shift, and go to state 39
+    ORDER_RELATION  shift, and go to state 40
+    COLON           shift, and go to state 41
+    QUESTION        shift, and go to state 42
 
-    $default  reduce using rule 37 (EXP)
+    $default  reduce using rule 34 (EXP)
 
 
 State 56
 
-   32 EXP: EXP COLON COLON . EXPLICIT_TYPE
+   32 EXP: EXP . R_DOT EXP
+   33    | EXP . COLON COLON EXPLICIT_TYPE
+   34    | EXP . BOOLEAN_LOGIC EXP
+   36    | EXP . QUESTION EXP COLON EXP
+   37    | EXP . EQUALITY_TEST EXP
+   37    | EXP EQUALITY_TEST EXP .
+   38    | EXP . ORDER_RELATION EXP
+   40    | EXP . ARITHMETIC_1 EXP
+   41    | EXP . ARITHMETIC_2 EXP
 
-    EXPLICIT_TYPE  shift, and go to state 70
+    R_DOT         shift, and go to state 35
+    ARITHMETIC_1  shift, and go to state 36
+    ARITHMETIC_2  shift, and go to state 37
+    COLON         shift, and go to state 41
+    QUESTION      shift, and go to state 42
+
+    $default  reduce using rule 37 (EXP)
 
 
 State 57
 
-   32 EXP: EXP . COLON COLON EXPLICIT_TYPE
-   33    | EXP . BOOLEAN_LOGIC EXP
-   35    | EXP . QUESTION EXP COLON EXP
-   35    | EXP QUESTION EXP . COLON EXP
-   36    | EXP . EQUALITY_TEST EXP
-   37    | EXP . ORDER_RELATION EXP
-   39    | EXP . ARITHMETIC_1 EXP
-   40    | EXP . ARITHMETIC_2 EXP
+   32 EXP: EXP . R_DOT EXP
+   33    | EXP . COLON COLON EXPLICIT_TYPE
+   34    | EXP . BOOLEAN_LOGIC EXP
+   36    | EXP . QUESTION EXP COLON EXP
+   37    | EXP . EQUALITY_TEST EXP
+   38    | EXP . ORDER_RELATION EXP
+   38    | EXP ORDER_RELATION EXP .
+   40    | EXP . ARITHMETIC_1 EXP
+   41    | EXP . ARITHMETIC_2 EXP
 
-    ARITHMETIC_1    shift, and go to state 35
-    ARITHMETIC_2    shift, and go to state 36
-    BOOLEAN_LOGIC   shift, and go to state 37
-    EQUALITY_TEST   shift, and go to state 38
-    ORDER_RELATION  shift, and go to state 39
-    COLON           shift, and go to state 71
-    QUESTION        shift, and go to state 41
+    R_DOT         shift, and go to state 35
+    ARITHMETIC_1  shift, and go to state 36
+    ARITHMETIC_2  shift, and go to state 37
+    COLON         shift, and go to state 41
+    QUESTION      shift, and go to state 42
+
+    $default  reduce using rule 38 (EXP)
 
 
 State 58
+
+   33 EXP: EXP COLON COLON . EXPLICIT_TYPE
+
+    EXPLICIT_TYPE  shift, and go to state 72
+
+
+State 59
+
+   32 EXP: EXP . R_DOT EXP
+   33    | EXP . COLON COLON EXPLICIT_TYPE
+   34    | EXP . BOOLEAN_LOGIC EXP
+   36    | EXP . QUESTION EXP COLON EXP
+   36    | EXP QUESTION EXP . COLON EXP
+   37    | EXP . EQUALITY_TEST EXP
+   38    | EXP . ORDER_RELATION EXP
+   40    | EXP . ARITHMETIC_1 EXP
+   41    | EXP . ARITHMETIC_2 EXP
+
+    R_DOT           shift, and go to state 35
+    ARITHMETIC_1    shift, and go to state 36
+    ARITHMETIC_2    shift, and go to state 37
+    BOOLEAN_LOGIC   shift, and go to state 38
+    EQUALITY_TEST   shift, and go to state 39
+    ORDER_RELATION  shift, and go to state 40
+    COLON           shift, and go to state 73
+    QUESTION        shift, and go to state 42
+
+
+State 60
 
    23 TYPE: INTEGER .
 
     $default  reduce using rule 23 (TYPE)
 
 
-State 59
+State 61
 
    24 TYPE: FLOAT .
 
     $default  reduce using rule 24 (TYPE)
 
 
-State 60
+State 62
 
    25 TYPE: BOOLEAN .
 
     $default  reduce using rule 25 (TYPE)
 
 
-State 61
+State 63
 
    26 TYPE: CHARACTER .
 
     $default  reduce using rule 26 (TYPE)
 
 
-State 62
+State 64
 
    27 TYPE: STRING .
 
     $default  reduce using rule 27 (TYPE)
 
 
-State 63
+State 65
 
    22 IS: varConst R_IS TYPE .
 
     $default  reduce using rule 22 (IS)
 
 
-State 64
+State 66
 
-   32 EXP: EXP . COLON COLON EXPLICIT_TYPE
-   33    | EXP . BOOLEAN_LOGIC EXP
-   35    | EXP . QUESTION EXP COLON EXP
-   36    | EXP . EQUALITY_TEST EXP
-   37    | EXP . ORDER_RELATION EXP
-   38    | varConst ASSIGNMENT EXP .
-   39    | EXP . ARITHMETIC_1 EXP
-   40    | EXP . ARITHMETIC_2 EXP
+   32 EXP: EXP . R_DOT EXP
+   33    | EXP . COLON COLON EXPLICIT_TYPE
+   34    | EXP . BOOLEAN_LOGIC EXP
+   36    | EXP . QUESTION EXP COLON EXP
+   37    | EXP . EQUALITY_TEST EXP
+   38    | EXP . ORDER_RELATION EXP
+   39    | varConst ASSIGNMENT EXP .
+   40    | EXP . ARITHMETIC_1 EXP
+   41    | EXP . ARITHMETIC_2 EXP
 
-    ARITHMETIC_1    shift, and go to state 35
-    ARITHMETIC_2    shift, and go to state 36
-    BOOLEAN_LOGIC   shift, and go to state 37
-    EQUALITY_TEST   shift, and go to state 38
-    ORDER_RELATION  shift, and go to state 39
-    COLON           shift, and go to state 40
-    QUESTION        shift, and go to state 41
+    R_DOT           shift, and go to state 35
+    ARITHMETIC_1    shift, and go to state 36
+    ARITHMETIC_2    shift, and go to state 37
+    BOOLEAN_LOGIC   shift, and go to state 38
+    EQUALITY_TEST   shift, and go to state 39
+    ORDER_RELATION  shift, and go to state 40
+    COLON           shift, and go to state 41
+    QUESTION        shift, and go to state 42
 
-    $default  reduce using rule 38 (EXP)
+    $default  reduce using rule 39 (EXP)
 
 
-State 65
+State 67
 
     8 ELSE: R_ELSE . ELSEIF
 
@@ -981,20 +1041,20 @@ State 65
 
     $default  reduce using rule 3 (START_SCOPE)
 
-    BLOCK        go to state 72
-    START_SCOPE  go to state 45
-    IF           go to state 73
-    ELSEIF       go to state 74
+    BLOCK        go to state 74
+    START_SCOPE  go to state 46
+    IF           go to state 75
+    ELSEIF       go to state 76
 
 
-State 66
+State 68
 
     7 IF: R_IF EXP BLOCK ELSE .
 
     $default  reduce using rule 7 (IF)
 
 
-State 67
+State 69
 
     2 BLOCK: START_SCOPE BLOCK_INIT . CMDS BLOCK_END END_SCOPE
 
@@ -1014,7 +1074,7 @@ State 67
 
     $default  reduce using rule 6 (CMDS)
 
-    CMDS      go to state 75
+    CMDS      go to state 77
     IF        go to state 16
     CMD       go to state 17
     IS        go to state 18
@@ -1024,7 +1084,7 @@ State 67
     varConst  go to state 22
 
 
-State 68
+State 70
 
    30 COMMA_OUT: COMMA . EXP COMMA_OUT
 
@@ -1038,28 +1098,28 @@ State 68
     CONST      shift, and go to state 11
     '('        shift, and go to state 13
 
-    EXP       go to state 76
+    EXP       go to state 78
     varConst  go to state 24
 
 
-State 69
+State 71
 
    29 OUT: R_OUT COLON EXP COMMA_OUT .
 
     $default  reduce using rule 29 (OUT)
 
 
-State 70
+State 72
 
-   32 EXP: EXP COLON COLON EXPLICIT_TYPE .
+   33 EXP: EXP COLON COLON EXPLICIT_TYPE .
 
-    $default  reduce using rule 32 (EXP)
+    $default  reduce using rule 33 (EXP)
 
 
-State 71
+State 73
 
-   32 EXP: EXP COLON . COLON EXPLICIT_TYPE
-   35    | EXP QUESTION EXP COLON . EXP
+   33 EXP: EXP COLON . COLON EXPLICIT_TYPE
+   36    | EXP QUESTION EXP COLON . EXP
 
     INTEGER    shift, and go to state 4
     FLOAT      shift, and go to state 5
@@ -1067,102 +1127,106 @@ State 71
     CHARACTER  shift, and go to state 7
     STRING     shift, and go to state 8
     NOT        shift, and go to state 9
-    COLON      shift, and go to state 56
+    COLON      shift, and go to state 58
     VAR        shift, and go to state 10
     CONST      shift, and go to state 11
     '('        shift, and go to state 13
 
-    EXP       go to state 77
+    EXP       go to state 79
     varConst  go to state 24
 
 
-State 72
+State 74
 
    11 ELSEIF: BLOCK .
 
     $default  reduce using rule 11 (ELSEIF)
 
 
-State 73
+State 75
 
    10 ELSEIF: IF .
 
     $default  reduce using rule 10 (ELSEIF)
 
 
-State 74
+State 76
 
     8 ELSE: R_ELSE ELSEIF .
 
     $default  reduce using rule 8 (ELSE)
 
 
-State 75
+State 77
 
     2 BLOCK: START_SCOPE BLOCK_INIT CMDS . BLOCK_END END_SCOPE
 
-    BLOCK_END  shift, and go to state 78
-
-
-State 76
-
-   30 COMMA_OUT: COMMA EXP . COMMA_OUT
-   32 EXP: EXP . COLON COLON EXPLICIT_TYPE
-   33    | EXP . BOOLEAN_LOGIC EXP
-   35    | EXP . QUESTION EXP COLON EXP
-   36    | EXP . EQUALITY_TEST EXP
-   37    | EXP . ORDER_RELATION EXP
-   39    | EXP . ARITHMETIC_1 EXP
-   40    | EXP . ARITHMETIC_2 EXP
-
-    ARITHMETIC_1    shift, and go to state 35
-    ARITHMETIC_2    shift, and go to state 36
-    BOOLEAN_LOGIC   shift, and go to state 37
-    EQUALITY_TEST   shift, and go to state 38
-    ORDER_RELATION  shift, and go to state 39
-    COLON           shift, and go to state 40
-    QUESTION        shift, and go to state 41
-    COMMA           shift, and go to state 68
-
-    $default  reduce using rule 31 (COMMA_OUT)
-
-    COMMA_OUT  go to state 79
-
-
-State 77
-
-   32 EXP: EXP . COLON COLON EXPLICIT_TYPE
-   33    | EXP . BOOLEAN_LOGIC EXP
-   35    | EXP . QUESTION EXP COLON EXP
-   35    | EXP QUESTION EXP COLON EXP .
-   36    | EXP . EQUALITY_TEST EXP
-   37    | EXP . ORDER_RELATION EXP
-   39    | EXP . ARITHMETIC_1 EXP
-   40    | EXP . ARITHMETIC_2 EXP
-
-    ARITHMETIC_1  shift, and go to state 35
-    ARITHMETIC_2  shift, and go to state 36
-
-    $default  reduce using rule 35 (EXP)
+    BLOCK_END  shift, and go to state 80
 
 
 State 78
+
+   30 COMMA_OUT: COMMA EXP . COMMA_OUT
+   32 EXP: EXP . R_DOT EXP
+   33    | EXP . COLON COLON EXPLICIT_TYPE
+   34    | EXP . BOOLEAN_LOGIC EXP
+   36    | EXP . QUESTION EXP COLON EXP
+   37    | EXP . EQUALITY_TEST EXP
+   38    | EXP . ORDER_RELATION EXP
+   40    | EXP . ARITHMETIC_1 EXP
+   41    | EXP . ARITHMETIC_2 EXP
+
+    R_DOT           shift, and go to state 35
+    ARITHMETIC_1    shift, and go to state 36
+    ARITHMETIC_2    shift, and go to state 37
+    BOOLEAN_LOGIC   shift, and go to state 38
+    EQUALITY_TEST   shift, and go to state 39
+    ORDER_RELATION  shift, and go to state 40
+    COLON           shift, and go to state 41
+    QUESTION        shift, and go to state 42
+    COMMA           shift, and go to state 70
+
+    $default  reduce using rule 31 (COMMA_OUT)
+
+    COMMA_OUT  go to state 81
+
+
+State 79
+
+   32 EXP: EXP . R_DOT EXP
+   33    | EXP . COLON COLON EXPLICIT_TYPE
+   34    | EXP . BOOLEAN_LOGIC EXP
+   36    | EXP . QUESTION EXP COLON EXP
+   36    | EXP QUESTION EXP COLON EXP .
+   37    | EXP . EQUALITY_TEST EXP
+   38    | EXP . ORDER_RELATION EXP
+   40    | EXP . ARITHMETIC_1 EXP
+   41    | EXP . ARITHMETIC_2 EXP
+
+    R_DOT         shift, and go to state 35
+    ARITHMETIC_1  shift, and go to state 36
+    ARITHMETIC_2  shift, and go to state 37
+
+    $default  reduce using rule 36 (EXP)
+
+
+State 80
 
     2 BLOCK: START_SCOPE BLOCK_INIT CMDS BLOCK_END . END_SCOPE
 
     $default  reduce using rule 4 (END_SCOPE)
 
-    END_SCOPE  go to state 80
+    END_SCOPE  go to state 82
 
 
-State 79
+State 81
 
    30 COMMA_OUT: COMMA EXP COMMA_OUT .
 
     $default  reduce using rule 30 (COMMA_OUT)
 
 
-State 80
+State 82
 
     2 BLOCK: START_SCOPE BLOCK_INIT CMDS BLOCK_END END_SCOPE .
 

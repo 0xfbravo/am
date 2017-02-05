@@ -65,6 +65,7 @@ Assignment          =
 "is"                { return R_IS; }
 "in"                { return R_IN; }
 "out"               { return R_OUT; }
+"\."                { return R_DOT; }
 {BlockInit}         { return BLOCK_INIT; }
 {BlockEnd}          { return BLOCK_END; }
 {SemiColon}         { return SEMI_COLON; }

@@ -15,48 +15,44 @@ using namespace std;
 
 int main() {
 	/* Declarations */
-	int temp1; // temp1 = 2;
-	int temp2; // a
-	int temp3; // temp3 = 2;
-	int temp4; // temp2 == temp3
-	int temp6; // temp6 = TRUE;
+	char* temp1; // temp1 = (char*) "abc123";
+	char* temp2; // a
+	char* temp3; // temp3 = (char*) "bibi";
+	char* temp4; // b
+	char* temp5; // temp2 . temp4
+	char* temp6; // temp6 = (char*) "eu te amo";
+	char* temp7; // temp5 . temp6
+	char* temp8; // c
 	
 	/* Operations */
-	temp1 = 2;
-	temp2 = temp1;
-	temp3 = 2;
-	temp4 = temp2 == temp3;
-	if (temp4) { goto BLOCK_LABEL_3; }
-	temp6 = TRUE;
-	if (temp6) { goto BLOCK_LABEL_2; }
-	else { goto BLOCK_LABEL_1; }
-	BLOCK_LABEL_1_EXIT:
-	BLOCK_LABEL_2_EXIT:
-	BLOCK_LABEL_3_EXIT:
+	temp1 = (char*) "abc123";
+	temp2 = (char*) malloc(strlen(temp1) * sizeof(char));
+	strcpy(temp2,temp1);
+	temp3 = (char*) "bibi";
+	temp4 = (char*) malloc(strlen(temp3) * sizeof(char));
+	strcpy(temp4,temp3);
+	temp5 = (char*) malloc((strlen(temp2) + strlen(temp4)) * sizeof(char));
+	strcat(temp5,temp2);
+	strcat(temp5,temp4);
+	temp6 = (char*) "eu te amo";
+	temp7 = (char*) malloc((strlen(temp5) + strlen(temp6)) * sizeof(char));
+	strcat(temp7,temp5);
+	strcat(temp7,temp6);
+	temp8 = (char*) malloc(strlen(temp7) * sizeof(char));
+	strcpy(temp8,temp7);
+	// Output 
+	cout << temp8 << " ";
+	cout << endl;
 	
 	/* Free memory */
+	free(temp2);
+	free(temp4);
+	free(temp5);
+	free(temp7);
 	free(temp8);
 	
 	return 0;
 
 	/* Scopes Labels */
-	BLOCK_LABEL_1:
-	int temp9; // temp9 = 990;
-	int temp10; // b
-	temp9 = 990;
-	temp10 = temp9;
-	goto BLOCK_LABEL_1_EXIT;
-	BLOCK_LABEL_2:
-	char* temp7; // temp7 = (char*) "string";
-	char* temp8; // c
-	temp7 = (char*) "string";
-	temp8 = (char*) malloc(strlen(temp7) * sizeof(char));
-	strcpy(temp8,temp7);
-	goto BLOCK_LABEL_2_EXIT;
-	BLOCK_LABEL_3:
-	int temp5; // temp5 = 30;
-	temp5 = 30;
-	temp2 = temp5;
-	goto BLOCK_LABEL_3_EXIT;
 	
 }

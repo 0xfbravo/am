@@ -72,6 +72,7 @@
 
   /* Useful Functions */
   bool onMemory(temp);
+  void removeFromMemory(temp);
   string clearMemory();
   string toUpper(const string&);
   string actualLine();
@@ -79,7 +80,7 @@
 
 %token BLOCK_INIT BLOCK_END SEMI_COLON
 %token R_IF R_ELSE R_WHILE R_DO R_FOR R_SWITCH R_CASE R_BREAK R_CONTINUE
-%token R_IN R_OUT R_IS
+%token R_IN R_OUT R_IS R_DOT
 %token INTEGER FLOAT BOOLEAN CHARACTER STRING
 %token ARITHMETIC_1 ARITHMETIC_2 BOOLEAN_LOGIC EQUALITY_TEST ORDER_RELATION
 %token ASSIGNMENT NOT COLON QUESTION COMMA
@@ -91,8 +92,9 @@
 %left EQUALITY_TEST ORDER_RELATION      // "==" "===" "!==" "!=" "<" "<=" ">" ">="
 %left QUESTION COLON                    // "?" ":"
 %left NOT                               // "!"
-%left ARITHMETIC_1
-%left ARITHMETIC_2
+%left R_DOT                             // 'a'.'b' == 'ab'
+%left ARITHMETIC_1                      // "+" "-"
+%left ARITHMETIC_2                      // "*" "/"
 %left '(' ')'
 %left BLOCK_INIT BLOCK_END              // "{" "}"
 
@@ -295,7 +297,30 @@
     |;
 
   EXP:
-    EXP COLON COLON EXPLICIT_TYPE { // EXP::EXPLICIT_TYPE
+    EXP R_DOT EXP { // EXP.EXP (String Concatenation)
+      if($1.token != STRING){ wrongOperation("'.' (String concatenation)",checkType($1.token)); }
+      else if($3.token != STRING){ wrongOperation("'.' (String concatenation)",checkType($3.token)); }
+      temp t = createTemp(STRING,$1.tempVar.name+ " . "+ $3.tempVar.name);
+      $$.tempTranslation = $1.tempTranslation + $3.tempTranslation + t.translation + " // "+ t.value + "\n\t";
+      $$.translation =
+        $1.translation +
+        $3.translation +
+        t.name + " = (char*) malloc((strlen(" + $1.tempVar.name + ") + strlen(" + $3.tempVar.name + ")) * sizeof(char));\n\t" +
+        "strcat(" + t.name + "," + $1.tempVar.name + ");\n\t" +
+        "strcat(" + t.name + "," + $3.tempVar.name + ");\n\t";
+      if(onMemory($1.tempVar)){ // Free $1.tempVar
+        //$$.translation = $$.translation + "free(" + $1.tempVar.name + ");\n\t";
+        //removeFromMemory($1.tempVar);
+      }
+      if(onMemory($3.tempVar)){ // Free $3.tempVar
+        //$$.translation = $$.translation + "free(" + $3.tempVar.name + ");\n\t";
+        //removeFromMemory($3.tempVar);
+      }
+      $$.token = STRING;
+      $$.tempVar = t;
+      tempsOnMemory.push_back(t);
+    };
+    | EXP COLON COLON EXPLICIT_TYPE { // EXP::EXPLICIT_TYPE
       temp t;
       if($1.token == $4.token){ warningExplicitType($1.tempVar.value,checkType($4.token)); }
       else if(($1.token != FLOAT) && ($1.token != INTEGER)){ wrongOperation("::"+checkType($4.token),checkType($1.token)); }
@@ -455,6 +480,8 @@
       $$.translation = $1.translation + $3.translation;
 
       if($1.token == BOOLEAN || $3.token == BOOLEAN){ wrongOperation($2.operation,"bool"); }
+      if($1.token == STRING || $3.token == STRING){ wrongOperation($2.operation,"string"); }
+      if($1.token == CHARACTER || $3.token == CHARACTER){ wrongOperation($2.operation,"char"); }
       if($1.token == INTEGER && $3.token == FLOAT){ // int ARITHMETIC float -> float
         $$.token = FLOAT;
         t = createTemp(FLOAT, "(float) " + $1.tempVar.name);
@@ -610,6 +637,13 @@ bool onMemory(temp tempVar){
     if(t.name == tempVar.name){ onMemory = true; break; }
   }
   return onMemory;
+}
+
+void removeFromMemory(temp tempVar){
+  for(vector<temp>::iterator it = tempsOnMemory.begin(); it != tempsOnMemory.end();){
+    if(it->name == tempVar.name){ tempsOnMemory.erase(it); }
+    else { ++it; }
+  }
 }
 
 string clearMemory(){
