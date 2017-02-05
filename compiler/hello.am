@@ -1,4 +1,6 @@
-a = "abc123"
-b = "bibi"
-c = a.b."eu te amo"
-out:c
+a=1
+while(a<=10){
+  out:a
+  a = a+1
+}
+out:"abc123","aa","123",123.34

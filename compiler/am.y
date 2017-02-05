@@ -164,6 +164,27 @@
       $$.tempTranslation = "";
     };
 
+  WHILE:
+    R_WHILE EXP BLOCK {
+      scopesCount ++;
+      $$.translation =
+        "BLOCK_LABEL_" + to_string(scopesCount) + "_EXIT:\n\t" +
+        $2.translation +
+        "if(" + $2.tempVar.name + ") { goto BLOCK_LABEL_" + to_string(scopesCount) +"; } \n\t";
+      $$.tempTranslation = $2.tempTranslation;
+      $$.scopesLabels =
+        "BLOCK_LABEL_" + to_string(scopesCount) + ":\n\t" +
+        $3.translation +
+        "goto BLOCK_LABEL_" + to_string(scopesCount) + "_EXIT;\n\t";
+    };
+
+  DO:
+    R_DO BLOCK R_WHILE EXP{
+
+    };
+
+
+
   IF:
     R_IF EXP BLOCK ELSE {
       scopesCount++;
@@ -204,6 +225,8 @@
 
   CMD:
     IF;
+    | WHILE;
+    | DO;
     | END_LINE;
     | IS;
     | IN;
@@ -240,18 +263,19 @@
       if(!(exists($3.id))){ notDeclared($3.id); }
       if(!getVar($3.id).isVar){ constWontChangeValue($3.id); }
       attr t = getVar($3.id);
-      if(!(exists("inBuffer"))){
-        temp inBuffer = createTemp(t.token,"");
-        addVar(inBuffer,"inBuffer", "true", "", $3.token);
-        $$.translation =
-          "// String Buffer Init\n\t" +
-          inBuffer.name + " = (char*) malloc(MAX_BUFFER_SIZE * sizeof(char));";
-        $$.tempTranslation = inBuffer.translation + " // String Input Buffer\n\t";
-        tempsOnMemory.push_back(inBuffer);
-      }
-      attr inBuffer = getVar("inBuffer");
+      attr inBuffer;
       switch(t.token){
         case STRING:
+          if(!(exists("inBuffer"))){
+            temp inBuffer = createTemp(t.token,"");
+            addVar(inBuffer,"inBuffer", "true", "", $3.token);
+            $$.translation =
+              "// String Buffer Init\n\t" +
+              inBuffer.name + " = (char*) malloc(MAX_BUFFER_SIZE * sizeof(char));";
+            $$.tempTranslation = inBuffer.translation + " // String Input Buffer\n\t";
+            tempsOnMemory.push_back(inBuffer);
+          }
+          inBuffer = getVar("inBuffer");
           if(onMemory(t.tempVar)){
             $$.translation =
               $$.translation + "\n\t" +
@@ -291,8 +315,8 @@
   COMMA_OUT:
     COMMA EXP COMMA_OUT {
       temp t = $2.tempVar;
-      $$.tempTranslation = $2.isVar ? $2.tempTranslation + $3.tempTranslation : $2.tempTranslation + "\n\t" + $3.tempTranslation;
-      $$.translation = $2.translation + "cout << " + t.name + " << \" \";"+ $3.translation;
+      $$.tempTranslation = $2.tempTranslation + $3.tempTranslation;
+      $$.translation = $2.translation + "cout << " + t.name + " << \" \";\n\t" + $3.translation;
     };
     |;
 
@@ -504,8 +528,8 @@
         $$.token = FLOAT;
         op = createTemp(FLOAT, $1.tempVar.name + " "+ $2.operation +" " + $3.tempVar.name);
       }
-      $$.tempTranslation = $$.tempTranslation + "\n\t" + op.translation + " // " + op.value + "\n\t";
-      $$.translation = $$.translation + "\n\t" + op.name + " = " + op.value + ";\n\t";
+      $$.tempTranslation = $$.tempTranslation + op.translation + " // " + op.value + "\n\t";
+      $$.translation = $$.translation + op.name + " = " + op.value + ";\n\t";
       $$.tempVar = op;
     };
     | EXP ARITHMETIC_2 EXP {
