@@ -168,19 +168,30 @@
     R_WHILE EXP BLOCK {
       scopesCount ++;
       $$.translation =
-        "BLOCK_LABEL_" + to_string(scopesCount) + "_EXIT:\n\t" +
+        "BLOCK_LABEL_" + to_string(scopesCount) + "_WHILE_EXIT:\n\t" +
         $2.translation +
-        "if(" + $2.tempVar.name + ") { goto BLOCK_LABEL_" + to_string(scopesCount) +"; } \n\t";
+        "if(" + $2.tempVar.name + ") { goto BLOCK_LABEL_" + to_string(scopesCount) +"_WHILE; } \n\t";
       $$.tempTranslation = $2.tempTranslation;
       $$.scopesLabels =
-        "BLOCK_LABEL_" + to_string(scopesCount) + ":\n\t" +
+        "BLOCK_LABEL_" + to_string(scopesCount) + "_WHILE:\n\t" +
         $3.translation +
-        "goto BLOCK_LABEL_" + to_string(scopesCount) + "_EXIT;\n\t";
+        "goto BLOCK_LABEL_" + to_string(scopesCount) + "_WHILE_EXIT;\n\t";
     };
 
-  DO:
+  DO_WHILE:
     R_DO BLOCK R_WHILE EXP{
-
+      scopesCount ++;
+      $$.translation =
+        "BLOCK_LABEL_" + to_string(scopesCount) + "_DO:\n\t" +
+        $2.translation +
+        "goto BLOCK_LABEL_" + to_string(scopesCount) +"_WHILE;\n\t" +
+        "BLOCK_LABEL_" + to_string(scopesCount) + "_DO_WHILE_EXIT:\n\t";
+      $$.tempTranslation = $2.tempTranslation;
+      $$.scopesLabels =
+        "BLOCK_LABEL_" + to_string(scopesCount) + "_WHILE:\n\t" +
+        $4.tempTranslation + $4.translation +
+        "if(" + $4.tempVar.name + ") { goto BLOCK_LABEL_" + to_string(scopesCount) +"_DO; } \n\t" +
+        "goto BLOCK_LABEL_" + to_string(scopesCount) + "_DO_WHILE_EXIT;\n\t";
     };
 
 
@@ -190,15 +201,15 @@
       scopesCount++;
       $$.translation =
         $2.translation +
-        "if (" + $2.tempVar.name + ") { goto BLOCK_LABEL_" + to_string(scopesCount) + "; }\n\t" +
+        "if (" + $2.tempVar.name + ") { goto BLOCK_LABEL_" + to_string(scopesCount) + "_IF; }\n\t" +
         $4.translation +
-        "BLOCK_LABEL_" + to_string(scopesCount) + "_EXIT:\n\t";
+        "BLOCK_LABEL_" + to_string(scopesCount) + "_IF_EXIT:\n\t";
       $$.tempTranslation = $2.tempTranslation + $4.tempTranslation;
       $$.scopesLabels =
         $4.scopesLabels +
-        "BLOCK_LABEL_" + to_string(scopesCount) + ":\n\t" +
+        "BLOCK_LABEL_" + to_string(scopesCount) + "_IF:\n\t" +
         $3.translation +
-        "goto BLOCK_LABEL_" + to_string(scopesCount) + "_EXIT;\n\t";
+        "goto BLOCK_LABEL_" + to_string(scopesCount) + "_IF_EXIT;\n\t";
     };
 
   ELSE:
@@ -215,18 +226,60 @@
       scopesCount++;
       $$.tempTranslation = $1.tempTranslation;
       $$.translation =
-        "else { goto BLOCK_LABEL_"+ to_string(scopesCount) +"; }\n\t" +
-        "BLOCK_LABEL_" + to_string(scopesCount) + "_EXIT:\n\t";
+        "else { goto BLOCK_LABEL_"+ to_string(scopesCount) +"_ELSE_IF; }\n\t" +
+        "BLOCK_LABEL_" + to_string(scopesCount) + "_ELSE_IF_EXIT:\n\t";
       $$.scopesLabels =
-        "BLOCK_LABEL_" + to_string(scopesCount) + ":\n\t" +
+        "BLOCK_LABEL_" + to_string(scopesCount) + "_ELSE_IF:\n\t" +
         $1.translation +
-        "goto BLOCK_LABEL_" + to_string(scopesCount) + "_EXIT;\n\t";
+        "goto BLOCK_LABEL_" + to_string(scopesCount) + "_ELSE_IF_EXIT;\n\t";
+    };
+
+  ASSIGNMENT_STATE:
+    varConst ASSIGNMENT EXP { // varConst = EXP
+      string name = $1.isVar ? $1.id : $1.id.erase(0,1);
+
+      if(!(exists(name))) { // Var/Const Not Declared
+        $1.tempVar = createTemp($3.token,$3.translation);
+        addVar($1.tempVar,name, $1.isVar, $3.value, $3.token);
+        $$.tempTranslation = $3.tempTranslation + $1.tempVar.translation + " // " + name + "\n\t";
+        if($3.token == STRING){
+          $$.translation =
+            $3.translation +
+            $1.tempVar.name + " = (char*) malloc(strlen(" + $3.tempVar.name + ") * sizeof(char));\n\t" +
+            "strcpy(" + $1.tempVar.name + "," + $3.tempVar.name + ");\n\t";
+            tempsOnMemory.push_back($1.tempVar);
+        }
+        else {
+            $$.translation = $3.translation + $1.tempVar.name + " = " + $3.tempVar.name + ";\n\t";
+        }
+        $$.tempVar = $1.tempVar;
+        $$.token = $1.tempVar.token;
+      }
+      else { // Var/Const Already Declared
+        attr varConst = getVar(name);
+        if(!varConst.isVar){ constWontChangeValue(name); }
+        if(varConst.token != $3.token) { alreadyDeclared(name,checkType(name)); }
+        $$.tempTranslation = $3.tempTranslation;
+        switch(varConst.token){
+          case STRING:
+            $$.translation =
+              $3.translation +
+              "free(" + varConst.tempVar.name + ");\n\t" +
+              varConst.tempVar.name + " = (char*) malloc(strlen(" + $3.tempVar.name + ") * sizeof(char));\n\t" +
+              "strcpy(" + varConst.tempVar.name + "," + $3.tempVar.name + ");\n\t";
+          break;
+          default:
+            $$.translation = $3.translation + varConst.tempVar.name + " = " + $3.tempVar.name + ";\n\t";
+          break;
+        }
+        varConst.value = $3.value;
+      }
     };
 
   CMD:
     IF;
     | WHILE;
-    | DO;
+    | DO_WHILE;
     | END_LINE;
     | IS;
     | IN;
@@ -234,14 +287,8 @@
     | IS SEMI_COLON;
     | IN SEMI_COLON;
     | OUT SEMI_COLON;
-    | EXP { // EXP
-      if(!$1.translation.empty()){ $$.translation = $1.translation; }
-      if(!$1.tempTranslation.empty()){ $$.tempTranslation = $1.tempTranslation; }
-    };
-    | EXP SEMI_COLON { // EXP;
-      if(!$1.translation.empty()){ $$.translation = $1.translation; }
-      if(!$1.tempTranslation.empty()){ $$.tempTranslation = $1.tempTranslation; }
-    };
+    | ASSIGNMENT_STATE;
+    | ASSIGNMENT_STATE SEMI_COLON;
 
   IS:
     varConst R_IS TYPE {
@@ -456,46 +503,6 @@
       $$.tempVar = op;
       $$.token = BOOLEAN;
     };
-    | varConst ASSIGNMENT EXP { // varConst = EXP
-      string name = $1.isVar ? $1.id : $1.id.erase(0,1);
-
-      if(!(exists(name))) { // Var/Const Not Declared
-        $1.tempVar = createTemp($3.token,$3.translation);
-        addVar($1.tempVar,name, $1.isVar, $3.value, $3.token);
-        $$.tempTranslation = $3.tempTranslation + $1.tempVar.translation + " // " + name + "\n\t";
-        if($3.token == STRING){
-          $$.translation =
-            $3.translation +
-            $1.tempVar.name + " = (char*) malloc(strlen(" + $3.tempVar.name + ") * sizeof(char));\n\t" +
-            "strcpy(" + $1.tempVar.name + "," + $3.tempVar.name + ");\n\t";
-            tempsOnMemory.push_back($1.tempVar);
-        }
-        else {
-            $$.translation = $3.translation + $1.tempVar.name + " = " + $3.tempVar.name + ";\n\t";
-        }
-        $$.tempVar = $1.tempVar;
-        $$.token = $1.tempVar.token;
-      }
-      else { // Var/Const Already Declared
-        attr varConst = getVar(name);
-        if(!varConst.isVar){ constWontChangeValue(name); }
-        if(varConst.token != $3.token) { alreadyDeclared(name,checkType(name)); }
-        $$.tempTranslation = $3.tempTranslation;
-        switch(varConst.token){
-          case STRING:
-            $$.translation =
-              $3.translation +
-              "free(" + varConst.tempVar.name + ");\n\t" +
-              varConst.tempVar.name + " = (char*) malloc(strlen(" + $3.tempVar.name + ") * sizeof(char));\n\t" +
-              "strcpy(" + varConst.tempVar.name + "," + $3.tempVar.name + ");\n\t";
-          break;
-          default:
-            $$.translation = $3.translation + varConst.tempVar.name + " = " + $3.tempVar.name + ";\n\t";
-          break;
-        }
-        varConst.value = $3.value;
-      }
-    };
     | EXP ARITHMETIC_1 EXP {
       temp t;
       temp op;
@@ -642,12 +649,7 @@ int main(int argc, char** argv){ yyparse(); }
 /* Bison Error Msg */
 void yyerror(string msg){
   cout <<
-  colorText("error:"+to_string(yylineno)+": ",hexToRGB(RED)) <<  msg  << " with " << colorText("'"+(string)yytext+"'",hexToRGB(YELLOW)) << endl <<
-  colorText("yylval.token: ",hexToRGB(OFF_WHITE)) << yylval.token << endl <<
-  colorText("yylval.id: ",hexToRGB(OFF_WHITE)) << yylval.id << endl <<
-  colorText("yylval.value: ",hexToRGB(OFF_WHITE)) << yylval.value << endl <<
-  colorText("yylval.isVar: ",hexToRGB(OFF_WHITE)) << yylval.isVar << endl <<
-  colorText("yylval.translation: ",hexToRGB(OFF_WHITE)) << yylval.translation << endl;
+  colorText("error:"+to_string(yylineno)+": ",hexToRGB(RED)) <<  msg  << " with " << colorText("'"+(string)yytext+"'",hexToRGB(YELLOW)) << endl;
 }
 
 /*
