@@ -166,6 +166,7 @@
 
   WHILE:
     R_WHILE EXP BLOCK {
+      if($2.token != BOOLEAN){  wrongOperation("while",checkType($2.token)); }
       scopesCount ++;
       $$.translation =
         "BLOCK_LABEL_" + to_string(scopesCount) + "_WHILE_EXIT:\n\t" +
@@ -180,6 +181,7 @@
 
   DO_WHILE:
     R_DO BLOCK R_WHILE EXP{
+      if($4.token != BOOLEAN){  wrongOperation("do-while",checkType($4.token)); }
       scopesCount ++;
       $$.translation =
         "BLOCK_LABEL_" + to_string(scopesCount) + "_DO:\n\t" +
@@ -198,6 +200,7 @@
 
   IF:
     R_IF EXP BLOCK ELSE {
+      if($2.token != BOOLEAN){ wrongOperation("do-while",checkType($4.token)); }
       scopesCount++;
       $$.translation =
         $2.translation +
