@@ -79,7 +79,7 @@
 %}
 
 %token BLOCK_INIT BLOCK_END SEMI_COLON
-%token R_IF R_ELSE R_WHILE R_DO R_FOR R_SWITCH R_CASE R_BREAK R_CONTINUE
+%token R_IF R_ELSE R_WHILE R_DO R_FOR R_SWITCH R_CASE R_DEFAULT R_BREAK R_CONTINUE
 %token R_IN R_OUT R_IS R_DOT
 %token INTEGER FLOAT BOOLEAN CHARACTER STRING
 %token ARITHMETIC_1 ARITHMETIC_2 BOOLEAN_LOGIC EQUALITY_TEST ORDER_RELATION
@@ -126,6 +126,7 @@
       "\t" << $$.translation << endl <<
       "\t/* Free memory */" << endl <<
       "\t" << clearMemory() << endl <<
+      "\tBLOCK_LABEL_0_END:" << endl <<
       "\treturn 0;\n" << endl <<
       "\t/* Scopes Labels */" << endl <<
       "\t" << $$.scopesLabels << endl <<
@@ -136,6 +137,7 @@
   BLOCK:
     START_SCOPE BLOCK_INIT CMDS BLOCK_END END_SCOPE {
       $$.translation = $3.tempTranslation + $3.translation;
+      $$.scopesLabels = $3.scopesLabels;
     };
 
   START_SCOPE:
@@ -167,52 +169,51 @@
   WHILE:
     R_WHILE EXP BLOCK {
       if($2.token != BOOLEAN){  wrongOperation("while",checkType($2.token)); }
-      scopesCount ++;
+      scopesCount++;
       $$.translation =
-        "BLOCK_LABEL_" + to_string(scopesCount) + "_WHILE_EXIT:\n\t" +
+        "BLOCK_LABEL_" + to_string(scopesCount) + "_BEGIN:\n\t" +
         $2.translation +
-        "if(" + $2.tempVar.name + ") { goto BLOCK_LABEL_" + to_string(scopesCount) +"_WHILE; } \n\t";
+        "if(" + $2.tempVar.name + ") { goto BLOCK_LABEL_" + to_string(scopesCount) +"; } \n\t" +
+        "BLOCK_LABEL_" + to_string(scopesCount) + "_END:\n\t";
       $$.tempTranslation = $2.tempTranslation;
       $$.scopesLabels =
-        "BLOCK_LABEL_" + to_string(scopesCount) + "_WHILE:\n\t" +
+        "BLOCK_LABEL_" + to_string(scopesCount) + ":\n\t" +
         $3.translation +
-        "goto BLOCK_LABEL_" + to_string(scopesCount) + "_WHILE_EXIT;\n\t";
+        "goto BLOCK_LABEL_" + to_string(scopesCount) + "_BEGIN;\n\t";
     };
 
   DO_WHILE:
     R_DO BLOCK R_WHILE EXP{
       if($4.token != BOOLEAN){  wrongOperation("do-while",checkType($4.token)); }
-      scopesCount ++;
+      scopesCount++;
       $$.translation =
-        "BLOCK_LABEL_" + to_string(scopesCount) + "_DO:\n\t" +
+        "BLOCK_LABEL_" + to_string(scopesCount) + "_BEGIN:\n\t" +
         $2.translation +
-        "goto BLOCK_LABEL_" + to_string(scopesCount) +"_WHILE;\n\t" +
-        "BLOCK_LABEL_" + to_string(scopesCount) + "_DO_WHILE_EXIT:\n\t";
+        "goto BLOCK_LABEL_" + to_string(scopesCount) +";\n\t" +
+        "BLOCK_LABEL_" + to_string(scopesCount) + "_END:\n\t";
       $$.tempTranslation = $2.tempTranslation;
       $$.scopesLabels =
-        "BLOCK_LABEL_" + to_string(scopesCount) + "_WHILE:\n\t" +
+        "BLOCK_LABEL_" + to_string(scopesCount) + ":\n\t" +
         $4.tempTranslation + $4.translation +
-        "if(" + $4.tempVar.name + ") { goto BLOCK_LABEL_" + to_string(scopesCount) +"_DO; } \n\t" +
-        "goto BLOCK_LABEL_" + to_string(scopesCount) + "_DO_WHILE_EXIT;\n\t";
+        "if(" + $4.tempVar.name + ") { goto BLOCK_LABEL_" + to_string(scopesCount) +"_BEGIN; } \n\t" +
+        "goto BLOCK_LABEL_" + to_string(scopesCount) + "_END;\n\t";
     };
-
-
 
   IF:
     R_IF EXP BLOCK ELSE {
-      if($2.token != BOOLEAN){ wrongOperation("do-while",checkType($2.token)); }
+      if($2.token != BOOLEAN){ wrongOperation("if",checkType($2.token)); }
       scopesCount++;
       $$.translation =
         $2.translation +
-        "if (" + $2.tempVar.name + ") { goto BLOCK_LABEL_" + to_string(scopesCount) + "_IF; }\n\t" +
+        "if (" + $2.tempVar.name + ") { goto BLOCK_LABEL_" + to_string(scopesCount) + "; }\n\t" +
         $4.translation +
-        "BLOCK_LABEL_" + to_string(scopesCount) + "_IF_EXIT:\n\t";
+        "BLOCK_LABEL_" + to_string(scopesCount) + "_END:\n\t";
       $$.tempTranslation = $2.tempTranslation + $4.tempTranslation;
       $$.scopesLabels =
-        $4.scopesLabels +
-        "BLOCK_LABEL_" + to_string(scopesCount) + "_IF:\n\t" +
+        "BLOCK_LABEL_" + to_string(scopesCount) + ":\n\t" +
         $3.translation +
-        "goto BLOCK_LABEL_" + to_string(scopesCount) + "_IF_EXIT;\n\t";
+        "goto BLOCK_LABEL_" + to_string(scopesCount) + "_END;\n\t" +
+        $4.scopesLabels;
     };
 
   ELSE:
@@ -229,29 +230,104 @@
       scopesCount++;
       $$.tempTranslation = $1.tempTranslation;
       $$.translation =
-        "else { goto BLOCK_LABEL_"+ to_string(scopesCount) +"_ELSE_IF; }\n\t" +
-        "BLOCK_LABEL_" + to_string(scopesCount) + "_ELSE_IF_EXIT:\n\t";
+        "else { goto BLOCK_LABEL_"+ to_string(scopesCount) +"; }\n\t" +
+        "BLOCK_LABEL_" + to_string(scopesCount) + "_END:\n\t";
       $$.scopesLabels =
-        "BLOCK_LABEL_" + to_string(scopesCount) + "_ELSE_IF:\n\t" +
+        $1.scopesLabels +
+        "BLOCK_LABEL_" + to_string(scopesCount) + ":\n\t" +
         $1.translation +
-        "goto BLOCK_LABEL_" + to_string(scopesCount) + "_ELSE_IF_EXIT;\n\t";
+        "goto BLOCK_LABEL_" + to_string(scopesCount) + "_END;\n\t";
     };
 
   FOR:
     R_FOR '(' ASSIGNMENT_STATE SEMI_COLON EXP SEMI_COLON ASSIGNMENT_STATE ')' BLOCK {
-      if($5.token != BOOLEAN){ wrongOperation("do-while",checkType($5.token)); }
-      scopesCount ++;
+      if($5.token != BOOLEAN){ wrongOperation("for",checkType($5.token)); }
+      scopesCount++;
       $$.tempTranslation = $3.tempTranslation + $5.tempTranslation +
         $7.tempTranslation;
       $$.translation = $3.translation +
-        "BLOCK_LABEL_" + to_string(scopesCount) + "_EXIT:\n\t" +
+        "BLOCK_LABEL_" + to_string(scopesCount) + "_BEGIN:\n\t" +
         $5.translation +
-        "if(" + $5.tempVar.name +") { goto BLOCK_LABEL_" + to_string(scopesCount) + ";}\n\t";
+        "if(" + $5.tempVar.name +") { goto BLOCK_LABEL_" + to_string(scopesCount) + ";}\n\t" +
+        "BLOCK_LABEL_" + to_string(scopesCount) + "_END:\n\t";
       $$.scopesLabels =
+        $9.scopesLabels +
         "BLOCK_LABEL_" + to_string(scopesCount) + ":\n\t" +
         $9.translation + $7.translation +
-        "goto BLOCK_LABEL_" + to_string(scopesCount) + "_EXIT;\n\t";
+        "goto BLOCK_LABEL_" + to_string(scopesCount) + "_BEGIN;\n\t";
     };
+
+  SWITCH:
+    R_SWITCH EXP BLOCK_INIT END_LINE CASES BLOCK_END {
+      $$.translation = $2.translation + $5.translation;
+      $$.tempTranslation = $2.tempTranslation + $5.tempTranslation;
+      $$.scopesLabels = $5.scopesLabels;
+    };
+
+  CASES:
+    CASE DEFAULT {
+      $$.translation = $1.translation + $2.translation;
+      $$.tempTranslation = $1.tempTranslation + $2.tempTranslation;
+      $$.scopesLabels = $1.scopesLabels + $2.scopesLabels;
+    };
+    | CASE CASES {
+      $$.translation = $1.translation + $2.translation;
+      $$.tempTranslation = $1.tempTranslation + $2.tempTranslation;
+      $$.scopesLabels = $1.scopesLabels + $2.scopesLabels;
+    };
+
+  CASE:
+    R_CASE EXP COLON CMDS {
+      scopesCount++;
+      map<string,attr> newScope;
+      scopes.push_back(newScope);
+
+      $$.tempTranslation = $2.tempTranslation;
+      $$.translation =
+        $2.translation +
+        "if(" + $2.tempVar.name + " == " + $$.tempVar.name + ") { goto BLOCK_LABEL_" + to_string(scopesCount) + "; }\n\t" +
+        "BLOCK_LABEL_" + to_string(scopesCount) + "_EXIT:\n\t";
+
+      $$.scopesLabels =
+        $4.scopesLabels +
+        "BLOCK_LABEL_" + to_string(scopesCount) + ":\n\t" +
+        $4.tempTranslation +
+        $4.translation +
+        "goto BLOCK_LABEL_" + to_string(scopesCount) + "_EXIT;\n\t";
+
+      scopes.pop_back();
+    };
+    |;
+
+  DEFAULT:
+    R_DEFAULT COLON CMDS {
+      scopesCount++;
+      map<string,attr> newScope;
+      scopes.push_back(newScope);
+
+      $$.translation =
+        "goto BLOCK_LABEL_" + to_string(scopesCount) + ";\n\t" +
+        "BLOCK_LABEL_" + to_string(scopesCount) + "_EXIT:\n\t";
+      $$.scopesLabels =
+        $3.scopesLabels +
+        "BLOCK_LABEL_" + to_string(scopesCount) + ":\n\t" +
+        $3.tempTranslation +
+        $3.translation +
+        "goto BLOCK_LABEL_" + to_string(scopesCount) + "_EXIT;\n\t";
+
+      scopes.pop_back();
+    };
+
+  BREAK:
+    R_BREAK {
+      $$.translation = "goto BLOCK_LABEL_" + to_string(scopes.size()) + "_END;\n\t";
+    };
+
+  CONTINUE:
+    R_CONTINUE {
+      $$.translation = "goto BLOCK_LABEL_" + to_string(scopes.size()) +";\n\t";
+    }
+  ;
 
   ASSIGNMENT_STATE:
     varConst ASSIGNMENT EXP { // varConst = EXP
@@ -301,6 +377,9 @@
     | DO_WHILE;
     | END_LINE;
     | FOR;
+    | SWITCH;
+    | BREAK;
+    | CONTINUE;
     | IS;
     | IN;
     | OUT;
@@ -346,7 +425,6 @@
           if(onMemory(t.tempVar)){
             $$.translation =
               $$.translation + "\n\t" +
-              "// Input: "+ t.id +"\n\t" +
               "free(" + t.tempVar.name + ");\n\t" +
               "fgets(" + inBuffer.tempVar.name + ",MAX_BUFFER_SIZE,stdin);\n\t" +
               inBuffer.tempVar.name + "[strlen(" + inBuffer.tempVar.name + ")-1] = 0;\n\t" +
@@ -356,7 +434,6 @@
           else {
             $$.translation =
               $$.translation + "\n\t" +
-              "// Input: "+ t.id +"\n\t" +
               "fgets(" + inBuffer.tempVar.name + ",MAX_BUFFER_SIZE,stdin);\n\t" +
               inBuffer.tempVar.name + "[strlen(" + inBuffer.tempVar.name + ")-1] = 0;\n\t" +
               t.tempVar.name + " = (char*) malloc(strlen(" + inBuffer.tempVar.name + ") * sizeof(char));\n\t" +
@@ -375,7 +452,6 @@
       temp t = $3.tempVar;
       $$.tempTranslation = $3.tempTranslation + $4.tempTranslation;
       $$.translation =
-        "// Output \n\t" +
         $3.translation + "cout << " + t.name + " << \" \";\n\t" + $4.translation + "cout << endl;\n\t";
     };
 

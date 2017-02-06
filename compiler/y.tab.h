@@ -55,31 +55,32 @@ extern int yydebug;
     R_FOR = 265,
     R_SWITCH = 266,
     R_CASE = 267,
-    R_BREAK = 268,
-    R_CONTINUE = 269,
-    R_IN = 270,
-    R_OUT = 271,
-    R_IS = 272,
-    R_DOT = 273,
-    INTEGER = 274,
-    FLOAT = 275,
-    BOOLEAN = 276,
-    CHARACTER = 277,
-    STRING = 278,
-    ARITHMETIC_1 = 279,
-    ARITHMETIC_2 = 280,
-    BOOLEAN_LOGIC = 281,
-    EQUALITY_TEST = 282,
-    ORDER_RELATION = 283,
-    ASSIGNMENT = 284,
-    NOT = 285,
-    COLON = 286,
-    QUESTION = 287,
-    COMMA = 288,
-    VAR = 289,
-    CONST = 290,
-    EXPLICIT_TYPE = 291,
-    END_LINE = 292
+    R_DEFAULT = 268,
+    R_BREAK = 269,
+    R_CONTINUE = 270,
+    R_IN = 271,
+    R_OUT = 272,
+    R_IS = 273,
+    R_DOT = 274,
+    INTEGER = 275,
+    FLOAT = 276,
+    BOOLEAN = 277,
+    CHARACTER = 278,
+    STRING = 279,
+    ARITHMETIC_1 = 280,
+    ARITHMETIC_2 = 281,
+    BOOLEAN_LOGIC = 282,
+    EQUALITY_TEST = 283,
+    ORDER_RELATION = 284,
+    ASSIGNMENT = 285,
+    NOT = 286,
+    COLON = 287,
+    QUESTION = 288,
+    COMMA = 289,
+    VAR = 290,
+    CONST = 291,
+    EXPLICIT_TYPE = 292,
+    END_LINE = 293
   };
 #endif
 /* Tokens.  */
@@ -93,31 +94,32 @@ extern int yydebug;
 #define R_FOR 265
 #define R_SWITCH 266
 #define R_CASE 267
-#define R_BREAK 268
-#define R_CONTINUE 269
-#define R_IN 270
-#define R_OUT 271
-#define R_IS 272
-#define R_DOT 273
-#define INTEGER 274
-#define FLOAT 275
-#define BOOLEAN 276
-#define CHARACTER 277
-#define STRING 278
-#define ARITHMETIC_1 279
-#define ARITHMETIC_2 280
-#define BOOLEAN_LOGIC 281
-#define EQUALITY_TEST 282
-#define ORDER_RELATION 283
-#define ASSIGNMENT 284
-#define NOT 285
-#define COLON 286
-#define QUESTION 287
-#define COMMA 288
-#define VAR 289
-#define CONST 290
-#define EXPLICIT_TYPE 291
-#define END_LINE 292
+#define R_DEFAULT 268
+#define R_BREAK 269
+#define R_CONTINUE 270
+#define R_IN 271
+#define R_OUT 272
+#define R_IS 273
+#define R_DOT 274
+#define INTEGER 275
+#define FLOAT 276
+#define BOOLEAN 277
+#define CHARACTER 278
+#define STRING 279
+#define ARITHMETIC_1 280
+#define ARITHMETIC_2 281
+#define BOOLEAN_LOGIC 282
+#define EQUALITY_TEST 283
+#define ORDER_RELATION 284
+#define ASSIGNMENT 285
+#define NOT 286
+#define COLON 287
+#define QUESTION 288
+#define COMMA 289
+#define VAR 290
+#define CONST 291
+#define EXPLICIT_TYPE 292
+#define END_LINE 293
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED

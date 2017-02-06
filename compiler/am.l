@@ -55,6 +55,7 @@ Assignment          =
 "for"               { return R_FOR; }
 "switch"            { return R_SWITCH; }
 "case"              { return R_CASE; }
+"default"           { return R_DEFAULT; }
 "break"             { return R_BREAK; }
 "continue"          { return R_CONTINUE; }
 "String"            { yylval.token = STRING; return STRING; }
