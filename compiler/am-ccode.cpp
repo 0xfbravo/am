@@ -15,30 +15,33 @@ using namespace std;
 
 int main() {
 	/* Declarations */
+	int temp1; // temp1 = 1;
+	int temp2; // a
+	int temp3; // temp3 = 10;
+	int temp4; // temp2 < temp3
+	int temp5; // temp5 = 1;
+	int temp6; // temp2 + temp5
 	
 	/* Operations */
-	BLOCK_LABEL_1_DO:
-	int temp1; // temp1 = 1;
-	int temp2; // temp2 = 1;
-	int temp3; // temp1 + temp2
-	// Output 
 	temp1 = 1;
-	temp2 = 1;
-	temp3 = temp1 + temp2;
-	cout << temp3 << " ";
-	cout << endl;
-	goto BLOCK_LABEL_1_WHILE;
-	BLOCK_LABEL_1_DO_WHILE_EXIT:
+	temp2 = temp1;
+	BLOCK_LABEL_1_EXIT:
+	temp3 = 10;
+	temp4 = temp2 < temp3;
+	if(temp4) { goto BLOCK_LABEL_1;}
 	
 	/* Free memory */
 	
 	return 0;
 
 	/* Scopes Labels */
-	BLOCK_LABEL_1_WHILE:
-	int temp4; // temp4 = TRUE;
-	temp4 = TRUE;
-	if(temp4) { goto BLOCK_LABEL_1_DO; } 
-	goto BLOCK_LABEL_1_DO_WHILE_EXIT;
+	BLOCK_LABEL_1:
+	// Output 
+	cout << temp2 << " ";
+	cout << endl;
+	temp5 = 1;
+	temp6 = temp2 + temp5;
+	temp2 = temp6;
+	goto BLOCK_LABEL_1_EXIT;
 	
 }

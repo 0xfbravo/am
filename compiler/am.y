@@ -200,7 +200,7 @@
 
   IF:
     R_IF EXP BLOCK ELSE {
-      if($2.token != BOOLEAN){ wrongOperation("do-while",checkType($4.token)); }
+      if($2.token != BOOLEAN){ wrongOperation("do-while",checkType($2.token)); }
       scopesCount++;
       $$.translation =
         $2.translation +
@@ -235,6 +235,22 @@
         "BLOCK_LABEL_" + to_string(scopesCount) + "_ELSE_IF:\n\t" +
         $1.translation +
         "goto BLOCK_LABEL_" + to_string(scopesCount) + "_ELSE_IF_EXIT;\n\t";
+    };
+
+  FOR:
+    R_FOR '(' ASSIGNMENT_STATE SEMI_COLON EXP SEMI_COLON ASSIGNMENT_STATE ')' BLOCK {
+      if($5.token != BOOLEAN){ wrongOperation("do-while",checkType($5.token)); }
+      scopesCount ++;
+      $$.tempTranslation = $3.tempTranslation + $5.tempTranslation +
+        $7.tempTranslation;
+      $$.translation = $3.translation +
+        "BLOCK_LABEL_" + to_string(scopesCount) + "_EXIT:\n\t" +
+        $5.translation +
+        "if(" + $5.tempVar.name +") { goto BLOCK_LABEL_" + to_string(scopesCount) + ";}\n\t";
+      $$.scopesLabels =
+        "BLOCK_LABEL_" + to_string(scopesCount) + ":\n\t" +
+        $9.translation + $7.translation +
+        "goto BLOCK_LABEL_" + to_string(scopesCount) + "_EXIT;\n\t";
     };
 
   ASSIGNMENT_STATE:
@@ -284,6 +300,7 @@
     | WHILE;
     | DO_WHILE;
     | END_LINE;
+    | FOR;
     | IS;
     | IN;
     | OUT;
