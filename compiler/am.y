@@ -21,6 +21,7 @@
 
   long long tempCount = 0;
   long long scopesCount = 0;
+  long long switchCount = 0;
 
   /* Structs */
   struct temp {
@@ -39,7 +40,7 @@
     bool isVar;                 // Var||Const
     string translation;         // C Translation
     string tempTranslation;     // Var declaration - C Translation
-    string scopesLabels;         // Scopes Labels
+    string scopesLabels;        // Scopes Labels
     string operation;           // Operation
   };
 
@@ -136,7 +137,8 @@
 
   BLOCK:
     START_SCOPE BLOCK_INIT CMDS BLOCK_END END_SCOPE {
-      $$.translation = $3.tempTranslation + $3.translation;
+      $$.translation =  $3.translation;
+      $$.tempTranslation = $3.tempTranslation;
       $$.scopesLabels = $3.scopesLabels;
     };
 
@@ -175,7 +177,7 @@
         $2.translation +
         "if(" + $2.tempVar.name + ") { goto BLOCK_LABEL_" + to_string(scopesCount) +"; } \n\t" +
         "BLOCK_LABEL_" + to_string(scopesCount) + "_END:\n\t";
-      $$.tempTranslation = $2.tempTranslation;
+      $$.tempTranslation = $2.tempTranslation + $3.tempTranslation;
       $$.scopesLabels =
         "BLOCK_LABEL_" + to_string(scopesCount) + ":\n\t" +
         $3.translation +
@@ -191,10 +193,10 @@
         $2.translation +
         "goto BLOCK_LABEL_" + to_string(scopesCount) +";\n\t" +
         "BLOCK_LABEL_" + to_string(scopesCount) + "_END:\n\t";
-      $$.tempTranslation = $2.tempTranslation;
+      $$.tempTranslation = $2.tempTranslation + $4.tempTranslation;
       $$.scopesLabels =
         "BLOCK_LABEL_" + to_string(scopesCount) + ":\n\t" +
-        $4.tempTranslation + $4.translation +
+        $4.translation +
         "if(" + $4.tempVar.name + ") { goto BLOCK_LABEL_" + to_string(scopesCount) +"_BEGIN; } \n\t" +
         "goto BLOCK_LABEL_" + to_string(scopesCount) + "_END;\n\t";
     };
@@ -208,7 +210,7 @@
         "if (" + $2.tempVar.name + ") { goto BLOCK_LABEL_" + to_string(scopesCount) + "; }\n\t" +
         $4.translation +
         "BLOCK_LABEL_" + to_string(scopesCount) + "_END:\n\t";
-      $$.tempTranslation = $2.tempTranslation + $4.tempTranslation;
+      $$.tempTranslation = $2.tempTranslation + $3.tempTranslation + $4.tempTranslation;
       $$.scopesLabels =
         "BLOCK_LABEL_" + to_string(scopesCount) + ":\n\t" +
         $3.translation +
@@ -244,7 +246,7 @@
       if($5.token != BOOLEAN){ wrongOperation("for",checkType($5.token)); }
       scopesCount++;
       $$.tempTranslation = $3.tempTranslation + $5.tempTranslation +
-        $7.tempTranslation;
+        $7.tempTranslation + $9.tempTranslation;
       $$.translation = $3.translation +
         "BLOCK_LABEL_" + to_string(scopesCount) + "_BEGIN:\n\t" +
         $5.translation +
@@ -259,7 +261,11 @@
 
   SWITCH:
     R_SWITCH EXP BLOCK_INIT END_LINE CASES BLOCK_END {
-      $$.translation = $2.translation + $5.translation;
+      switchCount++;
+      $$.translation =
+        $2.translation +
+        checkType($2.token) + " tempSwitch" + to_string(switchCount-1) + " = " + $2.tempVar.name + "; // tempSwitch = " + to_string(switchCount) + "\n\t" +
+        $5.translation;
       $$.tempTranslation = $2.tempTranslation + $5.tempTranslation;
       $$.scopesLabels = $5.scopesLabels;
     };
@@ -282,18 +288,16 @@
       map<string,attr> newScope;
       scopes.push_back(newScope);
 
-      $$.tempTranslation = $2.tempTranslation;
+      $$.tempTranslation = $2.tempTranslation + $4.tempTranslation;
       $$.translation =
         $2.translation +
-        "if(" + $2.tempVar.name + " == " + $$.tempVar.name + ") { goto BLOCK_LABEL_" + to_string(scopesCount) + "; }\n\t" +
-        "BLOCK_LABEL_" + to_string(scopesCount) + "_EXIT:\n\t";
+        "if(" + $2.tempVar.name + " == tempSwitch" + to_string(switchCount) + ") { goto BLOCK_LABEL_" + to_string(scopesCount) + "; }\n\t" +
+        "BLOCK_LABEL_" + to_string(scopesCount) + "_END:\n\t";
 
       $$.scopesLabels =
         $4.scopesLabels +
         "BLOCK_LABEL_" + to_string(scopesCount) + ":\n\t" +
-        $4.tempTranslation +
-        $4.translation +
-        "goto BLOCK_LABEL_" + to_string(scopesCount) + "_EXIT;\n\t";
+        $4.translation;
 
       scopes.pop_back();
     };
@@ -307,13 +311,12 @@
 
       $$.translation =
         "goto BLOCK_LABEL_" + to_string(scopesCount) + ";\n\t" +
-        "BLOCK_LABEL_" + to_string(scopesCount) + "_EXIT:\n\t";
+        "BLOCK_LABEL_" + to_string(scopesCount) + "_END:\n\t";
+      $$.tempTranslation = $3.tempTranslation;
       $$.scopesLabels =
         $3.scopesLabels +
         "BLOCK_LABEL_" + to_string(scopesCount) + ":\n\t" +
-        $3.tempTranslation +
-        $3.translation +
-        "goto BLOCK_LABEL_" + to_string(scopesCount) + "_EXIT;\n\t";
+        $3.translation;
 
       scopes.pop_back();
     };
@@ -325,7 +328,7 @@
 
   CONTINUE:
     R_CONTINUE {
-      $$.translation = "goto BLOCK_LABEL_" + to_string(scopes.size()) +";\n\t";
+      $$.translation = "goto BLOCK_LABEL_" + to_string(scopes.size()) +"_BEGIN;\n\t";
     }
   ;
 
@@ -492,16 +495,16 @@
       if($1.token == $4.token){ warningExplicitType($1.tempVar.value,checkType($4.token)); }
       else if(($1.token != FLOAT) && ($1.token != INTEGER)){ wrongOperation("::"+checkType($4.token),checkType($1.token)); }
       else if($4.token == FLOAT){
-        t = createTemp(FLOAT,"(float) "+$1.tempVar.name);
+        t = createTemp(FLOAT,"(float) "+$1.tempVar.name + ";");
         $$.tempTranslation = $1.tempTranslation + t.translation + " // " + t.value + "\n\t";
-        $$.translation = $1.translation + t.name + " = " + t.value + ";\n\t";
+        $$.translation = $1.translation + t.name + " = " + t.value + "\n\t";
         $$.token = FLOAT;
         $$.tempVar = t;
       }
       else if($4.token == INTEGER){
-        t = createTemp(INTEGER,"(int) "+$1.tempVar.name);
+        t = createTemp(INTEGER,"(int) "+$1.tempVar.name + ";");
         $$.tempTranslation = $1.tempTranslation + t.translation + " // " + t.value + "\n\t";
-        $$.translation = $1.translation + t.name + " = " + t.value + ";\n\t";
+        $$.translation = $1.translation + t.name + " = " + t.value + "\n\t";
         $$.token = INTEGER;
         $$.tempVar = t;
       }
@@ -551,16 +554,16 @@
       }
       else {
         if($1.token == INTEGER && $3.token == FLOAT){ // int EQUALITY_TEST float -> float
-          t = createTemp(FLOAT, "(float) " + $1.tempVar.name);
+          t = createTemp(FLOAT, "(float) " + $1.tempVar.name + ";");
           op = createTemp(BOOLEAN,t.name + " "+ $2.operation +" " + $3.tempVar.name);
           $$.tempTranslation = $$.tempTranslation + t.translation + " // " + t.value + "\n\t";
-          $$.translation = $$.translation + t.name + " = " + t.value + ";\n\t";
+          $$.translation = $$.translation + t.name + " = " + t.value + "\n\t";
         }
         else if($1.token == FLOAT && $3.token == INTEGER){ // float EQUALITY_TEST int -> float
-          t = createTemp(FLOAT, "(float) " + $3.tempVar.name);
+          t = createTemp(FLOAT, "(float) " + $3.tempVar.name + ";");
           op = createTemp(BOOLEAN,t.name + " "+ $2.operation +" " + $1.tempVar.name);
           $$.tempTranslation = $$.tempTranslation + t.translation + " // " + t.value + "\n\t";
-          $$.translation = $$.translation + t.name + " = " + t.value + ";\n\t";
+          $$.translation = $$.translation + t.name + " = " + t.value + "\n\t";
         }
         else { op = createTemp(BOOLEAN, $1.tempVar.name + " "+ $2.operation +" " + $3.tempVar.name); }
 
@@ -582,16 +585,16 @@
       else if($3.token != FLOAT && $3.token != INTEGER){ wrongOperation($2.operation,checkType($3.token)); }
 
       if($1.token == INTEGER && $3.token == FLOAT){ // int ORDER_RELATION float -> float
-        t = createTemp(FLOAT, "(float) " + $1.tempVar.name);
+        t = createTemp(FLOAT, "(float) " + $1.tempVar.name + ";");
         op = createTemp(BOOLEAN,t.name + " "+ $2.operation +" " + $3.tempVar.name);
         $$.tempTranslation = $$.tempTranslation + t.translation + " // " + t.value + "\n\t";
-        $$.translation = $$.translation + t.name + " = " + t.value + ";\n\t";
+        $$.translation = $$.translation + t.name + " = " + t.value + "\n\t";
       }
       else if($1.token == FLOAT && $3.token == INTEGER){ // float ORDER_RELATION int -> float
-        t = createTemp(FLOAT, "(float) " + $3.tempVar.name);
+        t = createTemp(FLOAT, "(float) " + $3.tempVar.name + ";");
         op = createTemp(BOOLEAN,t.name + " "+ $2.operation +" " + $1.tempVar.name);
         $$.tempTranslation = $$.tempTranslation + t.translation + " // " + t.value + "\n\t";
-        $$.translation = $$.translation + t.name + " = " + t.value + ";\n\t";
+        $$.translation = $$.translation + t.name + " = " + t.value + "\n\t";
       }
       else { op = createTemp(BOOLEAN, $1.tempVar.name + " "+ $2.operation +" " + $3.tempVar.name); }
       $$.tempTranslation = $$.tempTranslation + op.translation + " // " + op.value + "\n\t";
@@ -611,14 +614,14 @@
       if($1.token == CHARACTER || $3.token == CHARACTER){ wrongOperation($2.operation,"char"); }
       if($1.token == INTEGER && $3.token == FLOAT){ // int ARITHMETIC float -> float
         $$.token = FLOAT;
-        t = createTemp(FLOAT, "(float) " + $1.tempVar.name);
+        t = createTemp(FLOAT, "(float) " + $1.tempVar.name + ";");
         op = createTemp(FLOAT,t.name + " "+ $2.operation +" " + $3.tempVar.name);
         $$.tempTranslation = $$.tempTranslation + "\n\t" + t.translation + " // " + t.value + "\n\t";
         $$.translation = $$.translation + "\n\t" + t.name + " = " + t.value + "\n\t";
       }
       else if($1.token == FLOAT && $3.token == INTEGER){ // float ARITHMETIC int -> float
         $$.token = FLOAT;
-        t = createTemp(FLOAT, "(float) " + $3.tempVar.name);
+        t = createTemp(FLOAT, "(float) " + $3.tempVar.name + ";");
         op = createTemp(FLOAT,t.name + " "+ $2.operation +" " + $1.tempVar.name);
         $$.tempTranslation = $$.tempTranslation + "\n\t" + t.translation + " // " + t.value + "\n\t";
         $$.translation = $$.translation + "\n\t" + t.name + " = " + t.value + "\n\t";
@@ -645,14 +648,14 @@
       if($1.token == BOOLEAN || $3.token == BOOLEAN){ wrongOperation($2.operation,"bool"); }
       if($1.token == INTEGER && $3.token == FLOAT){ // int ARITHMETIC float -> float
         $$.token = FLOAT;
-        t = createTemp(FLOAT, "(float) " + $1.tempVar.name);
+        t = createTemp(FLOAT, "(float) " + $1.tempVar.name + ";");
         op = createTemp(FLOAT,t.name + " "+ $2.operation +" " + $3.tempVar.name);
         $$.tempTranslation = $$.tempTranslation + "\n\t" + t.translation + " // " + t.value + "\n\t";
         $$.translation = $$.translation + "\n\t" + t.name + " = " + t.value + "\n\t";
       }
       else if($1.token == FLOAT && $3.token == INTEGER){ // float ARITHMETIC int -> float
         $$.token = FLOAT;
-        t = createTemp(FLOAT, "(float) " + $3.tempVar.name);
+        t = createTemp(FLOAT, "(float) " + $3.tempVar.name + ";");
         op = createTemp(FLOAT,t.name + " "+ $2.operation +" " + $1.tempVar.name);
         $$.tempTranslation = $$.tempTranslation + "\n\t" + t.translation + " // " + t.value + "\n\t";
         $$.translation = $$.translation + "\n\t" + t.name + " = " + t.value + "\n\t";
