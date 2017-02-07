@@ -44,8 +44,10 @@ Professor: Filipe Braida
   - Atribuição de múltiplas variáveis
 
 ### Problemas conhecidos
-  - Corrigir ```free()``` na função ```freeMemory()```
   - Corrigir ```\n``` nas funções
     - If/Else/ElseIf
     - Do-while
-  - A função ```out:``` não está funcionando corretamente ao printar diversos valores em sequência.
+    - For
+    - Switch/Case
+  - Corrigir ```continue``` que está em looping infinito em alguns casos
+  - Corrigir 3 Shift/Reduce
