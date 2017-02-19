@@ -22,7 +22,7 @@
   long long tempCount = 0;
   long long scopesCount = 0;
   long long switchCount = 0;
-  bool onSwitch = true;
+  bool onSwitch = false;
 
   /* Structs */
   struct temp {
@@ -177,7 +177,7 @@
       $$.translation =
         "BLOCK_LABEL_" + to_string(scopesCount) + "_BEGIN:\n\t" +
         $2.translation +
-        "if(" + $2.tempVar.name + ") { goto BLOCK_LABEL_" + to_string(scopesCount) +"; } \n\t" +
+        "if(" + $2.tempVar.name + ") goto BLOCK_LABEL_" + to_string(scopesCount) +";\n\t" +
         "BLOCK_LABEL_" + to_string(scopesCount) + "_END:\n\t";
       $$.tempTranslation = $2.tempTranslation + $3.tempTranslation;
       $$.scopesLabels =
@@ -200,7 +200,7 @@
         $2.scopesLabels +
         "BLOCK_LABEL_" + to_string(scopesCount) + ":\n\t" +
         $4.translation +
-        "if(" + $4.tempVar.name + ") { goto BLOCK_LABEL_" + to_string(scopesCount) +"_BEGIN; } \n\t" +
+        "if(" + $4.tempVar.name + ") goto BLOCK_LABEL_" + to_string(scopesCount) +"_BEGIN;\n\t" +
         "goto BLOCK_LABEL_" + to_string(scopesCount) + "_END;\n\t";
     };
 
@@ -210,7 +210,7 @@
       scopesCount++;
       $$.translation =
         $2.translation +
-        "if (" + $2.tempVar.name + ") { goto BLOCK_LABEL_" + to_string(scopesCount) + "; }\n\t" +
+        "if (" + $2.tempVar.name + ") goto BLOCK_LABEL_" + to_string(scopesCount) + ";\n\t" +
         $4.translation +
         "BLOCK_LABEL_" + to_string(scopesCount) + "_END:\n\t";
       $$.tempTranslation = $2.tempTranslation + $3.tempTranslation + $4.tempTranslation;
@@ -235,7 +235,7 @@
       scopesCount++;
       $$.tempTranslation = $1.tempTranslation;
       $$.translation =
-        "else { goto BLOCK_LABEL_"+ to_string(scopesCount) +"; }\n\t" +
+        "else goto BLOCK_LABEL_"+ to_string(scopesCount) +";\n\t" +
         "BLOCK_LABEL_" + to_string(scopesCount) + "_END:\n\t";
       $$.scopesLabels =
         $1.scopesLabels +
@@ -253,7 +253,7 @@
       $$.translation = $3.translation +
         "BLOCK_LABEL_" + to_string(scopesCount) + "_BEGIN:\n\t" +
         $5.translation +
-        "if(" + $5.tempVar.name +") { goto BLOCK_LABEL_" + to_string(scopesCount) + ";}\n\t" +
+        "if(" + $5.tempVar.name +") goto BLOCK_LABEL_" + to_string(scopesCount) + ";\n\t" +
         "BLOCK_LABEL_" + to_string(scopesCount) + "_END:\n\t";
       $$.scopesLabels =
         $9.scopesLabels +
@@ -268,17 +268,19 @@
       scopesCount++;
       switchCount++;
       $$.translation =
-        $2.token == STRING ?
         $2.translation +
-        checkType(CHARACTER) + "* tempSwitch" + to_string(switchCount-1) + " = " + $2.tempVar.name + "; // tempSwitch = " + to_string(switchCount) + "\n\t" +
-        $5.translation +
-        "BLOCK_LABEL_"+to_string(scopesCount)+"_END:\n\t"
-        :
-        $2.translation +
-        checkType($2.token) + " tempSwitch" + to_string(switchCount-1) + " = " + $2.tempVar.name + "; // tempSwitch = " + to_string(switchCount) + "\n\t" +
+        "tempSwitch" + to_string(switchCount-1) + " = " + $2.tempVar.name + ";\n\t" +
         $5.translation +
         "BLOCK_LABEL_"+to_string(scopesCount)+"_END:\n\t";
-      $$.tempTranslation = $2.tempTranslation + $5.tempTranslation;
+      $$.tempTranslation =
+        $2.token == STRING ?
+          $2.tempTranslation +
+          $5.tempTranslation +
+          checkType(CHARACTER) + "* tempSwitch" + to_string(switchCount-1) + "; // tempSwitch = " + to_string(switchCount) + "\n\t"
+          :
+          $2.tempTranslation +
+          $5.tempTranslation +
+          checkType($2.token) + " tempSwitch" + to_string(switchCount-1) + "; // tempSwitch = " + to_string(switchCount) + "\n\t";
       $$.scopesLabels = $5.scopesLabels;
     };
 
@@ -299,16 +301,18 @@
       scopesCount++;
       map<string,attr> newScope;
       scopes.push_back(newScope);
-
-      $$.tempTranslation = $2.tempTranslation + $4.tempTranslation;
-      $$.translation =
+      temp t =
         $2.token == STRING ?
+          createTemp(BOOLEAN,"strcmp(" + $2.tempVar.name + ",tempSwitch" + to_string(switchCount) + ") == 0;") :
+          createTemp(BOOLEAN,$2.tempVar.name + " == tempSwitch" + to_string(switchCount) + ";");
+      $$.tempTranslation =
+        $2.tempTranslation +
+        $4.tempTranslation +
+        t.translation + " // " + t.value + "\n\t";
+      $$.translation =
         $2.translation +
-        "if(strcmp(" + $2.tempVar.name + ",tempSwitch" + to_string(switchCount) + ") == 0) { goto BLOCK_LABEL_" + to_string(scopesCount) + "; }\n\t" +
-        "BLOCK_LABEL_" + to_string(scopesCount) + "_END:\n\t"
-        :
-        $2.translation +
-        "if(" + $2.tempVar.name + " == tempSwitch" + to_string(switchCount) + ") { goto BLOCK_LABEL_" + to_string(scopesCount) + "; }\n\t" +
+        t.name + " = " + t.value + "\n\t" +
+        "if("+t.name+") goto BLOCK_LABEL_" + to_string(scopesCount) + ";\n\t" +
         "BLOCK_LABEL_" + to_string(scopesCount) + "_END:\n\t";
 
       $$.scopesLabels =
@@ -335,6 +339,7 @@
         $3.translation;
 
       scopes.pop_back();
+      onSwitch = false;
     };
 
   BREAK:
