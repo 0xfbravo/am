@@ -48,6 +48,8 @@ Colon               :
 Assignment          =
 
 %%
+"\+\+"              { return R_UP; }
+"\-\-"              { return R_UM; }
 "if"                { return R_IF; }
 "else"              { return R_ELSE; }
 "while"             { return R_WHILE; }

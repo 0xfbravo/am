@@ -48,78 +48,82 @@ extern int yydebug;
     BLOCK_INIT = 258,
     BLOCK_END = 259,
     SEMI_COLON = 260,
-    R_IF = 261,
-    R_ELSE = 262,
-    R_WHILE = 263,
-    R_DO = 264,
-    R_FOR = 265,
-    R_SWITCH = 266,
-    R_CASE = 267,
-    R_DEFAULT = 268,
-    R_BREAK = 269,
-    R_CONTINUE = 270,
-    R_IN = 271,
-    R_OUT = 272,
-    R_IS = 273,
-    R_DOT = 274,
-    INTEGER = 275,
-    FLOAT = 276,
-    BOOLEAN = 277,
-    CHARACTER = 278,
-    STRING = 279,
-    ARITHMETIC_1 = 280,
-    ARITHMETIC_2 = 281,
-    BOOLEAN_LOGIC = 282,
-    EQUALITY_TEST = 283,
-    ORDER_RELATION = 284,
-    ASSIGNMENT = 285,
-    NOT = 286,
-    COLON = 287,
-    QUESTION = 288,
-    COMMA = 289,
-    VAR = 290,
-    CONST = 291,
-    EXPLICIT_TYPE = 292,
-    END_LINE = 293
+    R_UP = 261,
+    R_UM = 262,
+    R_IF = 263,
+    R_ELSE = 264,
+    R_WHILE = 265,
+    R_DO = 266,
+    R_FOR = 267,
+    R_SWITCH = 268,
+    R_CASE = 269,
+    R_DEFAULT = 270,
+    R_BREAK = 271,
+    R_CONTINUE = 272,
+    R_IN = 273,
+    R_OUT = 274,
+    R_IS = 275,
+    R_DOT = 276,
+    INTEGER = 277,
+    FLOAT = 278,
+    BOOLEAN = 279,
+    CHARACTER = 280,
+    STRING = 281,
+    ARITHMETIC_1 = 282,
+    ARITHMETIC_2 = 283,
+    BOOLEAN_LOGIC = 284,
+    EQUALITY_TEST = 285,
+    ORDER_RELATION = 286,
+    ASSIGNMENT = 287,
+    NOT = 288,
+    COLON = 289,
+    QUESTION = 290,
+    COMMA = 291,
+    VAR = 292,
+    CONST = 293,
+    EXPLICIT_TYPE = 294,
+    END_LINE = 295
   };
 #endif
 /* Tokens.  */
 #define BLOCK_INIT 258
 #define BLOCK_END 259
 #define SEMI_COLON 260
-#define R_IF 261
-#define R_ELSE 262
-#define R_WHILE 263
-#define R_DO 264
-#define R_FOR 265
-#define R_SWITCH 266
-#define R_CASE 267
-#define R_DEFAULT 268
-#define R_BREAK 269
-#define R_CONTINUE 270
-#define R_IN 271
-#define R_OUT 272
-#define R_IS 273
-#define R_DOT 274
-#define INTEGER 275
-#define FLOAT 276
-#define BOOLEAN 277
-#define CHARACTER 278
-#define STRING 279
-#define ARITHMETIC_1 280
-#define ARITHMETIC_2 281
-#define BOOLEAN_LOGIC 282
-#define EQUALITY_TEST 283
-#define ORDER_RELATION 284
-#define ASSIGNMENT 285
-#define NOT 286
-#define COLON 287
-#define QUESTION 288
-#define COMMA 289
-#define VAR 290
-#define CONST 291
-#define EXPLICIT_TYPE 292
-#define END_LINE 293
+#define R_UP 261
+#define R_UM 262
+#define R_IF 263
+#define R_ELSE 264
+#define R_WHILE 265
+#define R_DO 266
+#define R_FOR 267
+#define R_SWITCH 268
+#define R_CASE 269
+#define R_DEFAULT 270
+#define R_BREAK 271
+#define R_CONTINUE 272
+#define R_IN 273
+#define R_OUT 274
+#define R_IS 275
+#define R_DOT 276
+#define INTEGER 277
+#define FLOAT 278
+#define BOOLEAN 279
+#define CHARACTER 280
+#define STRING 281
+#define ARITHMETIC_1 282
+#define ARITHMETIC_2 283
+#define BOOLEAN_LOGIC 284
+#define EQUALITY_TEST 285
+#define ORDER_RELATION 286
+#define ASSIGNMENT 287
+#define NOT 288
+#define COLON 289
+#define QUESTION 290
+#define COMMA 291
+#define VAR 292
+#define CONST 293
+#define EXPLICIT_TYPE 294
+#define END_LINE 295
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED

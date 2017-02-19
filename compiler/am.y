@@ -81,6 +81,7 @@
 %}
 
 %token BLOCK_INIT BLOCK_END SEMI_COLON
+%token R_UP R_UM
 %token R_IF R_ELSE R_WHILE R_DO R_FOR R_SWITCH R_CASE R_DEFAULT R_BREAK R_CONTINUE
 %token R_IN R_OUT R_IS R_DOT
 %token INTEGER FLOAT BOOLEAN CHARACTER STRING
@@ -244,7 +245,7 @@
     };
 
   FOR:
-    R_FOR '(' ASSIGNMENT_STATE SEMI_COLON EXP SEMI_COLON ASSIGNMENT_STATE ')' BLOCK {
+    R_FOR '(' ASSIGNMENT_STATE SEMI_COLON EXP SEMI_COLON UNITARY_STATE ')' BLOCK {
       if($5.token != BOOLEAN){ wrongOperation("for",checkType($5.token)); }
       scopesCount++;
       $$.tempTranslation = $3.tempTranslation + $5.tempTranslation +
@@ -431,6 +432,38 @@
     | OUT SEMI_COLON;
     | ASSIGNMENT_STATE;
     | ASSIGNMENT_STATE SEMI_COLON;
+    | UNITARY_STATE;
+    | UNITARY_STATE SEMI_COLON;
+
+  UNITARY_STATE:
+    varConst R_UP {
+      string name = $1.isVar ? $1.id : $1.id.erase(0,1);
+      if(!exists(name)){ notDeclared($1.id); }
+      if($1.token != INTEGER){ wrongOperation("'++' (Unitary Increment)",checkType($1.token)); }
+      attr varConst = getVar(name);
+      if(!varConst.isVar){ constWontChangeValue(name); }
+      temp t = createTemp($1.token,varConst.tempVar.name + " + 1;");
+      $$.tempTranslation =
+        t.translation + " // " + t.value + "\n\t";
+      $$.translation =
+        t.name + " = " + t.value + "\n\t" +
+        varConst.tempVar.name + " = " + t.name + ";\n\t";
+      $$.tempVar = varConst.tempVar;
+    };
+    | varConst R_UM {
+      string name = $1.isVar ? $1.id : $1.id.erase(0,1);
+      if(!exists(name)){ notDeclared($1.id); }
+      if($1.token != INTEGER){ wrongOperation("'--' (Unitary Decrement)",checkType($1.token)); }
+      attr varConst = getVar(name);
+      if(!varConst.isVar){ constWontChangeValue(name); }
+      temp t = createTemp($1.token,varConst.tempVar.name + " - 1;");
+      $$.tempTranslation =
+        t.translation + " // " + t.value + "\n\t";
+      $$.translation =
+        t.name + " = " + t.value + "\n\t" +
+        varConst.tempVar.name + " = " + t.name + ";\n\t";
+      $$.tempVar = varConst.tempVar;
+    };
 
   IS:
     varConst R_IS TYPE {
@@ -536,7 +569,8 @@
     |;
 
   EXP:
-    EXP R_DOT EXP { // EXP.EXP (String Concatenation)
+    UNITARY_STATE;
+    | EXP R_DOT EXP { // EXP.EXP (String Concatenation)
       if($1.token != STRING){ wrongOperation("'.' (String concatenation)",checkType($1.token)); }
       else if($3.token != STRING){ wrongOperation("'.' (String concatenation)",checkType($3.token)); }
       temp t = createTemp(STRING,$1.tempVar.name+ " . "+ $3.tempVar.name);
