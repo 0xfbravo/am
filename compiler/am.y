@@ -372,7 +372,7 @@
             strLenTemp.name + " = " + strLenTemp.value + "\n\t" +
             sizeOfTemp.name + " = " + sizeOfTemp.value + "\n\t" +
             calcMallocTemp.name + " = " + calcMallocTemp.value + "\n\t" +
-            $1.tempVar.name + " = (char*) malloc("+ calcMallocTemp.name +");\n\t" +
+            $1.tempVar.name + " = (char*) malloc(" + calcMallocTemp.name + ");\n\t" +
             "strcpy(" + $1.tempVar.name + "," + $3.tempVar.name + ");\n\t";
             tempsOnMemory.push_back($1.tempVar);
         }
@@ -387,12 +387,23 @@
         if(!varConst.isVar){ constWontChangeValue(name); }
         if(varConst.token != $3.token) { alreadyDeclared(name,checkType(name)); }
         $$.tempTranslation = $3.tempTranslation;
+        temp strLenTemp = createTemp(INTEGER,"strlen(" + $3.tempVar.name + ");");
+        temp sizeOfTemp = createTemp(INTEGER,"sizeof(char);");
+        temp calcMallocTemp = createTemp(INTEGER,strLenTemp.name + " * " + sizeOfTemp.name + ";");
         switch(varConst.token){
           case STRING:
+            $$.tempTranslation =
+              $$.tempTranslation +
+              strLenTemp.translation + "// " + strLenTemp.value + "\n\t" +
+              sizeOfTemp.translation + "// " + sizeOfTemp.value + "\n\t" +
+              calcMallocTemp.translation + "// " + calcMallocTemp.value + "\n\t";
             $$.translation =
               $3.translation +
+              strLenTemp.name + " = " + strLenTemp.value + "\n\t" +
+              sizeOfTemp.name + " = " + sizeOfTemp.value + "\n\t" +
+              calcMallocTemp.name + " = " + calcMallocTemp.value + "\n\t" +
               "free(" + varConst.tempVar.name + ");\n\t" +
-              varConst.tempVar.name + " = (char*) malloc(strlen(" + $3.tempVar.name + ") * sizeof(char));\n\t" +
+              varConst.tempVar.name + " = (char*) malloc(" + calcMallocTemp.name + ");\n\t" +
               "strcpy(" + varConst.tempVar.name + "," + $3.tempVar.name + ");\n\t";
           break;
           default:
@@ -445,28 +456,59 @@
       switch(t.token){
         case STRING:
           if(!(exists("inBuffer"))){
-            temp inBuffer = createTemp(t.token,"");
-            addVar(inBuffer,"inBuffer", "true", "", $3.token);
+            temp sizeOfTemp = createTemp(INTEGER,"sizeof(char);");
+            temp calcMallocTemp = createTemp(INTEGER,"MAX_BUFFER_SIZE * " + sizeOfTemp.name + ";");
+            temp inBuffer = createTemp(t.token,calcMallocTemp.name+";");
+            addVar(inBuffer,"inBuffer", "true", calcMallocTemp.name, $3.token);
             inBuffer.translation.pop_back();
-            $$.tempTranslation = inBuffer.translation + " = (char*) malloc(MAX_BUFFER_SIZE * sizeof(char)); // String Input Buffer\n\t";
+            $$.tempTranslation =
+              sizeOfTemp.translation + " // " + sizeOfTemp.value + "\n\t" +
+              calcMallocTemp.translation + " // " + calcMallocTemp.value + "\n\t" +
+              inBuffer.translation + "; // String Input Buffer\n\t";
+            $$.translation =
+              sizeOfTemp.name + " = " + sizeOfTemp.value + "\n\t" +
+              calcMallocTemp.name + " = " + calcMallocTemp.value + "\n\t" +
+              inBuffer.name + " = (char*) malloc(" + calcMallocTemp.name + ");\n\t";
             tempsOnMemory.push_back(inBuffer);
           }
           inBuffer = getVar("inBuffer");
           if(onMemory(t.tempVar)){
+            temp strLenTemp = createTemp(INTEGER,"strlen(" + inBuffer.tempVar.name + ");");
+            temp sizeOfTemp = createTemp(INTEGER,"sizeof(char);");
+            temp calcMallocTemp = createTemp(INTEGER,strLenTemp.name + " * " + sizeOfTemp.name + ";");
+            $$.tempTranslation =
+              $$.tempTranslation +
+              strLenTemp.translation + " // " + strLenTemp.value + "\n\t" +
+              sizeOfTemp.translation + " // " + sizeOfTemp.value + "\n\t" +
+              calcMallocTemp.translation + " // " + calcMallocTemp.value + "\n\t";
             $$.translation =
-              $$.translation + "\n\t" +
+              $$.translation +
+              strLenTemp.name + " = " + strLenTemp.value + "\n\t" +
+              sizeOfTemp.name + " = " + sizeOfTemp.value + "\n\t" +
+              calcMallocTemp.name + " = " + calcMallocTemp.value + "\n\t" +
               "free(" + t.tempVar.name + ");\n\t" +
               "fgets(" + inBuffer.tempVar.name + ",MAX_BUFFER_SIZE,stdin);\n\t" +
               inBuffer.tempVar.name + "[strlen(" + inBuffer.tempVar.name + ")-1] = 0;\n\t" +
-              t.tempVar.name + " = (char*) malloc(strlen(" + inBuffer.tempVar.name + ") * sizeof(char));\n\t" +
+              t.tempVar.name + " = (char*) malloc("+ calcMallocTemp.name +");\n\t" +
               "strcpy(" + t.tempVar.name + "," + inBuffer.tempVar.name + ");\n\t";
           }
           else {
+            temp strLenTemp = createTemp(INTEGER,"strlen(" + inBuffer.tempVar.name + ");");
+            temp sizeOfTemp = createTemp(INTEGER,"sizeof(char);");
+            temp calcMallocTemp = createTemp(INTEGER,strLenTemp.name + " * " + sizeOfTemp.name + ";");
+            $$.tempTranslation =
+              $$.tempTranslation +
+              strLenTemp.translation + " // " + strLenTemp.value + "\n\t" +
+              sizeOfTemp.translation + " // " + sizeOfTemp.value + "\n\t" +
+              calcMallocTemp.translation + " // " + calcMallocTemp.value + "\n\t";
             $$.translation =
-              $$.translation + "\n\t" +
+              $$.translation +
+              strLenTemp.name + " = " + strLenTemp.value + "\n\t" +
+              sizeOfTemp.name + " = " + sizeOfTemp.value + "\n\t" +
+              calcMallocTemp.name + " = " + calcMallocTemp.value + "\n\t" +
               "fgets(" + inBuffer.tempVar.name + ",MAX_BUFFER_SIZE,stdin);\n\t" +
               inBuffer.tempVar.name + "[strlen(" + inBuffer.tempVar.name + ")-1] = 0;\n\t" +
-              t.tempVar.name + " = (char*) malloc(strlen(" + inBuffer.tempVar.name + ") * sizeof(char));\n\t" +
+              t.tempVar.name + " = (char*) malloc("+ calcMallocTemp.name +");\n\t" +
               "strcpy(" + t.tempVar.name + "," + inBuffer.tempVar.name + ");\n\t";
               tempsOnMemory.push_back(t.tempVar);
           }
@@ -498,11 +540,29 @@
       if($1.token != STRING){ wrongOperation("'.' (String concatenation)",checkType($1.token)); }
       else if($3.token != STRING){ wrongOperation("'.' (String concatenation)",checkType($3.token)); }
       temp t = createTemp(STRING,$1.tempVar.name+ " . "+ $3.tempVar.name);
-      $$.tempTranslation = $1.tempTranslation + $3.tempTranslation + t.translation + " // "+ t.value + "\n\t";
+      temp strLenTemp1 = createTemp(INTEGER,"strlen(" + $1.tempVar.name + ");");
+      temp strLenTemp2 = createTemp(INTEGER,"strlen(" + $3.tempVar.name + ");");
+      temp strLenTemp3 = createTemp(INTEGER,strLenTemp1.name + " + " + strLenTemp2.name + ";");
+      temp sizeOfTemp = createTemp(INTEGER,"sizeof(char);");
+      temp calcMallocTemp = createTemp(INTEGER,strLenTemp3.name + " * " + sizeOfTemp.name + ";");
+      $$.tempTranslation =
+        $1.tempTranslation +
+        $3.tempTranslation +
+        strLenTemp1.translation + " // " + strLenTemp1.value + "\n\t" +
+        strLenTemp2.translation + " // " + strLenTemp2.value + "\n\t" +
+        strLenTemp3.translation + " // " + strLenTemp3.value + "\n\t" +
+        sizeOfTemp.translation + " // " + sizeOfTemp.value + "\n\t" +
+        calcMallocTemp.translation + " // " + calcMallocTemp.value + "\n\t" +
+        t.translation + " // "+ t.value + "\n\t";
       $$.translation =
         $1.translation +
         $3.translation +
-        t.name + " = (char*) malloc((strlen(" + $1.tempVar.name + ") + strlen(" + $3.tempVar.name + ")) * sizeof(char));\n\t" +
+        strLenTemp1.name + " = " + strLenTemp1.value + "\n\t" +
+        strLenTemp2.name + " = " + strLenTemp2.value + "\n\t" +
+        strLenTemp3.name + " = " + strLenTemp3.value + "\n\t" +
+        sizeOfTemp.name + " = " + sizeOfTemp.value + "\n\t" +
+        calcMallocTemp.name + " = " + calcMallocTemp.value + "\n\t" +
+        t.name + " = (char*) malloc(" + calcMallocTemp.name + ");\n\t" +
         "strcat(" + t.name + "," + $1.tempVar.name + ");\n\t" +
         "strcat(" + t.name + "," + $3.tempVar.name + ");\n\t";
       if(onMemory($1.tempVar)){ // Free $1.tempVar
