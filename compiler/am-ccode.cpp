@@ -15,43 +15,28 @@ using namespace std;
 
 int main() {
 	/* Declarations */
-	int temp1; // temp1 = 0;
-	int temp2; // i
-	int temp3; // temp3 = 10;
-	int temp4; // temp2 < temp3
-	int temp5; // temp5 = 1;
-	int temp6; // temp2 + temp5
-	int temp7; // temp7 = 5;
-	int temp8; // temp2 > temp7
+	char* temp1; // temp1 = (char*) "abc123";
+	char* temp2; // a
+	int temp3;// strlen(temp1);
+	int temp4;// sizeof(char);
+	int temp5;// temp3 * temp4;
 	
 	/* Operations */
-	temp1 = 0;
-	temp2 = temp1;
-	BLOCK_LABEL_2_BEGIN:
-	temp3 = 10;
-	temp4 = temp2 < temp3;
-	if(temp4) { goto BLOCK_LABEL_2;}
-	BLOCK_LABEL_2_END:
+	temp1 = (char*) "abc123";
+	temp3 = strlen(temp1);
+	temp4 = sizeof(char);
+	temp5 = temp3 * temp4;
+	temp2 = (char*) malloc(temp5);
+	strcpy(temp2,temp1);
+	cout << temp2 << " ";
+	cout << endl;
 	
 	/* Free memory */
+	free(temp2);
 	
 	BLOCK_LABEL_0_END:
 	return 0;
 
 	/* Scopes Labels */
-	BLOCK_LABEL_1:
-	goto BLOCK_LABEL_2_BEGIN;
-	goto BLOCK_LABEL_1_END;
-	BLOCK_LABEL_2:
-	cout << temp2 << " ";
-	cout << endl;
-	temp7 = 5;
-	temp8 = temp2 > temp7;
-	if (temp8) { goto BLOCK_LABEL_1; }
-	BLOCK_LABEL_1_END:
-	temp5 = 1;
-	temp6 = temp2 + temp5;
-	temp2 = temp6;
-	goto BLOCK_LABEL_2_BEGIN;
 	
 }

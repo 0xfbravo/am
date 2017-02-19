@@ -22,6 +22,7 @@
   long long tempCount = 0;
   long long scopesCount = 0;
   long long switchCount = 0;
+  bool onSwitch = true;
 
   /* Structs */
   struct temp {
@@ -195,6 +196,7 @@
         "BLOCK_LABEL_" + to_string(scopesCount) + "_END:\n\t";
       $$.tempTranslation = $2.tempTranslation + $4.tempTranslation;
       $$.scopesLabels =
+        $2.scopesLabels +
         "BLOCK_LABEL_" + to_string(scopesCount) + ":\n\t" +
         $4.translation +
         "if(" + $4.tempVar.name + ") { goto BLOCK_LABEL_" + to_string(scopesCount) +"_BEGIN; } \n\t" +
@@ -261,11 +263,20 @@
 
   SWITCH:
     R_SWITCH EXP BLOCK_INIT END_LINE CASES BLOCK_END {
+      onSwitch = true;
+      scopesCount++;
       switchCount++;
       $$.translation =
+        $2.token == STRING ?
+        $2.translation +
+        checkType(CHARACTER) + "* tempSwitch" + to_string(switchCount-1) + " = " + $2.tempVar.name + "; // tempSwitch = " + to_string(switchCount) + "\n\t" +
+        $5.translation +
+        "BLOCK_LABEL_"+to_string(scopesCount)+"_END:\n\t"
+        :
         $2.translation +
         checkType($2.token) + " tempSwitch" + to_string(switchCount-1) + " = " + $2.tempVar.name + "; // tempSwitch = " + to_string(switchCount) + "\n\t" +
-        $5.translation;
+        $5.translation +
+        "BLOCK_LABEL_"+to_string(scopesCount)+"_END:\n\t";
       $$.tempTranslation = $2.tempTranslation + $5.tempTranslation;
       $$.scopesLabels = $5.scopesLabels;
     };
@@ -290,6 +301,11 @@
 
       $$.tempTranslation = $2.tempTranslation + $4.tempTranslation;
       $$.translation =
+        $2.token == STRING ?
+        $2.translation +
+        "if(strcmp(" + $2.tempVar.name + ",tempSwitch" + to_string(switchCount) + ") == 0) { goto BLOCK_LABEL_" + to_string(scopesCount) + "; }\n\t" +
+        "BLOCK_LABEL_" + to_string(scopesCount) + "_END:\n\t"
+        :
         $2.translation +
         "if(" + $2.tempVar.name + " == tempSwitch" + to_string(switchCount) + ") { goto BLOCK_LABEL_" + to_string(scopesCount) + "; }\n\t" +
         "BLOCK_LABEL_" + to_string(scopesCount) + "_END:\n\t";
@@ -301,7 +317,6 @@
 
       scopes.pop_back();
     };
-    |;
 
   DEFAULT:
     R_DEFAULT COLON CMDS {
@@ -323,7 +338,10 @@
 
   BREAK:
     R_BREAK {
-      $$.translation = "goto BLOCK_LABEL_" + to_string(scopes.size()) + "_END;\n\t";
+      $$.translation =
+        onSwitch ?
+        "goto BLOCK_LABEL_" + to_string(scopes.size()+1) + "_END;\n\t" :
+        "goto BLOCK_LABEL_" + to_string(scopes.size()) + "_END;\n\t";
     };
 
   CONTINUE:
@@ -341,9 +359,20 @@
         addVar($1.tempVar,name, $1.isVar, $3.value, $3.token);
         $$.tempTranslation = $3.tempTranslation + $1.tempVar.translation + " // " + name + "\n\t";
         if($3.token == STRING){
+          temp strLenTemp = createTemp(INTEGER,"strlen(" + $3.tempVar.name + ");");
+          temp sizeOfTemp = createTemp(INTEGER,"sizeof(char);");
+          temp calcMallocTemp = createTemp(INTEGER,strLenTemp.name + " * " + sizeOfTemp.name + ";");
+          $$.tempTranslation =
+            $$.tempTranslation +
+            strLenTemp.translation + "// " + strLenTemp.value + "\n\t" +
+            sizeOfTemp.translation + "// " + sizeOfTemp.value + "\n\t" +
+            calcMallocTemp.translation + "// " + calcMallocTemp.value + "\n\t";
           $$.translation =
             $3.translation +
-            $1.tempVar.name + " = (char*) malloc(strlen(" + $3.tempVar.name + ") * sizeof(char));\n\t" +
+            strLenTemp.name + " = " + strLenTemp.value + "\n\t" +
+            sizeOfTemp.name + " = " + sizeOfTemp.value + "\n\t" +
+            calcMallocTemp.name + " = " + calcMallocTemp.value + "\n\t" +
+            $1.tempVar.name + " = (char*) malloc("+ calcMallocTemp.name +");\n\t" +
             "strcpy(" + $1.tempVar.name + "," + $3.tempVar.name + ");\n\t";
             tempsOnMemory.push_back($1.tempVar);
         }
@@ -418,10 +447,8 @@
           if(!(exists("inBuffer"))){
             temp inBuffer = createTemp(t.token,"");
             addVar(inBuffer,"inBuffer", "true", "", $3.token);
-            $$.translation =
-              "// String Buffer Init\n\t" +
-              inBuffer.name + " = (char*) malloc(MAX_BUFFER_SIZE * sizeof(char));";
-            $$.tempTranslation = inBuffer.translation + " // String Input Buffer\n\t";
+            inBuffer.translation.pop_back();
+            $$.tempTranslation = inBuffer.translation + " = (char*) malloc(MAX_BUFFER_SIZE * sizeof(char)); // String Input Buffer\n\t";
             tempsOnMemory.push_back(inBuffer);
           }
           inBuffer = getVar("inBuffer");
@@ -563,7 +590,7 @@
           t = createTemp(FLOAT, "(float) " + $3.tempVar.name + ";");
           op = createTemp(BOOLEAN,t.name + " "+ $2.operation +" " + $1.tempVar.name);
           $$.tempTranslation = $$.tempTranslation + t.translation + " // " + t.value + "\n\t";
-          $$.translation = $$.translation + t.name + " = " + t.value + "\n\t";
+          $$.translation = $$.translation + t.name + " = " + t.value + ";\n\t";
         }
         else { op = createTemp(BOOLEAN, $1.tempVar.name + " "+ $2.operation +" " + $3.tempVar.name); }
 
@@ -588,13 +615,13 @@
         t = createTemp(FLOAT, "(float) " + $1.tempVar.name + ";");
         op = createTemp(BOOLEAN,t.name + " "+ $2.operation +" " + $3.tempVar.name);
         $$.tempTranslation = $$.tempTranslation + t.translation + " // " + t.value + "\n\t";
-        $$.translation = $$.translation + t.name + " = " + t.value + "\n\t";
+        $$.translation = $$.translation + t.name + " = " + t.value + ";\n\t";
       }
       else if($1.token == FLOAT && $3.token == INTEGER){ // float ORDER_RELATION int -> float
         t = createTemp(FLOAT, "(float) " + $3.tempVar.name + ";");
         op = createTemp(BOOLEAN,t.name + " "+ $2.operation +" " + $1.tempVar.name);
         $$.tempTranslation = $$.tempTranslation + t.translation + " // " + t.value + "\n\t";
-        $$.translation = $$.translation + t.name + " = " + t.value + "\n\t";
+        $$.translation = $$.translation + t.name + " = " + t.value + ";\n\t";
       }
       else { op = createTemp(BOOLEAN, $1.tempVar.name + " "+ $2.operation +" " + $3.tempVar.name); }
       $$.tempTranslation = $$.tempTranslation + op.translation + " // " + op.value + "\n\t";
