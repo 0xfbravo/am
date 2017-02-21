@@ -48,6 +48,9 @@ Colon               :
 Assignment          =
 
 %%
+"\["                { return MATRIX_INIT; }
+"\]"                { return MATRIX_END; }
+"return"            { return RETURN; }
 "\+\+"              { return R_UP; }
 "\-\-"              { return R_UM; }
 "if"                { return R_IF; }
@@ -65,6 +68,7 @@ Assignment          =
 "Int"               { yylval.token = INTEGER; return INTEGER; }
 "Bool"              { yylval.token = BOOLEAN; return BOOLEAN; }
 "Char"              { yylval.token = CHARACTER; return CHARACTER; }
+"of"                { return R_OF; }
 "is"                { return R_IS; }
 "in"                { return R_IN; }
 "out"               { return R_OUT; }

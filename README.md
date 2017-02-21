@@ -50,4 +50,5 @@ Professor: Filipe Braida
     - For
     - Switch/Case
   - Corrigir ```continue``` que está em looping infinito em alguns casos
-  - Corrigir 3 Shift/Reduce
+  - Corrigir ```break``` após um switch (looping infinito)
+  - Função ```out``` não printa matrizes

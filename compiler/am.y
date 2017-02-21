@@ -30,19 +30,30 @@
     string name;
     string value;
     string translation;
+    int col;
+    int ln;
+    int tokenAccessMatrix;
+  };
+
+  struct func {
+    int returnType;
+    string name;
+    string translation;
+    vector<temp> params = {};
   };
 
   #define YYSTYPE attr
   struct attr {
-    int token;                  // LexToken (Type)
-    temp tempVar;               // TempVar
-    string id;                  // (Var||Const).name
-    string value;               // (Var||Const).value || Value
-    bool isVar;                 // Var||Const
-    string translation;         // C Translation
-    string tempTranslation;     // Var declaration - C Translation
-    string scopesLabels;        // Scopes Labels
-    string operation;           // Operation
+    int token;                    // LexToken (Type)
+    temp tempVar;                 // TempVar
+    string id;                    // (Var||Const).name
+    string value;                 // (Var||Const).value || Value
+    bool isVar;                   // Var||Const
+    string translation;           // C Translation
+    string tempTranslation;       // Var declaration - C Translation
+    string scopesLabels;          // Scopes Labels
+    string operation;             // Operation
+    string paramTranslation;      // Function Params Translation
   };
 
   /* Flex/Yacc Functions */
@@ -69,22 +80,26 @@
   map<string,attr>::iterator scopeIterator;
 
   /* Heap */
+  vector<func> functions = {};
+  vector<temp> functionsParams = {};
   vector<temp> tempsOnMemory = {};
   vector<map<string,attr>> scopes = {};
 
   /* Useful Functions */
   bool onMemory(temp);
   void removeFromMemory(temp);
+  string createFunctions();
   string clearMemory();
   string toUpper(const string&);
   string actualLine();
 %}
 
-%token BLOCK_INIT BLOCK_END SEMI_COLON
-%token R_UP R_UM
+%token BLOCK_INIT BLOCK_END SEMI_COLON MATRIX_INIT MATRIX_END
+%token R_UP R_UM RETURN
 %token R_IF R_ELSE R_WHILE R_DO R_FOR R_SWITCH R_CASE R_DEFAULT R_BREAK R_CONTINUE
-%token R_IN R_OUT R_IS R_DOT
-%token INTEGER FLOAT BOOLEAN CHARACTER STRING
+%token R_IN R_OUT R_IS R_DOT R_OF
+%token MTX_INT MTX_FLOAT MTX_BOOLEAN MTX_CHAR MTX_STRING
+%token INTEGER FLOAT BOOLEAN CHARACTER STRING VOID
 %token ARITHMETIC_1 ARITHMETIC_2 BOOLEAN_LOGIC EQUALITY_TEST ORDER_RELATION
 %token ASSIGNMENT NOT COLON QUESTION COMMA
 %token VAR CONST EXPLICIT_TYPE
@@ -95,10 +110,11 @@
 %left EQUALITY_TEST ORDER_RELATION      // "==" "===" "!==" "!=" "<" "<=" ">" ">="
 %left QUESTION COLON                    // "?" ":"
 %left NOT                               // "!"
-%left R_DOT                             // 'a'.'b' == 'ab'
+%left R_DOT                             // "abc"."123" == "abc123"
 %left ARITHMETIC_1                      // "+" "-"
 %left ARITHMETIC_2                      // "*" "/"
 %left '(' ')'
+%left MATRIX_INIT MATRIX_END            // "[" "]"
 %left BLOCK_INIT BLOCK_END              // "{" "}"
 
 %start BEFORE_THE_BEGINNING
@@ -122,6 +138,8 @@
       "#define TRUE 1" << endl <<
       "#define FALSE 0" << endl <<
       "#define MAX_BUFFER_SIZE 300\n" << endl <<
+      "/* Functions */" << endl <<
+      createFunctions() << "\n" << endl <<
       "int main() {" << endl <<
       "\t/* Declarations */" << endl <<
       "\t" << $$.tempTranslation << endl <<
@@ -264,7 +282,6 @@
 
   SWITCH:
     R_SWITCH EXP BLOCK_INIT END_LINE CASES BLOCK_END {
-      onSwitch = true;
       scopesCount++;
       switchCount++;
       $$.translation =
@@ -339,7 +356,6 @@
         $3.translation;
 
       scopes.pop_back();
-      onSwitch = false;
     };
 
   BREAK:
@@ -357,11 +373,48 @@
   ;
 
   ASSIGNMENT_STATE:
-    varConst ASSIGNMENT EXP { // varConst = EXP
+    varConst MATRIX_INIT PRIMITIVE COMMA PRIMITIVE MATRIX_END ASSIGNMENT EXP {
+      string name = $1.isVar ? $1.id : $1.id.erase(0,1);
+      if(!exists(name)){ notDeclared($1.id); }
+      if($1.token != MTX_INT && $1.token != MTX_FLOAT && $1.token != MTX_STRING &&
+         $1.token != MTX_CHAR && $1.token != MTX_BOOLEAN) { wrongOperation("'[Int,Int]' (Matrix Assignment)",checkType($1.token));  }
+      if($3.token != INTEGER){ wrongOperation("'[Int,Int]' (Matrix Assignment)",checkType($3.token)); }
+      if($5.token != INTEGER){ wrongOperation("'[Int,int]' (Matrix Assignment)",checkType($5.token)); }
+      if($8.token != $1.tempVar.tokenAccessMatrix){ wrongOperation("'[Int,int]' (Matrix Assignment)",checkType($8.token)); }
+
+      temp calcLineColumnTemp1 = createTemp(INTEGER,to_string($1.tempVar.col) + " * " + $3.value + ";");
+      temp calcLineColumnTemp2 = createTemp(INTEGER,$5.value + " + " + calcLineColumnTemp1.name + ";");
+      temp matrixAccess = createTemp($1.tempVar.tokenAccessMatrix,$1.tempVar.name + "[" + calcLineColumnTemp2.name + "]");
+
+      $$.tempTranslation =
+        $1.tempTranslation +
+        $3.tempTranslation +
+        $5.tempTranslation +
+        $8.tempTranslation +
+        calcLineColumnTemp1.translation + " // " + calcLineColumnTemp1.value + "\n\t" +
+        calcLineColumnTemp2.translation + " // " + calcLineColumnTemp2.value + "\n\t" +
+        matrixAccess.translation + " // " + matrixAccess.value + "\n\t";
+
+      $$.translation =
+        $1.translation +
+        $3.translation +
+        $5.translation +
+        $8.translation +
+        calcLineColumnTemp1.name + " = " + calcLineColumnTemp1.value + "\n\t" +
+        calcLineColumnTemp2.name + " = " + calcLineColumnTemp2.value + "\n\t" +
+        matrixAccess.value + " = " + $8.tempVar.name + ";\n\t";
+
+        $$.token = $1.tempVar.tokenAccessMatrix;
+        $$.tempVar = matrixAccess;
+    };
+    | varConst ASSIGNMENT EXP { // varConst = EXP
       string name = $1.isVar ? $1.id : $1.id.erase(0,1);
 
       if(!(exists(name))) { // Var/Const Not Declared
         $1.tempVar = createTemp($3.token,$3.translation);
+        $1.tempVar.ln = $3.tempVar.ln;
+        $1.tempVar.col = $3.tempVar.col;
+        $1.tempVar.tokenAccessMatrix = $3.tempVar.tokenAccessMatrix;
         addVar($1.tempVar,name, $1.isVar, $3.value, $3.token);
         $$.tempTranslation = $3.tempTranslation + $1.tempVar.translation + " // " + name + "\n\t";
         if($3.token == STRING){
@@ -420,8 +473,55 @@
       }
     };
 
+  FUNCTION_STATE:
+    varConst '(' PARAMS ')' BLOCK {
+      $5.translation.pop_back();
+      func f;
+      f.name = $1.id;
+      f.returnType = VOID;
+      f.translation =
+        checkType(VOID) + " " + f.name + " (" + $3.paramTranslation + ") {\n\t" +
+          $5.tempTranslation +
+          $5.translation +
+        "}";
+      f.params = functionsParams;
+      functionsParams.clear();
+      functions.push_back(f);
+    };
+
+  PARAMS:
+    PARAM COMMA_PARAMS {
+      $$.translation = $1.translation + $2.translation;
+      $$.tempTranslation = $1.tempTranslation + $2.tempTranslation;
+      $$.paramTranslation =
+        $2.paramTranslation.empty() ?
+          $1.paramTranslation :
+          $1.paramTranslation + ", " + $2.paramTranslation;
+    };
+    |;
+
+  COMMA_PARAMS:
+    COMMA PARAM COMMA_PARAMS {
+      $$.translation = $2.translation + $3.translation;
+      $$.tempTranslation = $2.tempTranslation + $3.tempTranslation;
+      $$.paramTranslation =
+        $3.paramTranslation.empty() ?
+          $2.paramTranslation :
+          $2.paramTranslation + ", " + $3.paramTranslation;
+    };
+    |;
+
+  PARAM:
+    IS {
+      $$.translation = $1.translation;
+      $$.tempTranslation = $1.tempTranslation;
+      $$.paramTranslation = checkType($1.tempVar.token) + " " + $1.tempVar.name;
+      functionsParams.push_back($1.tempVar);
+    };
+
   CMD:
-    IF;
+    FUNCTION_STATE;
+    | IF;
     | WHILE;
     | DO_WHILE;
     | END_LINE;
@@ -439,6 +539,7 @@
     | ASSIGNMENT_STATE SEMI_COLON;
     | UNITARY_STATE;
     | UNITARY_STATE SEMI_COLON;
+    | BLOCK;
 
   UNITARY_STATE:
     varConst R_UP {
@@ -476,6 +577,7 @@
       temp t = createTemp($3.token,"");
       addVar(t,$1.id, $1.isVar, "", $3.token);
       $$.tempTranslation = t.translation + " // Pre-declaration\n\t";
+      $$.tempVar = t;
     };
 
   TYPE:
@@ -560,21 +662,107 @@
   OUT:
     R_OUT COLON EXP COMMA_OUT {
       temp t = $3.tempVar;
-      $$.tempTranslation = $3.tempTranslation + $4.tempTranslation;
+      $$.tempTranslation =
+        $4.tempTranslation.empty() ?
+          $3.tempTranslation :
+          $3.tempTranslation + $4.tempTranslation;
       $$.translation =
-        $3.translation + "cout << " + t.name + " << \" \";\n\t" + $4.translation + "cout << endl;\n\t";
+        $4.tempTranslation.empty() ?
+          $3.translation + "cout << " + t.name + " << endl;\n\t" :
+          $3.translation + "cout << " + t.name + " << \" \";\n\t" + $4.translation + "cout << endl;\n\t";
     };
 
   COMMA_OUT:
     COMMA EXP COMMA_OUT {
       temp t = $2.tempVar;
-      $$.tempTranslation = $2.tempTranslation + $3.tempTranslation;
-      $$.translation = $2.translation + "cout << " + t.name + " << \" \";\n\t" + $3.translation;
+      $$.tempTranslation =
+        $3.tempTranslation.empty() ?
+          $2.tempTranslation :
+          $2.tempTranslation + $3.tempTranslation;
+      $$.translation =
+        $3.translation.empty() ?
+          $2.translation + "cout << " + t.name + " << \" \";\n\t" :
+          $2.translation + "cout << " + t.name + " << \" \";\n\t" + $3.translation;
     };
     |;
 
+  MATRIX_INIT_STATE:
+    MATRIX_INIT PRIMITIVE COLON PRIMITIVE MATRIX_END R_OF TYPE {
+      if($2.token != INTEGER){ wrongOperation("'[Int:Int]' (Matrix Init)",checkType($2.token)); }
+      if($4.token != INTEGER){ wrongOperation("'[Int:Int]' (Matrix Init)",checkType($4.token)); }
+
+      int matrixToken;
+      if($7.token == STRING) { matrixToken = MTX_STRING; }
+      else if($7.token == CHARACTER) { matrixToken = MTX_CHAR; }
+      else if($7.token == INTEGER) { matrixToken = MTX_INT; }
+      else if($7.token == FLOAT) { matrixToken = MTX_FLOAT; }
+      else if($7.token == BOOLEAN) { matrixToken = MTX_BOOLEAN; }
+
+      temp sizeOfTemp = createTemp(INTEGER,"sizeof(" + checkType($7.token) + ");");
+      temp calcLineColumn = createTemp(INTEGER,$2.tempVar.name + " * " + $4.tempVar.name + ";");
+      temp calcMallocTemp = createTemp(INTEGER,calcLineColumn.name + " * " + sizeOfTemp.name + ";");
+      temp matrixTemp = createTemp(matrixToken,"[" + $2.tempVar.name + "][" + $4.tempVar.name + "];");
+      matrixTemp.ln = stoi($2.value);
+      matrixTemp.col = stod($4.value);
+      matrixTemp.tokenAccessMatrix = $7.token;
+
+      $$.tempTranslation =
+        $2.tempTranslation +
+        $4.tempTranslation +
+        sizeOfTemp.translation + " // " + sizeOfTemp.value + "\n\t" +
+        calcLineColumn.translation + " // " + calcLineColumn.value + "\n\t" +
+        calcMallocTemp.translation + " // " + calcMallocTemp.value + "\n\t" +
+        matrixTemp.translation + " // " + matrixTemp.value + "\n\t";
+      $$.translation =
+        $2.translation +
+        $4.translation +
+        sizeOfTemp.name + " = " + sizeOfTemp.value + "\n\t" +
+        calcLineColumn.name + " = " + calcLineColumn.value + "\n\t" +
+        calcMallocTemp.name + " = " + calcMallocTemp.value + "\n\t" +
+        matrixTemp.name + " = " + "("+ checkType(matrixToken) +") malloc(" + calcMallocTemp.name + ");\n\t" +
+        "memset("+ matrixTemp.name +",0,"+ calcMallocTemp.name +");\n\t";
+      $$.tempVar = matrixTemp;
+      $$.token = matrixToken;
+      tempsOnMemory.push_back(matrixTemp);
+    };
+
+  MATRIX_ACCESS_STATE:
+    varConst MATRIX_INIT PRIMITIVE COMMA PRIMITIVE MATRIX_END {
+      string name = $1.isVar ? $1.id : $1.id.erase(0,1);
+      if(!exists(name)){ notDeclared($1.id); }
+      if($1.token != MTX_INT && $1.token != MTX_FLOAT && $1.token != MTX_STRING &&
+          $1.token != MTX_CHAR && $1.token != MTX_BOOLEAN) { wrongOperation("'[Int,Int]' (Matrix Access)",checkType($1.token));  }
+      if($3.token != INTEGER){ wrongOperation("'[Int,Int]' (Matrix Access)",checkType($3.token)); }
+      if($5.token != INTEGER){ wrongOperation("'[Int,int]' (Matrix Access)",checkType($5.token)); }
+
+      temp calcLineColumnTemp1 = createTemp(INTEGER,to_string($1.tempVar.col) + " * " + $3.value + ";");
+      temp calcLineColumnTemp2 = createTemp(INTEGER,$5.value + " + " + calcLineColumnTemp1.name + ";");
+      temp matrixAccess = createTemp($1.tempVar.tokenAccessMatrix,$1.tempVar.name + "[" + calcLineColumnTemp2.name + "];");
+
+      $$.tempTranslation =
+        $1.tempTranslation +
+        $3.tempTranslation +
+        $5.tempTranslation +
+        calcLineColumnTemp1.translation + " // " + calcLineColumnTemp1.value + "\n\t" +
+        calcLineColumnTemp2.translation + " // " + calcLineColumnTemp2.value + "\n\t" +
+        matrixAccess.translation + " // " + matrixAccess.value + "\n\t";
+
+      $$.translation =
+        $1.translation +
+        $3.translation +
+        $5.translation +
+        calcLineColumnTemp1.name + " = " + calcLineColumnTemp1.value + "\n\t" +
+        calcLineColumnTemp2.name + " = " + calcLineColumnTemp2.value + "\n\t" +
+        matrixAccess.name + " = " + matrixAccess.value + "\n\t";
+
+        $$.token = $1.tempVar.tokenAccessMatrix;
+        $$.tempVar = matrixAccess;
+    };
+
   EXP:
-    UNITARY_STATE;
+    MATRIX_INIT_STATE;
+    | MATRIX_ACCESS_STATE;
+    | UNITARY_STATE;
     | EXP R_DOT EXP { // EXP.EXP (String Concatenation)
       if($1.token != STRING){ wrongOperation("'.' (String concatenation)",checkType($1.token)); }
       else if($3.token != STRING){ wrongOperation("'.' (String concatenation)",checkType($3.token)); }
@@ -804,66 +992,75 @@
       $$.translation = $2.translation;
       $$.tempVar = $2.tempVar;
     };
-    | VAR {
-      if(!exists($1.id)) { notDeclared($1.id); };
-      $$.tempVar = getVar($1.id).tempVar;
-      $$.token = getVar($1.id).token;
-      $$.value = getVar($1.id).value;
-      $$.id = $1.id;
-    };
-    | CONST {
-      if(!exists($1.id)) { notDeclared($1.id); };
-      $$.tempVar = getVar($1.id).tempVar;
-      $$.token = getVar($1.id).token;
-      $$.value = getVar($1.id).value;
-      $$.id = $1.id;
-    };
-    | INTEGER {
-      $$.tempVar = createTemp($1.token,$1.value);
-      $$.translation = $$.tempVar.name + " = " + $1.value + ";\n\t";
-      $$.value = $1.value;
-      $$.token = INTEGER;
-      $$.tempTranslation = $$.tempVar.translation + " // " + $$.translation;
-    };
-    | FLOAT {
-      $$.tempVar = createTemp($1.token,$1.value);
-      $$.translation = $$.tempVar.name + " = " + $1.value + ";\n\t";
-      $$.value = $1.value;
-      $$.token = FLOAT;
-      $$.tempTranslation = $$.tempVar.translation + " // " + $$.translation;
-    };
-    | BOOLEAN {
-      $$.tempVar = createTemp($1.token,toUpper($1.value));
-      $$.translation = $$.tempVar.name + " = " + toUpper($1.value) + ";\n\t";
-      $$.value = $1.value;
-      $$.token = BOOLEAN;
-      $$.tempTranslation = $$.tempVar.translation + " // " + $$.translation;
-    };
-    | CHARACTER {
-      $$.tempVar = createTemp($1.token,$1.value);
-      $$.translation = $$.tempVar.name + " = " + $1.value + ";\n\t";
-      $$.value = $1.value;
-      $$.token = CHARACTER;
-      $$.tempTranslation = $$.tempVar.translation + " // " + $$.translation;
-    };
-    | STRING {
-      $$.tempVar = createTemp($1.token,$1.value);
-      $$.translation = $$.tempVar.name + " = (char*) " + $1.value + ";\n\t";
-      $$.value = $1.value;
-      $$.token = STRING;
-      $$.tempTranslation = $$.tempVar.translation + " // " + $$.translation;
-    };
+    | PRIMITIVE;
+
+  PRIMITIVE:
+      VAR {
+       if(!exists($1.id)) { notDeclared($1.id); };
+       $$.tempVar = getVar($1.id).tempVar;
+       $$.token = getVar($1.id).token;
+       $$.value = getVar($1.id).value;
+       $$.id = $1.id;
+     };
+     | CONST {
+       if(!exists($1.id)) { notDeclared($1.id); };
+       $$.tempVar = getVar($1.id).tempVar;
+       $$.token = getVar($1.id).token;
+       $$.value = getVar($1.id).value;
+       $$.id = $1.id;
+     };
+     | INTEGER {
+       $$.tempVar = createTemp($1.token,$1.value);
+       $$.translation = $$.tempVar.name + " = " + $1.value + ";\n\t";
+       $$.value = $1.value;
+       $$.token = INTEGER;
+       $$.tempTranslation = $$.tempVar.translation + " // " + $$.translation;
+     };
+     | FLOAT {
+       $$.tempVar = createTemp($1.token,$1.value);
+       $$.translation = $$.tempVar.name + " = " + $1.value + ";\n\t";
+       $$.value = $1.value;
+       $$.token = FLOAT;
+       $$.tempTranslation = $$.tempVar.translation + " // " + $$.translation;
+     };
+     | BOOLEAN {
+       $$.tempVar = createTemp($1.token,toUpper($1.value));
+       $$.translation = $$.tempVar.name + " = " + toUpper($1.value) + ";\n\t";
+       $$.value = $1.value;
+       $$.token = BOOLEAN;
+       $$.tempTranslation = $$.tempVar.translation + " // " + $$.translation;
+     };
+     | CHARACTER {
+       $$.tempVar = createTemp($1.token,$1.value);
+       $$.translation = $$.tempVar.name + " = " + $1.value + ";\n\t";
+       $$.value = $1.value;
+       $$.token = CHARACTER;
+       $$.tempTranslation = $$.tempVar.translation + " // " + $$.translation;
+     };
+     | STRING {
+       $$.tempVar = createTemp($1.token,$1.value);
+       $$.translation = $$.tempVar.name + " = (char*) " + $1.value + ";\n\t";
+       $$.value = $1.value;
+       $$.token = STRING;
+       $$.tempTranslation = $$.tempVar.translation + " // " + $$.translation;
+     };
 
   varConst:
     VAR {
       $$.id = $1.id;
       $$.isVar = true;
-      if(exists($1.id)){ $$.token = getVar($1.id).token; }
+      if(exists($1.id)){
+        $$.tempVar = getVar($1.id).tempVar;
+        $$.token = getVar($1.id).token;
+      }
     };
     | CONST {
       $$.id = $1.id;
       $$.isVar = false;
-      if(exists($1.id)){ $$.token = getVar($1.id).token; }
+      if(exists($1.id)){
+        $$.tempVar = getVar($1.id).tempVar;
+        $$.token = getVar($1.id).token;
+      }
     };
 %%
 
@@ -895,6 +1092,18 @@ void removeFromMemory(temp tempVar){
     if(it->name == tempVar.name){ tempsOnMemory.erase(it); }
     else { ++it; }
   }
+}
+
+string createFunctions(){
+  string result = "";
+  for(func f : functions){
+    cout << f.name << endl;
+    for(temp t : f.params){
+      cout << "\t" << t.name << " " << checkType(t.token) << endl;
+    }
+    result += f.translation + "\n\t";
+  }
+  return result;
 }
 
 string clearMemory(){
@@ -993,6 +1202,9 @@ string checkType(int token){
     case BOOLEAN: return "int";
     case CHARACTER: return "char";
     case STRING: return "string";
+    case VOID: return "void";
+    case MTX_INT: return "int*";
+    case MTX_FLOAT: return "float*";
     default: return "UNDEFINED";
   }
 }

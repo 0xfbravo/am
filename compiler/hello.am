@@ -1,9 +1,4 @@
-a is String
-in:a
-switch a {
-  case "fellipe":
-    out:"acertou"
-    break
-  default:
-    out:"errou"
-}
+a = [10:2] of Int
+a[1,2] = 10
+c = a[1,2]
+out:c
