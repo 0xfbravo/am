@@ -18,48 +18,50 @@ using namespace std;
 
 int main() {
 	/* Declarations */
-	int temp1; // temp1 = 10;
+	int temp1; // temp1 = 2;
 	int temp2; // temp2 = 2;
-	int temp3; // sizeof(int);
+	int temp3; // sizeof(float);
 	int temp4; // temp1 * temp2;
 	int temp5; // temp4 * temp3;
-	int* temp6; // [temp1][temp2];
-	int* temp7; // a
+	float* temp6; // [temp1][temp2];
+	float* temp7; // a
 	int temp8; // temp8 = 1;
-	int temp9; // temp9 = 2;
-	int temp10; // temp10 = 10;
-	int temp11; // 2 * 1;
-	int temp12; // 2 + temp11;
-	int temp13; // temp7[temp12]
-	int temp14; // temp14 = 1;
-	int temp15; // temp15 = 2;
-	int temp16; // 2 * 1;
-	int temp17; // 2 + temp16;
-	int temp18; // temp7[temp17];
-	int temp19; // c
+	int temp9; // temp9 = 1;
+	int temp10; // temp10 = 100;
+	float temp11; // temp11 = 3.2;
+	
+	float temp12; // (float) temp10;
+	float temp13; // temp12 + temp11
+	int temp14; // 2 * 1;
+	int temp15; // 1 + temp14;
+	float temp16; // temp7[temp15]
 	
 	/* Operations */
-	temp1 = 10;
+	temp1 = 2;
 	temp2 = 2;
-	temp3 = sizeof(int);
+	temp3 = sizeof(float);
 	temp4 = temp1 * temp2;
 	temp5 = temp4 * temp3;
-	temp6 = (int*) malloc(temp5);
+	temp6 = (float*) malloc(temp5);
 	memset(temp6,0,temp5);
 	temp7 = temp6;
 	temp8 = 1;
-	temp9 = 2;
-	temp10 = 10;
-	temp11 = 2 * 1;
-	temp12 = 2 + temp11;
-	temp7[temp12] = temp10;
-	temp14 = 1;
-	temp15 = 2;
-	temp16 = 2 * 1;
-	temp17 = 2 + temp16;
-	temp18 = temp7[temp17];
-	temp19 = temp18;
-	cout << temp19 << endl;
+	temp9 = 1;
+	temp10 = 100;
+	temp11 = 3.2;
+	
+	temp12 = (float) temp10;
+	temp13 = temp12 + temp11;
+	temp14 = 2 * 1;
+	temp15 = 1 + temp14;
+	temp7[temp15] = temp13;
+	cout << temp7[ 0 + 2 * 0 ] << " ";
+	cout << temp7[ 1 + 2 * 0 ] << " ";
+	cout << endl;
+	cout << temp7[ 0 + 2 * 1 ] << " ";
+	cout << temp7[ 1 + 2 * 1 ] << " ";
+	cout << endl;
+	cout << endl;
 	
 	/* Free memory */
 	free(temp6);

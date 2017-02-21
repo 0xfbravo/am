@@ -49,6 +49,6 @@ Professor: Filipe Braida
     - Do-while
     - For
     - Switch/Case
-  - Corrigir ```continue``` que está em looping infinito em alguns casos
-  - Corrigir ```break``` após um switch (looping infinito)
-  - Função ```out``` não printa matrizes
+  - Corrigir ```continue``` que está em looping infinito em alguns casos *GRAVE*
+  - Corrigir ```break``` após um switch (looping infinito) *GRAVE*
+  - Parâmetros da função estão sendo reconhecidos no escopo global *GRAVE*

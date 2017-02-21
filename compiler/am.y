@@ -61,6 +61,7 @@
   void yyerror(string);
 
   /* Messages */
+  void outOfRange(string,int,int);
   void notDeclared(string);
   void constWontChangeValue(string);
   void alreadyDeclared(string,string);
@@ -381,6 +382,9 @@
       if($3.token != INTEGER){ wrongOperation("'[Int,Int]' (Matrix Assignment)",checkType($3.token)); }
       if($5.token != INTEGER){ wrongOperation("'[Int,int]' (Matrix Assignment)",checkType($5.token)); }
       if($8.token != $1.tempVar.tokenAccessMatrix){ wrongOperation("'[Int,int]' (Matrix Assignment)",checkType($8.token)); }
+      if((stoi($5.value) < 0) || (stoi($3.value) < 0) || (stoi($5.value) >= $1.tempVar.col) || (stoi($3.value) >= $1.tempVar.ln)){
+        outOfRange($1.id,stoi($3.value),stoi($5.value));
+      }
 
       temp calcLineColumnTemp1 = createTemp(INTEGER,to_string($1.tempVar.col) + " * " + $3.value + ";");
       temp calcLineColumnTemp2 = createTemp(INTEGER,$5.value + " + " + calcLineColumnTemp1.name + ";");
@@ -662,14 +666,21 @@
   OUT:
     R_OUT COLON EXP COMMA_OUT {
       temp t = $3.tempVar;
-      $$.tempTranslation =
-        $4.tempTranslation.empty() ?
-          $3.tempTranslation :
-          $3.tempTranslation + $4.tempTranslation;
-      $$.translation =
-        $4.tempTranslation.empty() ?
-          $3.translation + "cout << " + t.name + " << endl;\n\t" :
-          $3.translation + "cout << " + t.name + " << \" \";\n\t" + $4.translation + "cout << endl;\n\t";
+      $$.tempTranslation = $3.tempTranslation + $4.tempTranslation;
+      $$.translation = $3.translation + "cout << " + t.name + " << \" \";\n\t" + $4.translation + "cout << endl;\n\t";
+
+      if($3.token == MTX_INT || $3.token == MTX_FLOAT || $1.token == MTX_STRING ||
+         $3.token == MTX_CHAR || $3.token == MTX_BOOLEAN){
+           $$.tempTranslation = $3.tempTranslation + $4.tempTranslation;
+           string result = "";
+           for(int i = 0; i < t.ln; i++){
+             for(int j = 0; j < t.col; j++){
+               result += "cout << " + t.name + "[ "+ to_string(j) +" + "+ to_string(t.col) +" * "+to_string(i)+" ] << \" \";\n\t";
+             }
+             result += "cout << endl;\n\t";
+           }
+           $$.translation = result + $4.translation + "cout << endl;\n\t";
+      }
     };
 
   COMMA_OUT:
@@ -734,6 +745,9 @@
           $1.token != MTX_CHAR && $1.token != MTX_BOOLEAN) { wrongOperation("'[Int,Int]' (Matrix Access)",checkType($1.token));  }
       if($3.token != INTEGER){ wrongOperation("'[Int,Int]' (Matrix Access)",checkType($3.token)); }
       if($5.token != INTEGER){ wrongOperation("'[Int,int]' (Matrix Access)",checkType($5.token)); }
+      if((stoi($5.value) < 0) || (stoi($3.value) < 0) || (stoi($5.value) >= $1.tempVar.col) || (stoi($3.value) >= $1.tempVar.ln)){
+        outOfRange($1.id,stoi($3.value),stoi($5.value));
+      }
 
       temp calcLineColumnTemp1 = createTemp(INTEGER,to_string($1.tempVar.col) + " * " + $3.value + ";");
       temp calcLineColumnTemp2 = createTemp(INTEGER,$5.value + " + " + calcLineColumnTemp1.name + ";");
@@ -1127,6 +1141,11 @@ string actualLine(){
           Messages
   ------------------------
 */
+void outOfRange(string name, int ln, int col){
+  cout << colorText("error:"+actualLine()+": ",hexToRGB(RED)) << colorText(name,hexToRGB(AQUA)) << "[" << ln << "," << col << "] is " << colorText("OUT",hexToRGB(RED)) << " of range." << endl;
+  exit(1);
+}
+
 void notDeclared(string name){
   cout << colorText("error:"+actualLine()+": ",hexToRGB(RED)) << colorText(name,hexToRGB(AQUA)) << " wasn't " << colorText("declared",hexToRGB(GREEN)) << " previously." << endl;
   exit(1);
@@ -1205,6 +1224,9 @@ string checkType(int token){
     case VOID: return "void";
     case MTX_INT: return "int*";
     case MTX_FLOAT: return "float*";
+    case MTX_CHAR: return "char*";
+    case MTX_STRING: return "char**";
+    case MTX_BOOLEAN: return "int*";
     default: return "UNDEFINED";
   }
 }
