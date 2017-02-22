@@ -44,11 +44,10 @@ Professor: Filipe Braida
   - Atribuição de múltiplas variáveis
 
 ### Problemas conhecidos
+  - Corrigir 4 Shift/Reduce (If/Else/Elseif)
   - Corrigir ```\n``` nas funções
-    - If/Else/ElseIf
     - Do-while
     - For
     - Switch/Case
   - Corrigir ```continue``` que está em looping infinito em alguns casos *GRAVE*
   - Corrigir ```break``` após um switch (looping infinito) *GRAVE*
-  - Parâmetros da função estão sendo reconhecidos no escopo global *GRAVE*

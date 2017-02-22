@@ -22,7 +22,6 @@
   long long tempCount = 0;
   long long scopesCount = 0;
   long long switchCount = 0;
-  bool onSwitch = false;
 
   /* Structs */
   struct temp {
@@ -141,7 +140,7 @@
       "#define FALSE 0" << endl <<
       "#define MAX_BUFFER_SIZE 300\n" << endl <<
       "/* Functions */" << endl <<
-      createFunctions() << "\n" << endl <<
+      createFunctions() << endl <<
       "int main() {" << endl <<
       "\t/* Declarations */" << endl <<
       "\t" << $$.tempTranslation << endl <<
@@ -242,12 +241,12 @@
     };
 
   ELSES:
-    ELSES ELSE {
+    ELSE ELSES {
       $$.translation = $1.translation + $2.translation;
       $$.tempTranslation = $1.tempTranslation + $2.tempTranslation;
       $$.scopesLabels = $1.scopesLabels + $2.scopesLabels;
     };
-    | END_LINE {
+    | {
       $$.translation = "";
       $$.tempTranslation = "";
       $$.scopesLabels = "";
@@ -259,6 +258,7 @@
       $$.tempTranslation = $2.tempTranslation;
       $$.scopesLabels = $2.scopesLabels;
     };
+    | END_LINE;
 
   ELSEIF:
     IF;
@@ -276,42 +276,52 @@
     };
 
   FOR:
-    R_FOR '(' ASSIGNMENT_STATE SEMI_COLON EXP SEMI_COLON UNITARY_STATE ')' BLOCK {
-      if($5.token != BOOLEAN){ wrongOperation("for",checkType($5.token)); }
+    R_FOR START_SCOPE '(' ASSIGNMENT_STATE SEMI_COLON EXP SEMI_COLON FOR_EXP_STATE ')' BLOCK END_SCOPE {
+      if($6.token != BOOLEAN){ wrongOperation("for(;;)",checkType($6.token)); }
       scopesCount++;
-      $$.tempTranslation = $3.tempTranslation + $5.tempTranslation +
-        $7.tempTranslation + $9.tempTranslation;
-      $$.translation = $3.translation +
+      $$.tempTranslation = $4.tempTranslation + $6.tempTranslation +
+        $8.tempTranslation + $10.tempTranslation;
+      $$.translation = $4.translation +
         "BLOCK_LABEL_" + to_string(scopesCount) + "_BEGIN:\n\t" +
-        $5.translation +
-        "if(" + $5.tempVar.name +") goto BLOCK_LABEL_" + to_string(scopesCount) + ";\n\t" +
+        $6.translation +
+        "if(" + $6.tempVar.name +") goto BLOCK_LABEL_" + to_string(scopesCount) + ";\n\t" +
         "BLOCK_LABEL_" + to_string(scopesCount) + "_END:\n\t";
       $$.scopesLabels =
-        $9.scopesLabels +
+        $10.scopesLabels +
         "BLOCK_LABEL_" + to_string(scopesCount) + ":\n\t" +
-        $9.translation + $7.translation +
+        $10.translation + $8.translation +
         "goto BLOCK_LABEL_" + to_string(scopesCount) + "_BEGIN;\n\t";
     };
 
+  FOR_EXP_STATE:
+    UNITARY_STATE {
+      $$.translation = $1.translation;
+      $$.tempTranslation = $1.tempTranslation;
+    };
+    | ASSIGNMENT_STATE {
+      $$.translation = $1.translation;
+      $$.tempTranslation = $1.tempTranslation;
+    };
+
   SWITCH:
-    R_SWITCH EXP BLOCK_INIT END_LINE CASES BLOCK_END {
+    R_SWITCH EXP START_SCOPE BLOCK_INIT END_LINE CASES BLOCK_END END_SCOPE {
       scopesCount++;
       switchCount++;
       $$.translation =
         $2.translation +
         "tempSwitch" + to_string(switchCount-1) + " = " + $2.tempVar.name + ";\n\t" +
-        $5.translation +
+        $6.translation +
         "BLOCK_LABEL_"+to_string(scopesCount)+"_END:\n\t";
       $$.tempTranslation =
         $2.token == STRING ?
           $2.tempTranslation +
-          $5.tempTranslation +
+          $6.tempTranslation +
           checkType(CHARACTER) + "* tempSwitch" + to_string(switchCount-1) + "; // tempSwitch = " + to_string(switchCount) + "\n\t"
           :
           $2.tempTranslation +
-          $5.tempTranslation +
+          $6.tempTranslation +
           checkType($2.token) + " tempSwitch" + to_string(switchCount-1) + "; // tempSwitch = " + to_string(switchCount) + "\n\t";
-      $$.scopesLabels = $5.scopesLabels;
+      $$.scopesLabels = $6.scopesLabels;
     };
 
   CASES:
@@ -327,7 +337,7 @@
     };
 
   CASE:
-    R_CASE EXP COLON CMDS {
+    R_CASE EXP COLON START_SCOPE CMDS END_SCOPE {
       scopesCount++;
       map<string,attr> newScope;
       scopes.push_back(newScope);
@@ -337,7 +347,7 @@
           createTemp(BOOLEAN,$2.tempVar.name + " == tempSwitch" + to_string(switchCount) + ";");
       $$.tempTranslation =
         $2.tempTranslation +
-        $4.tempTranslation +
+        $5.tempTranslation +
         t.translation + " // " + t.value + "\n\t";
       $$.translation =
         $2.translation +
@@ -346,15 +356,15 @@
         "BLOCK_LABEL_" + to_string(scopesCount) + "_END:\n\t";
 
       $$.scopesLabels =
-        $4.scopesLabels +
+        $5.scopesLabels +
         "BLOCK_LABEL_" + to_string(scopesCount) + ":\n\t" +
-        $4.translation;
+        $5.translation;
 
       scopes.pop_back();
     };
 
   DEFAULT:
-    R_DEFAULT COLON CMDS {
+    R_DEFAULT COLON START_SCOPE CMDS END_SCOPE {
       scopesCount++;
       map<string,attr> newScope;
       scopes.push_back(newScope);
@@ -362,21 +372,18 @@
       $$.translation =
         "goto BLOCK_LABEL_" + to_string(scopesCount) + ";\n\t" +
         "BLOCK_LABEL_" + to_string(scopesCount) + "_END:\n\t";
-      $$.tempTranslation = $3.tempTranslation;
+      $$.tempTranslation = $4.tempTranslation;
       $$.scopesLabels =
-        $3.scopesLabels +
+        $4.scopesLabels +
         "BLOCK_LABEL_" + to_string(scopesCount) + ":\n\t" +
-        $3.translation;
+        $4.translation;
 
       scopes.pop_back();
     };
 
   BREAK:
     R_BREAK {
-      $$.translation =
-        onSwitch ?
-        "goto BLOCK_LABEL_" + to_string(scopes.size()+1) + "_END;\n\t" :
-        "goto BLOCK_LABEL_" + to_string(scopes.size()) + "_END;\n\t";
+      $$.translation = "goto BLOCK_LABEL_" + to_string(scopes.size()+1) + "_END;\n\t";
     };
 
   CONTINUE:
@@ -908,7 +915,7 @@
         }
         else if($1.token == FLOAT && $3.token == INTEGER){ // float EQUALITY_TEST int -> float
           t = createTemp(FLOAT, "(float) " + $3.tempVar.name + ";");
-          op = createTemp(BOOLEAN,t.name + " "+ $2.operation +" " + $1.tempVar.name);
+          op = createTemp(BOOLEAN,$1.tempVar.name + " "+ $2.operation +" " + t.name);
           $$.tempTranslation = $$.tempTranslation + t.translation + " // " + t.value + "\n\t";
           $$.translation = $$.translation + t.name + " = " + t.value + ";\n\t";
         }
@@ -939,7 +946,7 @@
       }
       else if($1.token == FLOAT && $3.token == INTEGER){ // float ORDER_RELATION int -> float
         t = createTemp(FLOAT, "(float) " + $3.tempVar.name + ";");
-        op = createTemp(BOOLEAN,t.name + " "+ $2.operation +" " + $1.tempVar.name);
+        op = createTemp(BOOLEAN,$1.tempVar.name + " "+ $2.operation +" " + t.name);
         $$.tempTranslation = $$.tempTranslation + t.translation + " // " + t.value + "\n\t";
         $$.translation = $$.translation + t.name + " = " + t.value + ";\n\t";
       }
