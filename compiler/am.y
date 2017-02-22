@@ -70,6 +70,7 @@
 
   /* VarMap Functions */
   bool exists(string);
+  bool existsOnScope(string);
   void addVar(temp,string,bool,string,int);
   attr getVar(string);
   string checkType(int);
@@ -157,10 +158,10 @@
     };
 
   BLOCK:
-    START_SCOPE BLOCK_INIT CMDS BLOCK_END END_SCOPE {
-      $$.translation =  $3.translation;
-      $$.tempTranslation = $3.tempTranslation;
-      $$.scopesLabels = $3.scopesLabels;
+    BLOCK_INIT CMDS BLOCK_END {
+      $$.translation =  $2.translation;
+      $$.tempTranslation = $2.tempTranslation;
+      $$.scopesLabels = $2.scopesLabels;
     };
 
   START_SCOPE:
@@ -190,7 +191,7 @@
     };
 
   WHILE:
-    R_WHILE EXP BLOCK {
+    R_WHILE EXP START_SCOPE BLOCK END_SCOPE {
       if($2.token != BOOLEAN){  wrongOperation("while",checkType($2.token)); }
       scopesCount++;
       $$.translation =
@@ -198,46 +199,58 @@
         $2.translation +
         "if(" + $2.tempVar.name + ") goto BLOCK_LABEL_" + to_string(scopesCount) +";\n\t" +
         "BLOCK_LABEL_" + to_string(scopesCount) + "_END:\n\t";
-      $$.tempTranslation = $2.tempTranslation + $3.tempTranslation;
+      $$.tempTranslation = $2.tempTranslation + $4.tempTranslation;
       $$.scopesLabels =
         "BLOCK_LABEL_" + to_string(scopesCount) + ":\n\t" +
-        $3.translation +
+        $4.translation +
         "goto BLOCK_LABEL_" + to_string(scopesCount) + "_BEGIN;\n\t";
     };
 
   DO_WHILE:
-    R_DO BLOCK R_WHILE EXP{
-      if($4.token != BOOLEAN){  wrongOperation("do-while",checkType($4.token)); }
+    R_DO START_SCOPE BLOCK END_SCOPE R_WHILE EXP {
+      if($6.token != BOOLEAN){  wrongOperation("do-while",checkType($6.token)); }
       scopesCount++;
       $$.translation =
         "BLOCK_LABEL_" + to_string(scopesCount) + "_BEGIN:\n\t" +
-        $2.translation +
+        $3.translation +
         "goto BLOCK_LABEL_" + to_string(scopesCount) +";\n\t" +
         "BLOCK_LABEL_" + to_string(scopesCount) + "_END:\n\t";
-      $$.tempTranslation = $2.tempTranslation + $4.tempTranslation;
+      $$.tempTranslation = $3.tempTranslation + $6.tempTranslation;
       $$.scopesLabels =
-        $2.scopesLabels +
+        $3.scopesLabels +
         "BLOCK_LABEL_" + to_string(scopesCount) + ":\n\t" +
-        $4.translation +
-        "if(" + $4.tempVar.name + ") goto BLOCK_LABEL_" + to_string(scopesCount) +"_BEGIN;\n\t" +
+        $6.translation +
+        "if(" + $6.tempVar.name + ") goto BLOCK_LABEL_" + to_string(scopesCount) +"_BEGIN;\n\t" +
         "goto BLOCK_LABEL_" + to_string(scopesCount) + "_END;\n\t";
     };
 
   IF:
-    R_IF EXP BLOCK ELSE {
+    R_IF EXP START_SCOPE BLOCK END_SCOPE ELSES {
       if($2.token != BOOLEAN){ wrongOperation("if",checkType($2.token)); }
       scopesCount++;
       $$.translation =
         $2.translation +
         "if (" + $2.tempVar.name + ") goto BLOCK_LABEL_" + to_string(scopesCount) + ";\n\t" +
-        $4.translation +
+        $6.translation +
         "BLOCK_LABEL_" + to_string(scopesCount) + "_END:\n\t";
-      $$.tempTranslation = $2.tempTranslation + $3.tempTranslation + $4.tempTranslation;
+      $$.tempTranslation = $2.tempTranslation + $4.tempTranslation + $6.tempTranslation;
       $$.scopesLabels =
         "BLOCK_LABEL_" + to_string(scopesCount) + ":\n\t" +
-        $3.translation +
+        $4.translation +
         "goto BLOCK_LABEL_" + to_string(scopesCount) + "_END;\n\t" +
-        $4.scopesLabels;
+        $6.scopesLabels;
+    };
+
+  ELSES:
+    ELSES ELSE {
+      $$.translation = $1.translation + $2.translation;
+      $$.tempTranslation = $1.tempTranslation + $2.tempTranslation;
+      $$.scopesLabels = $1.scopesLabels + $2.scopesLabels;
+    };
+    | END_LINE {
+      $$.translation = "";
+      $$.tempTranslation = "";
+      $$.scopesLabels = "";
     };
 
   ELSE:
@@ -246,20 +259,19 @@
       $$.tempTranslation = $2.tempTranslation;
       $$.scopesLabels = $2.scopesLabels;
     };
-    |;
 
   ELSEIF:
     IF;
-    | BLOCK {
+    | START_SCOPE BLOCK END_SCOPE {
       scopesCount++;
-      $$.tempTranslation = $1.tempTranslation;
+      $$.tempTranslation = $2.tempTranslation;
       $$.translation =
         "else goto BLOCK_LABEL_"+ to_string(scopesCount) +";\n\t" +
         "BLOCK_LABEL_" + to_string(scopesCount) + "_END:\n\t";
       $$.scopesLabels =
-        $1.scopesLabels +
+        $2.scopesLabels +
         "BLOCK_LABEL_" + to_string(scopesCount) + ":\n\t" +
-        $1.translation +
+        $2.translation +
         "goto BLOCK_LABEL_" + to_string(scopesCount) + "_END;\n\t";
     };
 
@@ -376,7 +388,7 @@
   ASSIGNMENT_STATE:
     varConst MATRIX_INIT PRIMITIVE COMMA PRIMITIVE MATRIX_END ASSIGNMENT EXP {
       string name = $1.isVar ? $1.id : $1.id.erase(0,1);
-      if(!exists(name)){ notDeclared($1.id); }
+      if(!existsOnScope(name)){ notDeclared($1.id); }
       if($1.token != MTX_INT && $1.token != MTX_FLOAT && $1.token != MTX_STRING &&
          $1.token != MTX_CHAR && $1.token != MTX_BOOLEAN) { wrongOperation("'[Int,Int]' (Matrix Assignment)",checkType($1.token));  }
       if($3.token != INTEGER){ wrongOperation("'[Int,Int]' (Matrix Assignment)",checkType($3.token)); }
@@ -414,7 +426,7 @@
     | varConst ASSIGNMENT EXP { // varConst = EXP
       string name = $1.isVar ? $1.id : $1.id.erase(0,1);
 
-      if(!(exists(name))) { // Var/Const Not Declared
+      if(!(existsOnScope(name))) { // Var/Const Not Declared
         $1.tempVar = createTemp($3.token,$3.translation);
         $1.tempVar.ln = $3.tempVar.ln;
         $1.tempVar.col = $3.tempVar.col;
@@ -478,15 +490,15 @@
     };
 
   FUNCTION_STATE:
-    varConst '(' PARAMS ')' BLOCK {
-      $5.translation.pop_back();
+    varConst START_SCOPE '(' PARAMS ')' BLOCK END_SCOPE {
+      $6.translation.pop_back();
       func f;
       f.name = $1.id;
       f.returnType = VOID;
       f.translation =
-        checkType(VOID) + " " + f.name + " (" + $3.paramTranslation + ") {\n\t" +
-          $5.tempTranslation +
-          $5.translation +
+        checkType(VOID) + " " + f.name + " (" + $4.paramTranslation + ") {\n\t" +
+          $6.tempTranslation +
+          $6.translation +
         "}";
       f.params = functionsParams;
       functionsParams.clear();
@@ -519,7 +531,10 @@
     IS {
       $$.translation = $1.translation;
       $$.tempTranslation = $1.tempTranslation;
-      $$.paramTranslation = checkType($1.tempVar.token) + " " + $1.tempVar.name;
+      $$.paramTranslation =
+        $1.tempVar.token == STRING ?
+        "char* " + $1.tempVar.name :
+        checkType($1.tempVar.token) + " " + $1.tempVar.name;
       functionsParams.push_back($1.tempVar);
     };
 
@@ -543,7 +558,11 @@
     | ASSIGNMENT_STATE SEMI_COLON;
     | UNITARY_STATE;
     | UNITARY_STATE SEMI_COLON;
-    | BLOCK;
+    | START_SCOPE BLOCK END_SCOPE {
+      $$.tempTranslation = $2.tempTranslation;
+      $$.translation = $2.translation;
+      $$.scopesLabels = $2.scopesLabels;
+    };
 
   UNITARY_STATE:
     varConst R_UP {
@@ -1249,6 +1268,15 @@ bool exists(string varName){
   for(int i = 0; i < scopes.size(); i++){
       scopeIterator = scopes[i].find(varName);
       if(scopeIterator != scopes[i].end()){ return true; }
+  }
+  scopeIterator = globalScope.find(varName);
+  return !(scopeIterator == globalScope.end());
+}
+
+bool existsOnScope(string varName){
+  if(scopes.size() >= 1){
+    scopeIterator = scopes.back().find(varName);
+    return !(scopeIterator == scopes.back().end());
   }
   scopeIterator = globalScope.find(varName);
   return !(scopeIterator == globalScope.end());

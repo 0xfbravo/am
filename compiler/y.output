@@ -9,13 +9,16 @@ Terminals unused in grammar
    VOID
 
 
+State 144 conflicts: 1 shift/reduce
+
+
 Grammar
 
     0 $accept: BEFORE_THE_BEGINNING $end
 
     1 BEFORE_THE_BEGINNING: CMDS
 
-    2 BLOCK: START_SCOPE BLOCK_INIT CMDS BLOCK_END END_SCOPE
+    2 BLOCK: BLOCK_INIT CMDS BLOCK_END
 
     3 START_SCOPE: %empty
 
@@ -24,170 +27,172 @@ Grammar
     5 CMDS: CMD CMDS
     6     | %empty
 
-    7 WHILE: R_WHILE EXP BLOCK
+    7 WHILE: R_WHILE EXP START_SCOPE BLOCK END_SCOPE
 
-    8 DO_WHILE: R_DO BLOCK R_WHILE EXP
+    8 DO_WHILE: R_DO START_SCOPE BLOCK END_SCOPE R_WHILE EXP
 
-    9 IF: R_IF EXP BLOCK ELSE
+    9 IF: R_IF EXP START_SCOPE BLOCK END_SCOPE ELSES
 
-   10 ELSE: R_ELSE ELSEIF
-   11     | %empty
+   10 ELSES: ELSES ELSE
+   11      | END_LINE
 
-   12 ELSEIF: IF
-   13       | BLOCK
+   12 ELSE: R_ELSE ELSEIF
 
-   14 FOR: R_FOR '(' ASSIGNMENT_STATE SEMI_COLON EXP SEMI_COLON UNITARY_STATE ')' BLOCK
+   13 ELSEIF: IF
+   14       | START_SCOPE BLOCK END_SCOPE
 
-   15 SWITCH: R_SWITCH EXP BLOCK_INIT END_LINE CASES BLOCK_END
+   15 FOR: R_FOR '(' ASSIGNMENT_STATE SEMI_COLON EXP SEMI_COLON UNITARY_STATE ')' BLOCK
 
-   16 CASES: CASE DEFAULT
-   17      | CASE CASES
+   16 SWITCH: R_SWITCH EXP BLOCK_INIT END_LINE CASES BLOCK_END
 
-   18 CASE: R_CASE EXP COLON CMDS
+   17 CASES: CASE DEFAULT
+   18      | CASE CASES
 
-   19 DEFAULT: R_DEFAULT COLON CMDS
+   19 CASE: R_CASE EXP COLON CMDS
 
-   20 BREAK: R_BREAK
+   20 DEFAULT: R_DEFAULT COLON CMDS
 
-   21 CONTINUE: R_CONTINUE
+   21 BREAK: R_BREAK
 
-   22 ASSIGNMENT_STATE: varConst MATRIX_INIT PRIMITIVE COMMA PRIMITIVE MATRIX_END ASSIGNMENT EXP
-   23                 | varConst ASSIGNMENT EXP
+   22 CONTINUE: R_CONTINUE
 
-   24 FUNCTION_STATE: varConst '(' PARAMS ')' BLOCK
+   23 ASSIGNMENT_STATE: varConst MATRIX_INIT PRIMITIVE COMMA PRIMITIVE MATRIX_END ASSIGNMENT EXP
+   24                 | varConst ASSIGNMENT EXP
 
-   25 PARAMS: PARAM COMMA_PARAMS
-   26       | %empty
+   25 FUNCTION_STATE: varConst START_SCOPE '(' PARAMS ')' BLOCK END_SCOPE
 
-   27 COMMA_PARAMS: COMMA PARAM COMMA_PARAMS
-   28             | %empty
+   26 PARAMS: PARAM COMMA_PARAMS
+   27       | %empty
 
-   29 PARAM: IS
+   28 COMMA_PARAMS: COMMA PARAM COMMA_PARAMS
+   29             | %empty
 
-   30 CMD: FUNCTION_STATE
-   31    | IF
-   32    | WHILE
-   33    | DO_WHILE
-   34    | END_LINE
-   35    | FOR
-   36    | SWITCH
-   37    | BREAK
-   38    | CONTINUE
-   39    | IS
-   40    | IN
-   41    | OUT
-   42    | IS SEMI_COLON
-   43    | IN SEMI_COLON
-   44    | OUT SEMI_COLON
-   45    | ASSIGNMENT_STATE
-   46    | ASSIGNMENT_STATE SEMI_COLON
-   47    | UNITARY_STATE
-   48    | UNITARY_STATE SEMI_COLON
-   49    | BLOCK
+   30 PARAM: IS
 
-   50 UNITARY_STATE: varConst R_UP
-   51              | varConst R_UM
+   31 CMD: FUNCTION_STATE
+   32    | IF
+   33    | WHILE
+   34    | DO_WHILE
+   35    | END_LINE
+   36    | FOR
+   37    | SWITCH
+   38    | BREAK
+   39    | CONTINUE
+   40    | IS
+   41    | IN
+   42    | OUT
+   43    | IS SEMI_COLON
+   44    | IN SEMI_COLON
+   45    | OUT SEMI_COLON
+   46    | ASSIGNMENT_STATE
+   47    | ASSIGNMENT_STATE SEMI_COLON
+   48    | UNITARY_STATE
+   49    | UNITARY_STATE SEMI_COLON
+   50    | START_SCOPE BLOCK END_SCOPE
 
-   52 IS: varConst R_IS TYPE
+   51 UNITARY_STATE: varConst R_UP
+   52              | varConst R_UM
 
-   53 TYPE: INTEGER
-   54     | FLOAT
-   55     | BOOLEAN
-   56     | CHARACTER
-   57     | STRING
+   53 IS: varConst R_IS TYPE
 
-   58 IN: R_IN COLON varConst
+   54 TYPE: INTEGER
+   55     | FLOAT
+   56     | BOOLEAN
+   57     | CHARACTER
+   58     | STRING
 
-   59 OUT: R_OUT COLON EXP COMMA_OUT
+   59 IN: R_IN COLON varConst
 
-   60 COMMA_OUT: COMMA EXP COMMA_OUT
-   61          | %empty
+   60 OUT: R_OUT COLON EXP COMMA_OUT
 
-   62 MATRIX_INIT_STATE: MATRIX_INIT PRIMITIVE COLON PRIMITIVE MATRIX_END R_OF TYPE
+   61 COMMA_OUT: COMMA EXP COMMA_OUT
+   62          | %empty
 
-   63 MATRIX_ACCESS_STATE: varConst MATRIX_INIT PRIMITIVE COMMA PRIMITIVE MATRIX_END
+   63 MATRIX_INIT_STATE: MATRIX_INIT PRIMITIVE COLON PRIMITIVE MATRIX_END R_OF TYPE
 
-   64 EXP: MATRIX_INIT_STATE
-   65    | MATRIX_ACCESS_STATE
-   66    | UNITARY_STATE
-   67    | EXP R_DOT EXP
-   68    | EXP COLON COLON EXPLICIT_TYPE
-   69    | EXP BOOLEAN_LOGIC EXP
-   70    | NOT EXP
-   71    | EXP QUESTION EXP COLON EXP
-   72    | EXP EQUALITY_TEST EXP
-   73    | EXP ORDER_RELATION EXP
-   74    | EXP ARITHMETIC_1 EXP
-   75    | EXP ARITHMETIC_2 EXP
-   76    | '(' EXP ')'
-   77    | PRIMITIVE
+   64 MATRIX_ACCESS_STATE: varConst MATRIX_INIT PRIMITIVE COMMA PRIMITIVE MATRIX_END
 
-   78 PRIMITIVE: VAR
-   79          | CONST
-   80          | INTEGER
-   81          | FLOAT
-   82          | BOOLEAN
-   83          | CHARACTER
-   84          | STRING
+   65 EXP: MATRIX_INIT_STATE
+   66    | MATRIX_ACCESS_STATE
+   67    | UNITARY_STATE
+   68    | EXP R_DOT EXP
+   69    | EXP COLON COLON EXPLICIT_TYPE
+   70    | EXP BOOLEAN_LOGIC EXP
+   71    | NOT EXP
+   72    | EXP QUESTION EXP COLON EXP
+   73    | EXP EQUALITY_TEST EXP
+   74    | EXP ORDER_RELATION EXP
+   75    | EXP ARITHMETIC_1 EXP
+   76    | EXP ARITHMETIC_2 EXP
+   77    | '(' EXP ')'
+   78    | PRIMITIVE
 
-   85 varConst: VAR
-   86         | CONST
+   79 PRIMITIVE: VAR
+   80          | CONST
+   81          | INTEGER
+   82          | FLOAT
+   83          | BOOLEAN
+   84          | CHARACTER
+   85          | STRING
+
+   86 varConst: VAR
+   87         | CONST
 
 
 Terminals, with rules where they appear
 
 $end (0) 0
-'(' (40) 14 24 76
-')' (41) 14 24 76
+'(' (40) 15 25 77
+')' (41) 15 25 77
 error (256)
-BLOCK_INIT (258) 2 15
-BLOCK_END (259) 2 15
-SEMI_COLON (260) 14 42 43 44 46 48
-MATRIX_INIT (261) 22 62 63
-MATRIX_END (262) 22 62 63
-R_UP (263) 50
-R_UM (264) 51
+BLOCK_INIT (258) 2 16
+BLOCK_END (259) 2 16
+SEMI_COLON (260) 15 43 44 45 47 49
+MATRIX_INIT (261) 23 63 64
+MATRIX_END (262) 23 63 64
+R_UP (263) 51
+R_UM (264) 52
 RETURN (265)
 R_IF (266) 9
-R_ELSE (267) 10
+R_ELSE (267) 12
 R_WHILE (268) 7 8
 R_DO (269) 8
-R_FOR (270) 14
-R_SWITCH (271) 15
-R_CASE (272) 18
-R_DEFAULT (273) 19
-R_BREAK (274) 20
-R_CONTINUE (275) 21
-R_IN (276) 58
-R_OUT (277) 59
-R_IS (278) 52
-R_DOT (279) 67
-R_OF (280) 62
+R_FOR (270) 15
+R_SWITCH (271) 16
+R_CASE (272) 19
+R_DEFAULT (273) 20
+R_BREAK (274) 21
+R_CONTINUE (275) 22
+R_IN (276) 59
+R_OUT (277) 60
+R_IS (278) 53
+R_DOT (279) 68
+R_OF (280) 63
 MTX_INT (281)
 MTX_FLOAT (282)
 MTX_BOOLEAN (283)
 MTX_CHAR (284)
 MTX_STRING (285)
-INTEGER (286) 53 80
-FLOAT (287) 54 81
-BOOLEAN (288) 55 82
-CHARACTER (289) 56 83
-STRING (290) 57 84
+INTEGER (286) 54 81
+FLOAT (287) 55 82
+BOOLEAN (288) 56 83
+CHARACTER (289) 57 84
+STRING (290) 58 85
 VOID (291)
-ARITHMETIC_1 (292) 74
-ARITHMETIC_2 (293) 75
-BOOLEAN_LOGIC (294) 69
-EQUALITY_TEST (295) 72
-ORDER_RELATION (296) 73
-ASSIGNMENT (297) 22 23
-NOT (298) 70
-COLON (299) 18 19 58 59 62 68 71
-QUESTION (300) 71
-COMMA (301) 22 27 60 63
-VAR (302) 78 85
-CONST (303) 79 86
-EXPLICIT_TYPE (304) 68
-END_LINE (305) 15 34
+ARITHMETIC_1 (292) 75
+ARITHMETIC_2 (293) 76
+BOOLEAN_LOGIC (294) 70
+EQUALITY_TEST (295) 73
+ORDER_RELATION (296) 74
+ASSIGNMENT (297) 23 24
+NOT (298) 71
+COLON (299) 19 20 59 60 63 69 72
+QUESTION (300) 72
+COMMA (301) 23 28 61 64
+VAR (302) 79 86
+CONST (303) 80 87
+EXPLICIT_TYPE (304) 69
+END_LINE (305) 11 16 35
 
 
 Nonterminals, with rules where they appear
@@ -197,73 +202,75 @@ $accept (53)
 BEFORE_THE_BEGINNING (54)
     on left: 1, on right: 0
 BLOCK (55)
-    on left: 2, on right: 7 8 9 13 14 24 49
+    on left: 2, on right: 7 8 9 14 15 25 50
 START_SCOPE (56)
-    on left: 3, on right: 2
+    on left: 3, on right: 7 8 9 14 25 50
 END_SCOPE (57)
-    on left: 4, on right: 2
+    on left: 4, on right: 7 8 9 14 25 50
 CMDS (58)
-    on left: 5 6, on right: 1 2 5 18 19
+    on left: 5 6, on right: 1 2 5 19 20
 WHILE (59)
-    on left: 7, on right: 32
+    on left: 7, on right: 33
 DO_WHILE (60)
-    on left: 8, on right: 33
+    on left: 8, on right: 34
 IF (61)
-    on left: 9, on right: 12 31
-ELSE (62)
-    on left: 10 11, on right: 9
-ELSEIF (63)
-    on left: 12 13, on right: 10
-FOR (64)
-    on left: 14, on right: 35
-SWITCH (65)
+    on left: 9, on right: 13 32
+ELSES (62)
+    on left: 10 11, on right: 9 10
+ELSE (63)
+    on left: 12, on right: 10
+ELSEIF (64)
+    on left: 13 14, on right: 12
+FOR (65)
     on left: 15, on right: 36
-CASES (66)
-    on left: 16 17, on right: 15 17
-CASE (67)
-    on left: 18, on right: 16 17
-DEFAULT (68)
-    on left: 19, on right: 16
-BREAK (69)
-    on left: 20, on right: 37
-CONTINUE (70)
+SWITCH (66)
+    on left: 16, on right: 37
+CASES (67)
+    on left: 17 18, on right: 16 18
+CASE (68)
+    on left: 19, on right: 17 18
+DEFAULT (69)
+    on left: 20, on right: 17
+BREAK (70)
     on left: 21, on right: 38
-ASSIGNMENT_STATE (71)
-    on left: 22 23, on right: 14 45 46
-FUNCTION_STATE (72)
-    on left: 24, on right: 30
-PARAMS (73)
-    on left: 25 26, on right: 24
-COMMA_PARAMS (74)
-    on left: 27 28, on right: 25 27
-PARAM (75)
-    on left: 29, on right: 25 27
-CMD (76)
-    on left: 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47
-    48 49, on right: 5
-UNITARY_STATE (77)
-    on left: 50 51, on right: 14 47 48 66
-IS (78)
-    on left: 52, on right: 29 39 42
-TYPE (79)
-    on left: 53 54 55 56 57, on right: 52 62
-IN (80)
-    on left: 58, on right: 40 43
-OUT (81)
+CONTINUE (71)
+    on left: 22, on right: 39
+ASSIGNMENT_STATE (72)
+    on left: 23 24, on right: 15 46 47
+FUNCTION_STATE (73)
+    on left: 25, on right: 31
+PARAMS (74)
+    on left: 26 27, on right: 25
+COMMA_PARAMS (75)
+    on left: 28 29, on right: 26 28
+PARAM (76)
+    on left: 30, on right: 26 28
+CMD (77)
+    on left: 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48
+    49 50, on right: 5
+UNITARY_STATE (78)
+    on left: 51 52, on right: 15 48 49 67
+IS (79)
+    on left: 53, on right: 30 40 43
+TYPE (80)
+    on left: 54 55 56 57 58, on right: 53 63
+IN (81)
     on left: 59, on right: 41 44
-COMMA_OUT (82)
-    on left: 60 61, on right: 59 60
-MATRIX_INIT_STATE (83)
-    on left: 62, on right: 64
-MATRIX_ACCESS_STATE (84)
+OUT (82)
+    on left: 60, on right: 42 45
+COMMA_OUT (83)
+    on left: 61 62, on right: 60 61
+MATRIX_INIT_STATE (84)
     on left: 63, on right: 65
-EXP (85)
-    on left: 64 65 66 67 68 69 70 71 72 73 74 75 76 77, on right: 7
-    8 9 14 15 18 22 23 59 60 67 68 69 70 71 72 73 74 75 76
-PRIMITIVE (86)
-    on left: 78 79 80 81 82 83 84, on right: 22 62 63 77
-varConst (87)
-    on left: 85 86, on right: 22 23 24 50 51 52 58 63
+MATRIX_ACCESS_STATE (85)
+    on left: 64, on right: 66
+EXP (86)
+    on left: 65 66 67 68 69 70 71 72 73 74 75 76 77 78, on right: 7
+    8 9 15 16 19 23 24 60 61 68 69 70 71 72 73 74 75 76 77
+PRIMITIVE (87)
+    on left: 79 80 81 82 83 84 85, on right: 23 63 64 78
+varConst (88)
+    on left: 86 87, on right: 23 24 25 51 52 53 59 64
 
 
 State 0
@@ -287,256 +294,249 @@ State 0
     $default  reduce using rule 3 (START_SCOPE)
 
     BEFORE_THE_BEGINNING  go to state 13
-    BLOCK                 go to state 14
-    START_SCOPE           go to state 15
-    CMDS                  go to state 16
-    WHILE                 go to state 17
-    DO_WHILE              go to state 18
-    IF                    go to state 19
-    FOR                   go to state 20
-    SWITCH                go to state 21
-    BREAK                 go to state 22
-    CONTINUE              go to state 23
-    ASSIGNMENT_STATE      go to state 24
-    FUNCTION_STATE        go to state 25
-    CMD                   go to state 26
-    UNITARY_STATE         go to state 27
-    IS                    go to state 28
-    IN                    go to state 29
-    OUT                   go to state 30
-    varConst              go to state 31
+    START_SCOPE           go to state 14
+    CMDS                  go to state 15
+    WHILE                 go to state 16
+    DO_WHILE              go to state 17
+    IF                    go to state 18
+    FOR                   go to state 19
+    SWITCH                go to state 20
+    BREAK                 go to state 21
+    CONTINUE              go to state 22
+    ASSIGNMENT_STATE      go to state 23
+    FUNCTION_STATE        go to state 24
+    CMD                   go to state 25
+    UNITARY_STATE         go to state 26
+    IS                    go to state 27
+    IN                    go to state 28
+    OUT                   go to state 29
+    varConst              go to state 30
 
 
 State 1
 
-    9 IF: R_IF . EXP BLOCK ELSE
+    9 IF: R_IF . EXP START_SCOPE BLOCK END_SCOPE ELSES
 
-    MATRIX_INIT  shift, and go to state 32
-    INTEGER      shift, and go to state 33
-    FLOAT        shift, and go to state 34
-    BOOLEAN      shift, and go to state 35
-    CHARACTER    shift, and go to state 36
-    STRING       shift, and go to state 37
-    NOT          shift, and go to state 38
-    VAR          shift, and go to state 39
-    CONST        shift, and go to state 40
-    '('          shift, and go to state 41
+    MATRIX_INIT  shift, and go to state 31
+    INTEGER      shift, and go to state 32
+    FLOAT        shift, and go to state 33
+    BOOLEAN      shift, and go to state 34
+    CHARACTER    shift, and go to state 35
+    STRING       shift, and go to state 36
+    NOT          shift, and go to state 37
+    VAR          shift, and go to state 38
+    CONST        shift, and go to state 39
+    '('          shift, and go to state 40
 
-    UNITARY_STATE        go to state 42
-    MATRIX_INIT_STATE    go to state 43
-    MATRIX_ACCESS_STATE  go to state 44
-    EXP                  go to state 45
-    PRIMITIVE            go to state 46
-    varConst             go to state 47
+    UNITARY_STATE        go to state 41
+    MATRIX_INIT_STATE    go to state 42
+    MATRIX_ACCESS_STATE  go to state 43
+    EXP                  go to state 44
+    PRIMITIVE            go to state 45
+    varConst             go to state 46
 
 
 State 2
 
-    7 WHILE: R_WHILE . EXP BLOCK
+    7 WHILE: R_WHILE . EXP START_SCOPE BLOCK END_SCOPE
 
-    MATRIX_INIT  shift, and go to state 32
-    INTEGER      shift, and go to state 33
-    FLOAT        shift, and go to state 34
-    BOOLEAN      shift, and go to state 35
-    CHARACTER    shift, and go to state 36
-    STRING       shift, and go to state 37
-    NOT          shift, and go to state 38
-    VAR          shift, and go to state 39
-    CONST        shift, and go to state 40
-    '('          shift, and go to state 41
+    MATRIX_INIT  shift, and go to state 31
+    INTEGER      shift, and go to state 32
+    FLOAT        shift, and go to state 33
+    BOOLEAN      shift, and go to state 34
+    CHARACTER    shift, and go to state 35
+    STRING       shift, and go to state 36
+    NOT          shift, and go to state 37
+    VAR          shift, and go to state 38
+    CONST        shift, and go to state 39
+    '('          shift, and go to state 40
 
-    UNITARY_STATE        go to state 42
-    MATRIX_INIT_STATE    go to state 43
-    MATRIX_ACCESS_STATE  go to state 44
-    EXP                  go to state 48
-    PRIMITIVE            go to state 46
-    varConst             go to state 47
+    UNITARY_STATE        go to state 41
+    MATRIX_INIT_STATE    go to state 42
+    MATRIX_ACCESS_STATE  go to state 43
+    EXP                  go to state 47
+    PRIMITIVE            go to state 45
+    varConst             go to state 46
 
 
 State 3
 
-    8 DO_WHILE: R_DO . BLOCK R_WHILE EXP
+    8 DO_WHILE: R_DO . START_SCOPE BLOCK END_SCOPE R_WHILE EXP
 
     $default  reduce using rule 3 (START_SCOPE)
 
-    BLOCK        go to state 49
-    START_SCOPE  go to state 15
+    START_SCOPE  go to state 48
 
 
 State 4
 
-   14 FOR: R_FOR . '(' ASSIGNMENT_STATE SEMI_COLON EXP SEMI_COLON UNITARY_STATE ')' BLOCK
+   15 FOR: R_FOR . '(' ASSIGNMENT_STATE SEMI_COLON EXP SEMI_COLON UNITARY_STATE ')' BLOCK
 
-    '('  shift, and go to state 50
+    '('  shift, and go to state 49
 
 
 State 5
 
-   15 SWITCH: R_SWITCH . EXP BLOCK_INIT END_LINE CASES BLOCK_END
+   16 SWITCH: R_SWITCH . EXP BLOCK_INIT END_LINE CASES BLOCK_END
 
-    MATRIX_INIT  shift, and go to state 32
-    INTEGER      shift, and go to state 33
-    FLOAT        shift, and go to state 34
-    BOOLEAN      shift, and go to state 35
-    CHARACTER    shift, and go to state 36
-    STRING       shift, and go to state 37
-    NOT          shift, and go to state 38
-    VAR          shift, and go to state 39
-    CONST        shift, and go to state 40
-    '('          shift, and go to state 41
+    MATRIX_INIT  shift, and go to state 31
+    INTEGER      shift, and go to state 32
+    FLOAT        shift, and go to state 33
+    BOOLEAN      shift, and go to state 34
+    CHARACTER    shift, and go to state 35
+    STRING       shift, and go to state 36
+    NOT          shift, and go to state 37
+    VAR          shift, and go to state 38
+    CONST        shift, and go to state 39
+    '('          shift, and go to state 40
 
-    UNITARY_STATE        go to state 42
-    MATRIX_INIT_STATE    go to state 43
-    MATRIX_ACCESS_STATE  go to state 44
-    EXP                  go to state 51
-    PRIMITIVE            go to state 46
-    varConst             go to state 47
+    UNITARY_STATE        go to state 41
+    MATRIX_INIT_STATE    go to state 42
+    MATRIX_ACCESS_STATE  go to state 43
+    EXP                  go to state 50
+    PRIMITIVE            go to state 45
+    varConst             go to state 46
 
 
 State 6
 
-   20 BREAK: R_BREAK .
+   21 BREAK: R_BREAK .
 
-    $default  reduce using rule 20 (BREAK)
+    $default  reduce using rule 21 (BREAK)
 
 
 State 7
 
-   21 CONTINUE: R_CONTINUE .
+   22 CONTINUE: R_CONTINUE .
 
-    $default  reduce using rule 21 (CONTINUE)
+    $default  reduce using rule 22 (CONTINUE)
 
 
 State 8
 
-   58 IN: R_IN . COLON varConst
+   59 IN: R_IN . COLON varConst
 
-    COLON  shift, and go to state 52
+    COLON  shift, and go to state 51
 
 
 State 9
 
-   59 OUT: R_OUT . COLON EXP COMMA_OUT
+   60 OUT: R_OUT . COLON EXP COMMA_OUT
 
-    COLON  shift, and go to state 53
+    COLON  shift, and go to state 52
 
 
 State 10
 
-   85 varConst: VAR .
-
-    $default  reduce using rule 85 (varConst)
-
-
-State 11
-
-   86 varConst: CONST .
+   86 varConst: VAR .
 
     $default  reduce using rule 86 (varConst)
 
 
+State 11
+
+   87 varConst: CONST .
+
+    $default  reduce using rule 87 (varConst)
+
+
 State 12
 
-   34 CMD: END_LINE .
+   35 CMD: END_LINE .
 
-    $default  reduce using rule 34 (CMD)
+    $default  reduce using rule 35 (CMD)
 
 
 State 13
 
     0 $accept: BEFORE_THE_BEGINNING . $end
 
-    $end  shift, and go to state 54
+    $end  shift, and go to state 53
 
 
 State 14
 
-   49 CMD: BLOCK .
+   50 CMD: START_SCOPE . BLOCK END_SCOPE
 
-    $default  reduce using rule 49 (CMD)
+    BLOCK_INIT  shift, and go to state 54
+
+    BLOCK  go to state 55
 
 
 State 15
-
-    2 BLOCK: START_SCOPE . BLOCK_INIT CMDS BLOCK_END END_SCOPE
-
-    BLOCK_INIT  shift, and go to state 55
-
-
-State 16
 
     1 BEFORE_THE_BEGINNING: CMDS .
 
     $default  reduce using rule 1 (BEFORE_THE_BEGINNING)
 
 
-State 17
+State 16
 
-   32 CMD: WHILE .
-
-    $default  reduce using rule 32 (CMD)
-
-
-State 18
-
-   33 CMD: DO_WHILE .
+   33 CMD: WHILE .
 
     $default  reduce using rule 33 (CMD)
 
 
+State 17
+
+   34 CMD: DO_WHILE .
+
+    $default  reduce using rule 34 (CMD)
+
+
+State 18
+
+   32 CMD: IF .
+
+    $default  reduce using rule 32 (CMD)
+
+
 State 19
 
-   31 CMD: IF .
-
-    $default  reduce using rule 31 (CMD)
-
-
-State 20
-
-   35 CMD: FOR .
-
-    $default  reduce using rule 35 (CMD)
-
-
-State 21
-
-   36 CMD: SWITCH .
+   36 CMD: FOR .
 
     $default  reduce using rule 36 (CMD)
 
 
-State 22
+State 20
 
-   37 CMD: BREAK .
+   37 CMD: SWITCH .
 
     $default  reduce using rule 37 (CMD)
 
 
-State 23
+State 21
 
-   38 CMD: CONTINUE .
+   38 CMD: BREAK .
 
     $default  reduce using rule 38 (CMD)
 
 
-State 24
+State 22
 
-   45 CMD: ASSIGNMENT_STATE .
-   46    | ASSIGNMENT_STATE . SEMI_COLON
+   39 CMD: CONTINUE .
+
+    $default  reduce using rule 39 (CMD)
+
+
+State 23
+
+   46 CMD: ASSIGNMENT_STATE .
+   47    | ASSIGNMENT_STATE . SEMI_COLON
 
     SEMI_COLON  shift, and go to state 56
 
-    $default  reduce using rule 45 (CMD)
+    $default  reduce using rule 46 (CMD)
+
+
+State 24
+
+   31 CMD: FUNCTION_STATE .
+
+    $default  reduce using rule 31 (CMD)
 
 
 State 25
-
-   30 CMD: FUNCTION_STATE .
-
-    $default  reduce using rule 30 (CMD)
-
-
-State 26
 
     5 CMDS: CMD . CMDS
 
@@ -556,171 +556,162 @@ State 26
     BLOCK_INIT  reduce using rule 3 (START_SCOPE)
     $default    reduce using rule 6 (CMDS)
 
-    BLOCK             go to state 14
-    START_SCOPE       go to state 15
+    START_SCOPE       go to state 14
     CMDS              go to state 57
-    WHILE             go to state 17
-    DO_WHILE          go to state 18
-    IF                go to state 19
-    FOR               go to state 20
-    SWITCH            go to state 21
-    BREAK             go to state 22
-    CONTINUE          go to state 23
-    ASSIGNMENT_STATE  go to state 24
-    FUNCTION_STATE    go to state 25
-    CMD               go to state 26
-    UNITARY_STATE     go to state 27
-    IS                go to state 28
-    IN                go to state 29
-    OUT               go to state 30
-    varConst          go to state 31
+    WHILE             go to state 16
+    DO_WHILE          go to state 17
+    IF                go to state 18
+    FOR               go to state 19
+    SWITCH            go to state 20
+    BREAK             go to state 21
+    CONTINUE          go to state 22
+    ASSIGNMENT_STATE  go to state 23
+    FUNCTION_STATE    go to state 24
+    CMD               go to state 25
+    UNITARY_STATE     go to state 26
+    IS                go to state 27
+    IN                go to state 28
+    OUT               go to state 29
+    varConst          go to state 30
+
+
+State 26
+
+   48 CMD: UNITARY_STATE .
+   49    | UNITARY_STATE . SEMI_COLON
+
+    SEMI_COLON  shift, and go to state 58
+
+    $default  reduce using rule 48 (CMD)
 
 
 State 27
 
-   47 CMD: UNITARY_STATE .
-   48    | UNITARY_STATE . SEMI_COLON
-
-    SEMI_COLON  shift, and go to state 58
-
-    $default  reduce using rule 47 (CMD)
-
-
-State 28
-
-   39 CMD: IS .
-   42    | IS . SEMI_COLON
+   40 CMD: IS .
+   43    | IS . SEMI_COLON
 
     SEMI_COLON  shift, and go to state 59
-
-    $default  reduce using rule 39 (CMD)
-
-
-State 29
-
-   40 CMD: IN .
-   43    | IN . SEMI_COLON
-
-    SEMI_COLON  shift, and go to state 60
 
     $default  reduce using rule 40 (CMD)
 
 
-State 30
+State 28
 
-   41 CMD: OUT .
-   44    | OUT . SEMI_COLON
+   41 CMD: IN .
+   44    | IN . SEMI_COLON
 
-    SEMI_COLON  shift, and go to state 61
+    SEMI_COLON  shift, and go to state 60
 
     $default  reduce using rule 41 (CMD)
 
 
-State 31
+State 29
 
-   22 ASSIGNMENT_STATE: varConst . MATRIX_INIT PRIMITIVE COMMA PRIMITIVE MATRIX_END ASSIGNMENT EXP
-   23                 | varConst . ASSIGNMENT EXP
-   24 FUNCTION_STATE: varConst . '(' PARAMS ')' BLOCK
-   50 UNITARY_STATE: varConst . R_UP
-   51              | varConst . R_UM
-   52 IS: varConst . R_IS TYPE
+   42 CMD: OUT .
+   45    | OUT . SEMI_COLON
+
+    SEMI_COLON  shift, and go to state 61
+
+    $default  reduce using rule 42 (CMD)
+
+
+State 30
+
+   23 ASSIGNMENT_STATE: varConst . MATRIX_INIT PRIMITIVE COMMA PRIMITIVE MATRIX_END ASSIGNMENT EXP
+   24                 | varConst . ASSIGNMENT EXP
+   25 FUNCTION_STATE: varConst . START_SCOPE '(' PARAMS ')' BLOCK END_SCOPE
+   51 UNITARY_STATE: varConst . R_UP
+   52              | varConst . R_UM
+   53 IS: varConst . R_IS TYPE
 
     MATRIX_INIT  shift, and go to state 62
     R_UP         shift, and go to state 63
     R_UM         shift, and go to state 64
     R_IS         shift, and go to state 65
     ASSIGNMENT   shift, and go to state 66
-    '('          shift, and go to state 67
+
+    $default  reduce using rule 3 (START_SCOPE)
+
+    START_SCOPE  go to state 67
 
 
-State 32
+State 31
 
-   62 MATRIX_INIT_STATE: MATRIX_INIT . PRIMITIVE COLON PRIMITIVE MATRIX_END R_OF TYPE
+   63 MATRIX_INIT_STATE: MATRIX_INIT . PRIMITIVE COLON PRIMITIVE MATRIX_END R_OF TYPE
 
-    INTEGER    shift, and go to state 33
-    FLOAT      shift, and go to state 34
-    BOOLEAN    shift, and go to state 35
-    CHARACTER  shift, and go to state 36
-    STRING     shift, and go to state 37
+    INTEGER    shift, and go to state 32
+    FLOAT      shift, and go to state 33
+    BOOLEAN    shift, and go to state 34
+    CHARACTER  shift, and go to state 35
+    STRING     shift, and go to state 36
     VAR        shift, and go to state 68
     CONST      shift, and go to state 69
 
     PRIMITIVE  go to state 70
 
 
-State 33
+State 32
 
-   80 PRIMITIVE: INTEGER .
-
-    $default  reduce using rule 80 (PRIMITIVE)
-
-
-State 34
-
-   81 PRIMITIVE: FLOAT .
+   81 PRIMITIVE: INTEGER .
 
     $default  reduce using rule 81 (PRIMITIVE)
 
 
-State 35
+State 33
 
-   82 PRIMITIVE: BOOLEAN .
+   82 PRIMITIVE: FLOAT .
 
     $default  reduce using rule 82 (PRIMITIVE)
 
 
-State 36
+State 34
 
-   83 PRIMITIVE: CHARACTER .
+   83 PRIMITIVE: BOOLEAN .
 
     $default  reduce using rule 83 (PRIMITIVE)
 
 
-State 37
+State 35
 
-   84 PRIMITIVE: STRING .
+   84 PRIMITIVE: CHARACTER .
 
     $default  reduce using rule 84 (PRIMITIVE)
 
 
+State 36
+
+   85 PRIMITIVE: STRING .
+
+    $default  reduce using rule 85 (PRIMITIVE)
+
+
+State 37
+
+   71 EXP: NOT . EXP
+
+    MATRIX_INIT  shift, and go to state 31
+    INTEGER      shift, and go to state 32
+    FLOAT        shift, and go to state 33
+    BOOLEAN      shift, and go to state 34
+    CHARACTER    shift, and go to state 35
+    STRING       shift, and go to state 36
+    NOT          shift, and go to state 37
+    VAR          shift, and go to state 38
+    CONST        shift, and go to state 39
+    '('          shift, and go to state 40
+
+    UNITARY_STATE        go to state 41
+    MATRIX_INIT_STATE    go to state 42
+    MATRIX_ACCESS_STATE  go to state 43
+    EXP                  go to state 71
+    PRIMITIVE            go to state 45
+    varConst             go to state 46
+
+
 State 38
 
-   70 EXP: NOT . EXP
-
-    MATRIX_INIT  shift, and go to state 32
-    INTEGER      shift, and go to state 33
-    FLOAT        shift, and go to state 34
-    BOOLEAN      shift, and go to state 35
-    CHARACTER    shift, and go to state 36
-    STRING       shift, and go to state 37
-    NOT          shift, and go to state 38
-    VAR          shift, and go to state 39
-    CONST        shift, and go to state 40
-    '('          shift, and go to state 41
-
-    UNITARY_STATE        go to state 42
-    MATRIX_INIT_STATE    go to state 43
-    MATRIX_ACCESS_STATE  go to state 44
-    EXP                  go to state 71
-    PRIMITIVE            go to state 46
-    varConst             go to state 47
-
-
-State 39
-
-   78 PRIMITIVE: VAR .
-   85 varConst: VAR .
-
-    MATRIX_INIT  reduce using rule 85 (varConst)
-    R_UP         reduce using rule 85 (varConst)
-    R_UM         reduce using rule 85 (varConst)
-    $default     reduce using rule 78 (PRIMITIVE)
-
-
-State 40
-
-   79 PRIMITIVE: CONST .
-   86 varConst: CONST .
+   79 PRIMITIVE: VAR .
+   86 varConst: VAR .
 
     MATRIX_INIT  reduce using rule 86 (varConst)
     R_UP         reduce using rule 86 (varConst)
@@ -728,61 +719,72 @@ State 40
     $default     reduce using rule 79 (PRIMITIVE)
 
 
+State 39
+
+   80 PRIMITIVE: CONST .
+   87 varConst: CONST .
+
+    MATRIX_INIT  reduce using rule 87 (varConst)
+    R_UP         reduce using rule 87 (varConst)
+    R_UM         reduce using rule 87 (varConst)
+    $default     reduce using rule 80 (PRIMITIVE)
+
+
+State 40
+
+   77 EXP: '(' . EXP ')'
+
+    MATRIX_INIT  shift, and go to state 31
+    INTEGER      shift, and go to state 32
+    FLOAT        shift, and go to state 33
+    BOOLEAN      shift, and go to state 34
+    CHARACTER    shift, and go to state 35
+    STRING       shift, and go to state 36
+    NOT          shift, and go to state 37
+    VAR          shift, and go to state 38
+    CONST        shift, and go to state 39
+    '('          shift, and go to state 40
+
+    UNITARY_STATE        go to state 41
+    MATRIX_INIT_STATE    go to state 42
+    MATRIX_ACCESS_STATE  go to state 43
+    EXP                  go to state 72
+    PRIMITIVE            go to state 45
+    varConst             go to state 46
+
+
 State 41
 
-   76 EXP: '(' . EXP ')'
+   67 EXP: UNITARY_STATE .
 
-    MATRIX_INIT  shift, and go to state 32
-    INTEGER      shift, and go to state 33
-    FLOAT        shift, and go to state 34
-    BOOLEAN      shift, and go to state 35
-    CHARACTER    shift, and go to state 36
-    STRING       shift, and go to state 37
-    NOT          shift, and go to state 38
-    VAR          shift, and go to state 39
-    CONST        shift, and go to state 40
-    '('          shift, and go to state 41
-
-    UNITARY_STATE        go to state 42
-    MATRIX_INIT_STATE    go to state 43
-    MATRIX_ACCESS_STATE  go to state 44
-    EXP                  go to state 72
-    PRIMITIVE            go to state 46
-    varConst             go to state 47
+    $default  reduce using rule 67 (EXP)
 
 
 State 42
 
-   66 EXP: UNITARY_STATE .
-
-    $default  reduce using rule 66 (EXP)
-
-
-State 43
-
-   64 EXP: MATRIX_INIT_STATE .
-
-    $default  reduce using rule 64 (EXP)
-
-
-State 44
-
-   65 EXP: MATRIX_ACCESS_STATE .
+   65 EXP: MATRIX_INIT_STATE .
 
     $default  reduce using rule 65 (EXP)
 
 
-State 45
+State 43
 
-    9 IF: R_IF EXP . BLOCK ELSE
-   67 EXP: EXP . R_DOT EXP
-   68    | EXP . COLON COLON EXPLICIT_TYPE
-   69    | EXP . BOOLEAN_LOGIC EXP
-   71    | EXP . QUESTION EXP COLON EXP
-   72    | EXP . EQUALITY_TEST EXP
-   73    | EXP . ORDER_RELATION EXP
-   74    | EXP . ARITHMETIC_1 EXP
-   75    | EXP . ARITHMETIC_2 EXP
+   66 EXP: MATRIX_ACCESS_STATE .
+
+    $default  reduce using rule 66 (EXP)
+
+
+State 44
+
+    9 IF: R_IF EXP . START_SCOPE BLOCK END_SCOPE ELSES
+   68 EXP: EXP . R_DOT EXP
+   69    | EXP . COLON COLON EXPLICIT_TYPE
+   70    | EXP . BOOLEAN_LOGIC EXP
+   72    | EXP . QUESTION EXP COLON EXP
+   73    | EXP . EQUALITY_TEST EXP
+   74    | EXP . ORDER_RELATION EXP
+   75    | EXP . ARITHMETIC_1 EXP
+   76    | EXP . ARITHMETIC_2 EXP
 
     R_DOT           shift, and go to state 73
     ARITHMETIC_1    shift, and go to state 74
@@ -795,39 +797,38 @@ State 45
 
     $default  reduce using rule 3 (START_SCOPE)
 
-    BLOCK        go to state 81
-    START_SCOPE  go to state 15
+    START_SCOPE  go to state 81
+
+
+State 45
+
+   78 EXP: PRIMITIVE .
+
+    $default  reduce using rule 78 (EXP)
 
 
 State 46
 
-   77 EXP: PRIMITIVE .
-
-    $default  reduce using rule 77 (EXP)
-
-
-State 47
-
-   50 UNITARY_STATE: varConst . R_UP
-   51              | varConst . R_UM
-   63 MATRIX_ACCESS_STATE: varConst . MATRIX_INIT PRIMITIVE COMMA PRIMITIVE MATRIX_END
+   51 UNITARY_STATE: varConst . R_UP
+   52              | varConst . R_UM
+   64 MATRIX_ACCESS_STATE: varConst . MATRIX_INIT PRIMITIVE COMMA PRIMITIVE MATRIX_END
 
     MATRIX_INIT  shift, and go to state 82
     R_UP         shift, and go to state 63
     R_UM         shift, and go to state 64
 
 
-State 48
+State 47
 
-    7 WHILE: R_WHILE EXP . BLOCK
-   67 EXP: EXP . R_DOT EXP
-   68    | EXP . COLON COLON EXPLICIT_TYPE
-   69    | EXP . BOOLEAN_LOGIC EXP
-   71    | EXP . QUESTION EXP COLON EXP
-   72    | EXP . EQUALITY_TEST EXP
-   73    | EXP . ORDER_RELATION EXP
-   74    | EXP . ARITHMETIC_1 EXP
-   75    | EXP . ARITHMETIC_2 EXP
+    7 WHILE: R_WHILE EXP . START_SCOPE BLOCK END_SCOPE
+   68 EXP: EXP . R_DOT EXP
+   69    | EXP . COLON COLON EXPLICIT_TYPE
+   70    | EXP . BOOLEAN_LOGIC EXP
+   72    | EXP . QUESTION EXP COLON EXP
+   73    | EXP . EQUALITY_TEST EXP
+   74    | EXP . ORDER_RELATION EXP
+   75    | EXP . ARITHMETIC_1 EXP
+   76    | EXP . ARITHMETIC_2 EXP
 
     R_DOT           shift, and go to state 73
     ARITHMETIC_1    shift, and go to state 74
@@ -840,20 +841,21 @@ State 48
 
     $default  reduce using rule 3 (START_SCOPE)
 
-    BLOCK        go to state 83
-    START_SCOPE  go to state 15
+    START_SCOPE  go to state 83
+
+
+State 48
+
+    8 DO_WHILE: R_DO START_SCOPE . BLOCK END_SCOPE R_WHILE EXP
+
+    BLOCK_INIT  shift, and go to state 54
+
+    BLOCK  go to state 84
 
 
 State 49
 
-    8 DO_WHILE: R_DO BLOCK . R_WHILE EXP
-
-    R_WHILE  shift, and go to state 84
-
-
-State 50
-
-   14 FOR: R_FOR '(' . ASSIGNMENT_STATE SEMI_COLON EXP SEMI_COLON UNITARY_STATE ')' BLOCK
+   15 FOR: R_FOR '(' . ASSIGNMENT_STATE SEMI_COLON EXP SEMI_COLON UNITARY_STATE ')' BLOCK
 
     VAR    shift, and go to state 10
     CONST  shift, and go to state 11
@@ -862,17 +864,17 @@ State 50
     varConst          go to state 86
 
 
-State 51
+State 50
 
-   15 SWITCH: R_SWITCH EXP . BLOCK_INIT END_LINE CASES BLOCK_END
-   67 EXP: EXP . R_DOT EXP
-   68    | EXP . COLON COLON EXPLICIT_TYPE
-   69    | EXP . BOOLEAN_LOGIC EXP
-   71    | EXP . QUESTION EXP COLON EXP
-   72    | EXP . EQUALITY_TEST EXP
-   73    | EXP . ORDER_RELATION EXP
-   74    | EXP . ARITHMETIC_1 EXP
-   75    | EXP . ARITHMETIC_2 EXP
+   16 SWITCH: R_SWITCH EXP . BLOCK_INIT END_LINE CASES BLOCK_END
+   68 EXP: EXP . R_DOT EXP
+   69    | EXP . COLON COLON EXPLICIT_TYPE
+   70    | EXP . BOOLEAN_LOGIC EXP
+   72    | EXP . QUESTION EXP COLON EXP
+   73    | EXP . EQUALITY_TEST EXP
+   74    | EXP . ORDER_RELATION EXP
+   75    | EXP . ARITHMETIC_1 EXP
+   76    | EXP . ARITHMETIC_2 EXP
 
     BLOCK_INIT      shift, and go to state 87
     R_DOT           shift, and go to state 73
@@ -885,9 +887,9 @@ State 51
     QUESTION        shift, and go to state 80
 
 
-State 52
+State 51
 
-   58 IN: R_IN COLON . varConst
+   59 IN: R_IN COLON . varConst
 
     VAR    shift, and go to state 10
     CONST  shift, and go to state 11
@@ -895,39 +897,39 @@ State 52
     varConst  go to state 88
 
 
-State 53
+State 52
 
-   59 OUT: R_OUT COLON . EXP COMMA_OUT
+   60 OUT: R_OUT COLON . EXP COMMA_OUT
 
-    MATRIX_INIT  shift, and go to state 32
-    INTEGER      shift, and go to state 33
-    FLOAT        shift, and go to state 34
-    BOOLEAN      shift, and go to state 35
-    CHARACTER    shift, and go to state 36
-    STRING       shift, and go to state 37
-    NOT          shift, and go to state 38
-    VAR          shift, and go to state 39
-    CONST        shift, and go to state 40
-    '('          shift, and go to state 41
+    MATRIX_INIT  shift, and go to state 31
+    INTEGER      shift, and go to state 32
+    FLOAT        shift, and go to state 33
+    BOOLEAN      shift, and go to state 34
+    CHARACTER    shift, and go to state 35
+    STRING       shift, and go to state 36
+    NOT          shift, and go to state 37
+    VAR          shift, and go to state 38
+    CONST        shift, and go to state 39
+    '('          shift, and go to state 40
 
-    UNITARY_STATE        go to state 42
-    MATRIX_INIT_STATE    go to state 43
-    MATRIX_ACCESS_STATE  go to state 44
+    UNITARY_STATE        go to state 41
+    MATRIX_INIT_STATE    go to state 42
+    MATRIX_ACCESS_STATE  go to state 43
     EXP                  go to state 89
-    PRIMITIVE            go to state 46
-    varConst             go to state 47
+    PRIMITIVE            go to state 45
+    varConst             go to state 46
 
 
-State 54
+State 53
 
     0 $accept: BEFORE_THE_BEGINNING $end .
 
     $default  accept
 
 
-State 55
+State 54
 
-    2 BLOCK: START_SCOPE BLOCK_INIT . CMDS BLOCK_END END_SCOPE
+    2 BLOCK: BLOCK_INIT . CMDS BLOCK_END
 
     R_IF        shift, and go to state 1
     R_WHILE     shift, and go to state 2
@@ -945,31 +947,39 @@ State 55
     BLOCK_END  reduce using rule 6 (CMDS)
     $default   reduce using rule 3 (START_SCOPE)
 
-    BLOCK             go to state 14
-    START_SCOPE       go to state 15
+    START_SCOPE       go to state 14
     CMDS              go to state 90
-    WHILE             go to state 17
-    DO_WHILE          go to state 18
-    IF                go to state 19
-    FOR               go to state 20
-    SWITCH            go to state 21
-    BREAK             go to state 22
-    CONTINUE          go to state 23
-    ASSIGNMENT_STATE  go to state 24
-    FUNCTION_STATE    go to state 25
-    CMD               go to state 26
-    UNITARY_STATE     go to state 27
-    IS                go to state 28
-    IN                go to state 29
-    OUT               go to state 30
-    varConst          go to state 31
+    WHILE             go to state 16
+    DO_WHILE          go to state 17
+    IF                go to state 18
+    FOR               go to state 19
+    SWITCH            go to state 20
+    BREAK             go to state 21
+    CONTINUE          go to state 22
+    ASSIGNMENT_STATE  go to state 23
+    FUNCTION_STATE    go to state 24
+    CMD               go to state 25
+    UNITARY_STATE     go to state 26
+    IS                go to state 27
+    IN                go to state 28
+    OUT               go to state 29
+    varConst          go to state 30
+
+
+State 55
+
+   50 CMD: START_SCOPE BLOCK . END_SCOPE
+
+    $default  reduce using rule 4 (END_SCOPE)
+
+    END_SCOPE  go to state 91
 
 
 State 56
 
-   46 CMD: ASSIGNMENT_STATE SEMI_COLON .
+   47 CMD: ASSIGNMENT_STATE SEMI_COLON .
 
-    $default  reduce using rule 46 (CMD)
+    $default  reduce using rule 47 (CMD)
 
 
 State 57
@@ -981,163 +991,155 @@ State 57
 
 State 58
 
-   48 CMD: UNITARY_STATE SEMI_COLON .
+   49 CMD: UNITARY_STATE SEMI_COLON .
 
-    $default  reduce using rule 48 (CMD)
+    $default  reduce using rule 49 (CMD)
 
 
 State 59
 
-   42 CMD: IS SEMI_COLON .
-
-    $default  reduce using rule 42 (CMD)
-
-
-State 60
-
-   43 CMD: IN SEMI_COLON .
+   43 CMD: IS SEMI_COLON .
 
     $default  reduce using rule 43 (CMD)
 
 
-State 61
+State 60
 
-   44 CMD: OUT SEMI_COLON .
+   44 CMD: IN SEMI_COLON .
 
     $default  reduce using rule 44 (CMD)
 
 
+State 61
+
+   45 CMD: OUT SEMI_COLON .
+
+    $default  reduce using rule 45 (CMD)
+
+
 State 62
 
-   22 ASSIGNMENT_STATE: varConst MATRIX_INIT . PRIMITIVE COMMA PRIMITIVE MATRIX_END ASSIGNMENT EXP
+   23 ASSIGNMENT_STATE: varConst MATRIX_INIT . PRIMITIVE COMMA PRIMITIVE MATRIX_END ASSIGNMENT EXP
 
-    INTEGER    shift, and go to state 33
-    FLOAT      shift, and go to state 34
-    BOOLEAN    shift, and go to state 35
-    CHARACTER  shift, and go to state 36
-    STRING     shift, and go to state 37
+    INTEGER    shift, and go to state 32
+    FLOAT      shift, and go to state 33
+    BOOLEAN    shift, and go to state 34
+    CHARACTER  shift, and go to state 35
+    STRING     shift, and go to state 36
     VAR        shift, and go to state 68
     CONST      shift, and go to state 69
 
-    PRIMITIVE  go to state 91
+    PRIMITIVE  go to state 92
 
 
 State 63
 
-   50 UNITARY_STATE: varConst R_UP .
-
-    $default  reduce using rule 50 (UNITARY_STATE)
-
-
-State 64
-
-   51 UNITARY_STATE: varConst R_UM .
+   51 UNITARY_STATE: varConst R_UP .
 
     $default  reduce using rule 51 (UNITARY_STATE)
 
 
+State 64
+
+   52 UNITARY_STATE: varConst R_UM .
+
+    $default  reduce using rule 52 (UNITARY_STATE)
+
+
 State 65
 
-   52 IS: varConst R_IS . TYPE
+   53 IS: varConst R_IS . TYPE
 
-    INTEGER    shift, and go to state 92
-    FLOAT      shift, and go to state 93
-    BOOLEAN    shift, and go to state 94
-    CHARACTER  shift, and go to state 95
-    STRING     shift, and go to state 96
+    INTEGER    shift, and go to state 93
+    FLOAT      shift, and go to state 94
+    BOOLEAN    shift, and go to state 95
+    CHARACTER  shift, and go to state 96
+    STRING     shift, and go to state 97
 
-    TYPE  go to state 97
+    TYPE  go to state 98
 
 
 State 66
 
-   23 ASSIGNMENT_STATE: varConst ASSIGNMENT . EXP
+   24 ASSIGNMENT_STATE: varConst ASSIGNMENT . EXP
 
-    MATRIX_INIT  shift, and go to state 32
-    INTEGER      shift, and go to state 33
-    FLOAT        shift, and go to state 34
-    BOOLEAN      shift, and go to state 35
-    CHARACTER    shift, and go to state 36
-    STRING       shift, and go to state 37
-    NOT          shift, and go to state 38
-    VAR          shift, and go to state 39
-    CONST        shift, and go to state 40
-    '('          shift, and go to state 41
+    MATRIX_INIT  shift, and go to state 31
+    INTEGER      shift, and go to state 32
+    FLOAT        shift, and go to state 33
+    BOOLEAN      shift, and go to state 34
+    CHARACTER    shift, and go to state 35
+    STRING       shift, and go to state 36
+    NOT          shift, and go to state 37
+    VAR          shift, and go to state 38
+    CONST        shift, and go to state 39
+    '('          shift, and go to state 40
 
-    UNITARY_STATE        go to state 42
-    MATRIX_INIT_STATE    go to state 43
-    MATRIX_ACCESS_STATE  go to state 44
-    EXP                  go to state 98
-    PRIMITIVE            go to state 46
-    varConst             go to state 47
+    UNITARY_STATE        go to state 41
+    MATRIX_INIT_STATE    go to state 42
+    MATRIX_ACCESS_STATE  go to state 43
+    EXP                  go to state 99
+    PRIMITIVE            go to state 45
+    varConst             go to state 46
 
 
 State 67
 
-   24 FUNCTION_STATE: varConst '(' . PARAMS ')' BLOCK
+   25 FUNCTION_STATE: varConst START_SCOPE . '(' PARAMS ')' BLOCK END_SCOPE
 
-    VAR    shift, and go to state 10
-    CONST  shift, and go to state 11
-
-    $default  reduce using rule 26 (PARAMS)
-
-    PARAMS    go to state 99
-    PARAM     go to state 100
-    IS        go to state 101
-    varConst  go to state 102
+    '('  shift, and go to state 100
 
 
 State 68
 
-   78 PRIMITIVE: VAR .
-
-    $default  reduce using rule 78 (PRIMITIVE)
-
-
-State 69
-
-   79 PRIMITIVE: CONST .
+   79 PRIMITIVE: VAR .
 
     $default  reduce using rule 79 (PRIMITIVE)
 
 
+State 69
+
+   80 PRIMITIVE: CONST .
+
+    $default  reduce using rule 80 (PRIMITIVE)
+
+
 State 70
 
-   62 MATRIX_INIT_STATE: MATRIX_INIT PRIMITIVE . COLON PRIMITIVE MATRIX_END R_OF TYPE
+   63 MATRIX_INIT_STATE: MATRIX_INIT PRIMITIVE . COLON PRIMITIVE MATRIX_END R_OF TYPE
 
-    COLON  shift, and go to state 103
+    COLON  shift, and go to state 101
 
 
 State 71
 
-   67 EXP: EXP . R_DOT EXP
-   68    | EXP . COLON COLON EXPLICIT_TYPE
-   69    | EXP . BOOLEAN_LOGIC EXP
-   70    | NOT EXP .
-   71    | EXP . QUESTION EXP COLON EXP
-   72    | EXP . EQUALITY_TEST EXP
-   73    | EXP . ORDER_RELATION EXP
-   74    | EXP . ARITHMETIC_1 EXP
-   75    | EXP . ARITHMETIC_2 EXP
+   68 EXP: EXP . R_DOT EXP
+   69    | EXP . COLON COLON EXPLICIT_TYPE
+   70    | EXP . BOOLEAN_LOGIC EXP
+   71    | NOT EXP .
+   72    | EXP . QUESTION EXP COLON EXP
+   73    | EXP . EQUALITY_TEST EXP
+   74    | EXP . ORDER_RELATION EXP
+   75    | EXP . ARITHMETIC_1 EXP
+   76    | EXP . ARITHMETIC_2 EXP
 
     R_DOT         shift, and go to state 73
     ARITHMETIC_1  shift, and go to state 74
     ARITHMETIC_2  shift, and go to state 75
 
-    $default  reduce using rule 70 (EXP)
+    $default  reduce using rule 71 (EXP)
 
 
 State 72
 
-   67 EXP: EXP . R_DOT EXP
-   68    | EXP . COLON COLON EXPLICIT_TYPE
-   69    | EXP . BOOLEAN_LOGIC EXP
-   71    | EXP . QUESTION EXP COLON EXP
-   72    | EXP . EQUALITY_TEST EXP
-   73    | EXP . ORDER_RELATION EXP
-   74    | EXP . ARITHMETIC_1 EXP
-   75    | EXP . ARITHMETIC_2 EXP
-   76    | '(' EXP . ')'
+   68 EXP: EXP . R_DOT EXP
+   69    | EXP . COLON COLON EXPLICIT_TYPE
+   70    | EXP . BOOLEAN_LOGIC EXP
+   72    | EXP . QUESTION EXP COLON EXP
+   73    | EXP . EQUALITY_TEST EXP
+   74    | EXP . ORDER_RELATION EXP
+   75    | EXP . ARITHMETIC_1 EXP
+   76    | EXP . ARITHMETIC_2 EXP
+   77    | '(' EXP . ')'
 
     R_DOT           shift, and go to state 73
     ARITHMETIC_1    shift, and go to state 74
@@ -1147,244 +1149,230 @@ State 72
     ORDER_RELATION  shift, and go to state 78
     COLON           shift, and go to state 79
     QUESTION        shift, and go to state 80
-    ')'             shift, and go to state 104
+    ')'             shift, and go to state 102
 
 
 State 73
 
-   67 EXP: EXP R_DOT . EXP
+   68 EXP: EXP R_DOT . EXP
 
-    MATRIX_INIT  shift, and go to state 32
-    INTEGER      shift, and go to state 33
-    FLOAT        shift, and go to state 34
-    BOOLEAN      shift, and go to state 35
-    CHARACTER    shift, and go to state 36
-    STRING       shift, and go to state 37
-    NOT          shift, and go to state 38
-    VAR          shift, and go to state 39
-    CONST        shift, and go to state 40
-    '('          shift, and go to state 41
+    MATRIX_INIT  shift, and go to state 31
+    INTEGER      shift, and go to state 32
+    FLOAT        shift, and go to state 33
+    BOOLEAN      shift, and go to state 34
+    CHARACTER    shift, and go to state 35
+    STRING       shift, and go to state 36
+    NOT          shift, and go to state 37
+    VAR          shift, and go to state 38
+    CONST        shift, and go to state 39
+    '('          shift, and go to state 40
 
-    UNITARY_STATE        go to state 42
-    MATRIX_INIT_STATE    go to state 43
-    MATRIX_ACCESS_STATE  go to state 44
-    EXP                  go to state 105
-    PRIMITIVE            go to state 46
-    varConst             go to state 47
+    UNITARY_STATE        go to state 41
+    MATRIX_INIT_STATE    go to state 42
+    MATRIX_ACCESS_STATE  go to state 43
+    EXP                  go to state 103
+    PRIMITIVE            go to state 45
+    varConst             go to state 46
 
 
 State 74
 
-   74 EXP: EXP ARITHMETIC_1 . EXP
+   75 EXP: EXP ARITHMETIC_1 . EXP
 
-    MATRIX_INIT  shift, and go to state 32
-    INTEGER      shift, and go to state 33
-    FLOAT        shift, and go to state 34
-    BOOLEAN      shift, and go to state 35
-    CHARACTER    shift, and go to state 36
-    STRING       shift, and go to state 37
-    NOT          shift, and go to state 38
-    VAR          shift, and go to state 39
-    CONST        shift, and go to state 40
-    '('          shift, and go to state 41
+    MATRIX_INIT  shift, and go to state 31
+    INTEGER      shift, and go to state 32
+    FLOAT        shift, and go to state 33
+    BOOLEAN      shift, and go to state 34
+    CHARACTER    shift, and go to state 35
+    STRING       shift, and go to state 36
+    NOT          shift, and go to state 37
+    VAR          shift, and go to state 38
+    CONST        shift, and go to state 39
+    '('          shift, and go to state 40
 
-    UNITARY_STATE        go to state 42
-    MATRIX_INIT_STATE    go to state 43
-    MATRIX_ACCESS_STATE  go to state 44
-    EXP                  go to state 106
-    PRIMITIVE            go to state 46
-    varConst             go to state 47
+    UNITARY_STATE        go to state 41
+    MATRIX_INIT_STATE    go to state 42
+    MATRIX_ACCESS_STATE  go to state 43
+    EXP                  go to state 104
+    PRIMITIVE            go to state 45
+    varConst             go to state 46
 
 
 State 75
 
-   75 EXP: EXP ARITHMETIC_2 . EXP
+   76 EXP: EXP ARITHMETIC_2 . EXP
 
-    MATRIX_INIT  shift, and go to state 32
-    INTEGER      shift, and go to state 33
-    FLOAT        shift, and go to state 34
-    BOOLEAN      shift, and go to state 35
-    CHARACTER    shift, and go to state 36
-    STRING       shift, and go to state 37
-    NOT          shift, and go to state 38
-    VAR          shift, and go to state 39
-    CONST        shift, and go to state 40
-    '('          shift, and go to state 41
+    MATRIX_INIT  shift, and go to state 31
+    INTEGER      shift, and go to state 32
+    FLOAT        shift, and go to state 33
+    BOOLEAN      shift, and go to state 34
+    CHARACTER    shift, and go to state 35
+    STRING       shift, and go to state 36
+    NOT          shift, and go to state 37
+    VAR          shift, and go to state 38
+    CONST        shift, and go to state 39
+    '('          shift, and go to state 40
 
-    UNITARY_STATE        go to state 42
-    MATRIX_INIT_STATE    go to state 43
-    MATRIX_ACCESS_STATE  go to state 44
-    EXP                  go to state 107
-    PRIMITIVE            go to state 46
-    varConst             go to state 47
+    UNITARY_STATE        go to state 41
+    MATRIX_INIT_STATE    go to state 42
+    MATRIX_ACCESS_STATE  go to state 43
+    EXP                  go to state 105
+    PRIMITIVE            go to state 45
+    varConst             go to state 46
 
 
 State 76
 
-   69 EXP: EXP BOOLEAN_LOGIC . EXP
+   70 EXP: EXP BOOLEAN_LOGIC . EXP
 
-    MATRIX_INIT  shift, and go to state 32
-    INTEGER      shift, and go to state 33
-    FLOAT        shift, and go to state 34
-    BOOLEAN      shift, and go to state 35
-    CHARACTER    shift, and go to state 36
-    STRING       shift, and go to state 37
-    NOT          shift, and go to state 38
-    VAR          shift, and go to state 39
-    CONST        shift, and go to state 40
-    '('          shift, and go to state 41
+    MATRIX_INIT  shift, and go to state 31
+    INTEGER      shift, and go to state 32
+    FLOAT        shift, and go to state 33
+    BOOLEAN      shift, and go to state 34
+    CHARACTER    shift, and go to state 35
+    STRING       shift, and go to state 36
+    NOT          shift, and go to state 37
+    VAR          shift, and go to state 38
+    CONST        shift, and go to state 39
+    '('          shift, and go to state 40
 
-    UNITARY_STATE        go to state 42
-    MATRIX_INIT_STATE    go to state 43
-    MATRIX_ACCESS_STATE  go to state 44
-    EXP                  go to state 108
-    PRIMITIVE            go to state 46
-    varConst             go to state 47
+    UNITARY_STATE        go to state 41
+    MATRIX_INIT_STATE    go to state 42
+    MATRIX_ACCESS_STATE  go to state 43
+    EXP                  go to state 106
+    PRIMITIVE            go to state 45
+    varConst             go to state 46
 
 
 State 77
 
-   72 EXP: EXP EQUALITY_TEST . EXP
+   73 EXP: EXP EQUALITY_TEST . EXP
 
-    MATRIX_INIT  shift, and go to state 32
-    INTEGER      shift, and go to state 33
-    FLOAT        shift, and go to state 34
-    BOOLEAN      shift, and go to state 35
-    CHARACTER    shift, and go to state 36
-    STRING       shift, and go to state 37
-    NOT          shift, and go to state 38
-    VAR          shift, and go to state 39
-    CONST        shift, and go to state 40
-    '('          shift, and go to state 41
+    MATRIX_INIT  shift, and go to state 31
+    INTEGER      shift, and go to state 32
+    FLOAT        shift, and go to state 33
+    BOOLEAN      shift, and go to state 34
+    CHARACTER    shift, and go to state 35
+    STRING       shift, and go to state 36
+    NOT          shift, and go to state 37
+    VAR          shift, and go to state 38
+    CONST        shift, and go to state 39
+    '('          shift, and go to state 40
 
-    UNITARY_STATE        go to state 42
-    MATRIX_INIT_STATE    go to state 43
-    MATRIX_ACCESS_STATE  go to state 44
-    EXP                  go to state 109
-    PRIMITIVE            go to state 46
-    varConst             go to state 47
+    UNITARY_STATE        go to state 41
+    MATRIX_INIT_STATE    go to state 42
+    MATRIX_ACCESS_STATE  go to state 43
+    EXP                  go to state 107
+    PRIMITIVE            go to state 45
+    varConst             go to state 46
 
 
 State 78
 
-   73 EXP: EXP ORDER_RELATION . EXP
+   74 EXP: EXP ORDER_RELATION . EXP
 
-    MATRIX_INIT  shift, and go to state 32
-    INTEGER      shift, and go to state 33
-    FLOAT        shift, and go to state 34
-    BOOLEAN      shift, and go to state 35
-    CHARACTER    shift, and go to state 36
-    STRING       shift, and go to state 37
-    NOT          shift, and go to state 38
-    VAR          shift, and go to state 39
-    CONST        shift, and go to state 40
-    '('          shift, and go to state 41
+    MATRIX_INIT  shift, and go to state 31
+    INTEGER      shift, and go to state 32
+    FLOAT        shift, and go to state 33
+    BOOLEAN      shift, and go to state 34
+    CHARACTER    shift, and go to state 35
+    STRING       shift, and go to state 36
+    NOT          shift, and go to state 37
+    VAR          shift, and go to state 38
+    CONST        shift, and go to state 39
+    '('          shift, and go to state 40
 
-    UNITARY_STATE        go to state 42
-    MATRIX_INIT_STATE    go to state 43
-    MATRIX_ACCESS_STATE  go to state 44
-    EXP                  go to state 110
-    PRIMITIVE            go to state 46
-    varConst             go to state 47
+    UNITARY_STATE        go to state 41
+    MATRIX_INIT_STATE    go to state 42
+    MATRIX_ACCESS_STATE  go to state 43
+    EXP                  go to state 108
+    PRIMITIVE            go to state 45
+    varConst             go to state 46
 
 
 State 79
 
-   68 EXP: EXP COLON . COLON EXPLICIT_TYPE
+   69 EXP: EXP COLON . COLON EXPLICIT_TYPE
 
-    COLON  shift, and go to state 111
+    COLON  shift, and go to state 109
 
 
 State 80
 
-   71 EXP: EXP QUESTION . EXP COLON EXP
+   72 EXP: EXP QUESTION . EXP COLON EXP
 
-    MATRIX_INIT  shift, and go to state 32
-    INTEGER      shift, and go to state 33
-    FLOAT        shift, and go to state 34
-    BOOLEAN      shift, and go to state 35
-    CHARACTER    shift, and go to state 36
-    STRING       shift, and go to state 37
-    NOT          shift, and go to state 38
-    VAR          shift, and go to state 39
-    CONST        shift, and go to state 40
-    '('          shift, and go to state 41
+    MATRIX_INIT  shift, and go to state 31
+    INTEGER      shift, and go to state 32
+    FLOAT        shift, and go to state 33
+    BOOLEAN      shift, and go to state 34
+    CHARACTER    shift, and go to state 35
+    STRING       shift, and go to state 36
+    NOT          shift, and go to state 37
+    VAR          shift, and go to state 38
+    CONST        shift, and go to state 39
+    '('          shift, and go to state 40
 
-    UNITARY_STATE        go to state 42
-    MATRIX_INIT_STATE    go to state 43
-    MATRIX_ACCESS_STATE  go to state 44
-    EXP                  go to state 112
-    PRIMITIVE            go to state 46
-    varConst             go to state 47
+    UNITARY_STATE        go to state 41
+    MATRIX_INIT_STATE    go to state 42
+    MATRIX_ACCESS_STATE  go to state 43
+    EXP                  go to state 110
+    PRIMITIVE            go to state 45
+    varConst             go to state 46
 
 
 State 81
 
-    9 IF: R_IF EXP BLOCK . ELSE
+    9 IF: R_IF EXP START_SCOPE . BLOCK END_SCOPE ELSES
 
-    R_ELSE  shift, and go to state 113
+    BLOCK_INIT  shift, and go to state 54
 
-    $default  reduce using rule 11 (ELSE)
-
-    ELSE  go to state 114
+    BLOCK  go to state 111
 
 
 State 82
 
-   63 MATRIX_ACCESS_STATE: varConst MATRIX_INIT . PRIMITIVE COMMA PRIMITIVE MATRIX_END
+   64 MATRIX_ACCESS_STATE: varConst MATRIX_INIT . PRIMITIVE COMMA PRIMITIVE MATRIX_END
 
-    INTEGER    shift, and go to state 33
-    FLOAT      shift, and go to state 34
-    BOOLEAN    shift, and go to state 35
-    CHARACTER  shift, and go to state 36
-    STRING     shift, and go to state 37
+    INTEGER    shift, and go to state 32
+    FLOAT      shift, and go to state 33
+    BOOLEAN    shift, and go to state 34
+    CHARACTER  shift, and go to state 35
+    STRING     shift, and go to state 36
     VAR        shift, and go to state 68
     CONST      shift, and go to state 69
 
-    PRIMITIVE  go to state 115
+    PRIMITIVE  go to state 112
 
 
 State 83
 
-    7 WHILE: R_WHILE EXP BLOCK .
+    7 WHILE: R_WHILE EXP START_SCOPE . BLOCK END_SCOPE
 
-    $default  reduce using rule 7 (WHILE)
+    BLOCK_INIT  shift, and go to state 54
+
+    BLOCK  go to state 113
 
 
 State 84
 
-    8 DO_WHILE: R_DO BLOCK R_WHILE . EXP
+    8 DO_WHILE: R_DO START_SCOPE BLOCK . END_SCOPE R_WHILE EXP
 
-    MATRIX_INIT  shift, and go to state 32
-    INTEGER      shift, and go to state 33
-    FLOAT        shift, and go to state 34
-    BOOLEAN      shift, and go to state 35
-    CHARACTER    shift, and go to state 36
-    STRING       shift, and go to state 37
-    NOT          shift, and go to state 38
-    VAR          shift, and go to state 39
-    CONST        shift, and go to state 40
-    '('          shift, and go to state 41
+    $default  reduce using rule 4 (END_SCOPE)
 
-    UNITARY_STATE        go to state 42
-    MATRIX_INIT_STATE    go to state 43
-    MATRIX_ACCESS_STATE  go to state 44
-    EXP                  go to state 116
-    PRIMITIVE            go to state 46
-    varConst             go to state 47
+    END_SCOPE  go to state 114
 
 
 State 85
 
-   14 FOR: R_FOR '(' ASSIGNMENT_STATE . SEMI_COLON EXP SEMI_COLON UNITARY_STATE ')' BLOCK
+   15 FOR: R_FOR '(' ASSIGNMENT_STATE . SEMI_COLON EXP SEMI_COLON UNITARY_STATE ')' BLOCK
 
-    SEMI_COLON  shift, and go to state 117
+    SEMI_COLON  shift, and go to state 115
 
 
 State 86
 
-   22 ASSIGNMENT_STATE: varConst . MATRIX_INIT PRIMITIVE COMMA PRIMITIVE MATRIX_END ASSIGNMENT EXP
-   23                 | varConst . ASSIGNMENT EXP
+   23 ASSIGNMENT_STATE: varConst . MATRIX_INIT PRIMITIVE COMMA PRIMITIVE MATRIX_END ASSIGNMENT EXP
+   24                 | varConst . ASSIGNMENT EXP
 
     MATRIX_INIT  shift, and go to state 62
     ASSIGNMENT   shift, and go to state 66
@@ -1392,29 +1380,29 @@ State 86
 
 State 87
 
-   15 SWITCH: R_SWITCH EXP BLOCK_INIT . END_LINE CASES BLOCK_END
+   16 SWITCH: R_SWITCH EXP BLOCK_INIT . END_LINE CASES BLOCK_END
 
-    END_LINE  shift, and go to state 118
+    END_LINE  shift, and go to state 116
 
 
 State 88
 
-   58 IN: R_IN COLON varConst .
+   59 IN: R_IN COLON varConst .
 
-    $default  reduce using rule 58 (IN)
+    $default  reduce using rule 59 (IN)
 
 
 State 89
 
-   59 OUT: R_OUT COLON EXP . COMMA_OUT
-   67 EXP: EXP . R_DOT EXP
-   68    | EXP . COLON COLON EXPLICIT_TYPE
-   69    | EXP . BOOLEAN_LOGIC EXP
-   71    | EXP . QUESTION EXP COLON EXP
-   72    | EXP . EQUALITY_TEST EXP
-   73    | EXP . ORDER_RELATION EXP
-   74    | EXP . ARITHMETIC_1 EXP
-   75    | EXP . ARITHMETIC_2 EXP
+   60 OUT: R_OUT COLON EXP . COMMA_OUT
+   68 EXP: EXP . R_DOT EXP
+   69    | EXP . COLON COLON EXPLICIT_TYPE
+   70    | EXP . BOOLEAN_LOGIC EXP
+   72    | EXP . QUESTION EXP COLON EXP
+   73    | EXP . EQUALITY_TEST EXP
+   74    | EXP . ORDER_RELATION EXP
+   75    | EXP . ARITHMETIC_1 EXP
+   76    | EXP . ARITHMETIC_2 EXP
 
     R_DOT           shift, and go to state 73
     ARITHMETIC_1    shift, and go to state 74
@@ -1424,80 +1412,87 @@ State 89
     ORDER_RELATION  shift, and go to state 78
     COLON           shift, and go to state 79
     QUESTION        shift, and go to state 80
-    COMMA           shift, and go to state 119
+    COMMA           shift, and go to state 117
 
-    $default  reduce using rule 61 (COMMA_OUT)
+    $default  reduce using rule 62 (COMMA_OUT)
 
-    COMMA_OUT  go to state 120
+    COMMA_OUT  go to state 118
 
 
 State 90
 
-    2 BLOCK: START_SCOPE BLOCK_INIT CMDS . BLOCK_END END_SCOPE
+    2 BLOCK: BLOCK_INIT CMDS . BLOCK_END
 
-    BLOCK_END  shift, and go to state 121
+    BLOCK_END  shift, and go to state 119
 
 
 State 91
 
-   22 ASSIGNMENT_STATE: varConst MATRIX_INIT PRIMITIVE . COMMA PRIMITIVE MATRIX_END ASSIGNMENT EXP
+   50 CMD: START_SCOPE BLOCK END_SCOPE .
 
-    COMMA  shift, and go to state 122
+    $default  reduce using rule 50 (CMD)
 
 
 State 92
 
-   53 TYPE: INTEGER .
+   23 ASSIGNMENT_STATE: varConst MATRIX_INIT PRIMITIVE . COMMA PRIMITIVE MATRIX_END ASSIGNMENT EXP
 
-    $default  reduce using rule 53 (TYPE)
+    COMMA  shift, and go to state 120
 
 
 State 93
 
-   54 TYPE: FLOAT .
+   54 TYPE: INTEGER .
 
     $default  reduce using rule 54 (TYPE)
 
 
 State 94
 
-   55 TYPE: BOOLEAN .
+   55 TYPE: FLOAT .
 
     $default  reduce using rule 55 (TYPE)
 
 
 State 95
 
-   56 TYPE: CHARACTER .
+   56 TYPE: BOOLEAN .
 
     $default  reduce using rule 56 (TYPE)
 
 
 State 96
 
-   57 TYPE: STRING .
+   57 TYPE: CHARACTER .
 
     $default  reduce using rule 57 (TYPE)
 
 
 State 97
 
-   52 IS: varConst R_IS TYPE .
+   58 TYPE: STRING .
 
-    $default  reduce using rule 52 (IS)
+    $default  reduce using rule 58 (TYPE)
 
 
 State 98
 
-   23 ASSIGNMENT_STATE: varConst ASSIGNMENT EXP .
-   67 EXP: EXP . R_DOT EXP
-   68    | EXP . COLON COLON EXPLICIT_TYPE
-   69    | EXP . BOOLEAN_LOGIC EXP
-   71    | EXP . QUESTION EXP COLON EXP
-   72    | EXP . EQUALITY_TEST EXP
-   73    | EXP . ORDER_RELATION EXP
-   74    | EXP . ARITHMETIC_1 EXP
-   75    | EXP . ARITHMETIC_2 EXP
+   53 IS: varConst R_IS TYPE .
+
+    $default  reduce using rule 53 (IS)
+
+
+State 99
+
+   24 ASSIGNMENT_STATE: varConst ASSIGNMENT EXP .
+   68 EXP: EXP . R_DOT EXP
+   69    | EXP . COLON COLON EXPLICIT_TYPE
+   70    | EXP . BOOLEAN_LOGIC EXP
+   72    | EXP . QUESTION EXP COLON EXP
+   73    | EXP . EQUALITY_TEST EXP
+   74    | EXP . ORDER_RELATION EXP
+   75    | EXP . ARITHMETIC_1 EXP
+   76    | EXP . ARITHMETIC_2 EXP
 
     R_DOT           shift, and go to state 73
     ARITHMETIC_1    shift, and go to state 74
@@ -1508,124 +1503,107 @@ State 98
     COLON           shift, and go to state 79
     QUESTION        shift, and go to state 80
 
-    $default  reduce using rule 23 (ASSIGNMENT_STATE)
-
-
-State 99
-
-   24 FUNCTION_STATE: varConst '(' PARAMS . ')' BLOCK
-
-    ')'  shift, and go to state 123
+    $default  reduce using rule 24 (ASSIGNMENT_STATE)
 
 
 State 100
 
-   25 PARAMS: PARAM . COMMA_PARAMS
+   25 FUNCTION_STATE: varConst START_SCOPE '(' . PARAMS ')' BLOCK END_SCOPE
 
-    COMMA  shift, and go to state 124
+    VAR    shift, and go to state 10
+    CONST  shift, and go to state 11
 
-    $default  reduce using rule 28 (COMMA_PARAMS)
+    $default  reduce using rule 27 (PARAMS)
 
-    COMMA_PARAMS  go to state 125
+    PARAMS    go to state 121
+    PARAM     go to state 122
+    IS        go to state 123
+    varConst  go to state 124
 
 
 State 101
 
-   29 PARAM: IS .
+   63 MATRIX_INIT_STATE: MATRIX_INIT PRIMITIVE COLON . PRIMITIVE MATRIX_END R_OF TYPE
 
-    $default  reduce using rule 29 (PARAM)
+    INTEGER    shift, and go to state 32
+    FLOAT      shift, and go to state 33
+    BOOLEAN    shift, and go to state 34
+    CHARACTER  shift, and go to state 35
+    STRING     shift, and go to state 36
+    VAR        shift, and go to state 68
+    CONST      shift, and go to state 69
+
+    PRIMITIVE  go to state 125
 
 
 State 102
 
-   52 IS: varConst . R_IS TYPE
+   77 EXP: '(' EXP ')' .
 
-    R_IS  shift, and go to state 65
+    $default  reduce using rule 77 (EXP)
 
 
 State 103
 
-   62 MATRIX_INIT_STATE: MATRIX_INIT PRIMITIVE COLON . PRIMITIVE MATRIX_END R_OF TYPE
-
-    INTEGER    shift, and go to state 33
-    FLOAT      shift, and go to state 34
-    BOOLEAN    shift, and go to state 35
-    CHARACTER  shift, and go to state 36
-    STRING     shift, and go to state 37
-    VAR        shift, and go to state 68
-    CONST      shift, and go to state 69
-
-    PRIMITIVE  go to state 126
-
-
-State 104
-
-   76 EXP: '(' EXP ')' .
-
-    $default  reduce using rule 76 (EXP)
-
-
-State 105
-
-   67 EXP: EXP . R_DOT EXP
-   67    | EXP R_DOT EXP .
-   68    | EXP . COLON COLON EXPLICIT_TYPE
-   69    | EXP . BOOLEAN_LOGIC EXP
-   71    | EXP . QUESTION EXP COLON EXP
-   72    | EXP . EQUALITY_TEST EXP
-   73    | EXP . ORDER_RELATION EXP
-   74    | EXP . ARITHMETIC_1 EXP
-   75    | EXP . ARITHMETIC_2 EXP
+   68 EXP: EXP . R_DOT EXP
+   68    | EXP R_DOT EXP .
+   69    | EXP . COLON COLON EXPLICIT_TYPE
+   70    | EXP . BOOLEAN_LOGIC EXP
+   72    | EXP . QUESTION EXP COLON EXP
+   73    | EXP . EQUALITY_TEST EXP
+   74    | EXP . ORDER_RELATION EXP
+   75    | EXP . ARITHMETIC_1 EXP
+   76    | EXP . ARITHMETIC_2 EXP
 
     ARITHMETIC_1  shift, and go to state 74
     ARITHMETIC_2  shift, and go to state 75
 
-    $default  reduce using rule 67 (EXP)
+    $default  reduce using rule 68 (EXP)
 
 
-State 106
+State 104
 
-   67 EXP: EXP . R_DOT EXP
-   68    | EXP . COLON COLON EXPLICIT_TYPE
-   69    | EXP . BOOLEAN_LOGIC EXP
-   71    | EXP . QUESTION EXP COLON EXP
-   72    | EXP . EQUALITY_TEST EXP
-   73    | EXP . ORDER_RELATION EXP
-   74    | EXP . ARITHMETIC_1 EXP
-   74    | EXP ARITHMETIC_1 EXP .
-   75    | EXP . ARITHMETIC_2 EXP
+   68 EXP: EXP . R_DOT EXP
+   69    | EXP . COLON COLON EXPLICIT_TYPE
+   70    | EXP . BOOLEAN_LOGIC EXP
+   72    | EXP . QUESTION EXP COLON EXP
+   73    | EXP . EQUALITY_TEST EXP
+   74    | EXP . ORDER_RELATION EXP
+   75    | EXP . ARITHMETIC_1 EXP
+   75    | EXP ARITHMETIC_1 EXP .
+   76    | EXP . ARITHMETIC_2 EXP
 
     ARITHMETIC_2  shift, and go to state 75
-
-    $default  reduce using rule 74 (EXP)
-
-
-State 107
-
-   67 EXP: EXP . R_DOT EXP
-   68    | EXP . COLON COLON EXPLICIT_TYPE
-   69    | EXP . BOOLEAN_LOGIC EXP
-   71    | EXP . QUESTION EXP COLON EXP
-   72    | EXP . EQUALITY_TEST EXP
-   73    | EXP . ORDER_RELATION EXP
-   74    | EXP . ARITHMETIC_1 EXP
-   75    | EXP . ARITHMETIC_2 EXP
-   75    | EXP ARITHMETIC_2 EXP .
 
     $default  reduce using rule 75 (EXP)
 
 
-State 108
+State 105
 
-   67 EXP: EXP . R_DOT EXP
-   68    | EXP . COLON COLON EXPLICIT_TYPE
-   69    | EXP . BOOLEAN_LOGIC EXP
-   69    | EXP BOOLEAN_LOGIC EXP .
-   71    | EXP . QUESTION EXP COLON EXP
-   72    | EXP . EQUALITY_TEST EXP
-   73    | EXP . ORDER_RELATION EXP
-   74    | EXP . ARITHMETIC_1 EXP
-   75    | EXP . ARITHMETIC_2 EXP
+   68 EXP: EXP . R_DOT EXP
+   69    | EXP . COLON COLON EXPLICIT_TYPE
+   70    | EXP . BOOLEAN_LOGIC EXP
+   72    | EXP . QUESTION EXP COLON EXP
+   73    | EXP . EQUALITY_TEST EXP
+   74    | EXP . ORDER_RELATION EXP
+   75    | EXP . ARITHMETIC_1 EXP
+   76    | EXP . ARITHMETIC_2 EXP
+   76    | EXP ARITHMETIC_2 EXP .
+
+    $default  reduce using rule 76 (EXP)
+
+
+State 106
+
+   68 EXP: EXP . R_DOT EXP
+   69    | EXP . COLON COLON EXPLICIT_TYPE
+   70    | EXP . BOOLEAN_LOGIC EXP
+   70    | EXP BOOLEAN_LOGIC EXP .
+   72    | EXP . QUESTION EXP COLON EXP
+   73    | EXP . EQUALITY_TEST EXP
+   74    | EXP . ORDER_RELATION EXP
+   75    | EXP . ARITHMETIC_1 EXP
+   76    | EXP . ARITHMETIC_2 EXP
 
     R_DOT           shift, and go to state 73
     ARITHMETIC_1    shift, and go to state 74
@@ -1635,41 +1613,20 @@ State 108
     COLON           shift, and go to state 79
     QUESTION        shift, and go to state 80
 
-    $default  reduce using rule 69 (EXP)
+    $default  reduce using rule 70 (EXP)
 
 
-State 109
+State 107
 
-   67 EXP: EXP . R_DOT EXP
-   68    | EXP . COLON COLON EXPLICIT_TYPE
-   69    | EXP . BOOLEAN_LOGIC EXP
-   71    | EXP . QUESTION EXP COLON EXP
-   72    | EXP . EQUALITY_TEST EXP
-   72    | EXP EQUALITY_TEST EXP .
-   73    | EXP . ORDER_RELATION EXP
-   74    | EXP . ARITHMETIC_1 EXP
-   75    | EXP . ARITHMETIC_2 EXP
-
-    R_DOT         shift, and go to state 73
-    ARITHMETIC_1  shift, and go to state 74
-    ARITHMETIC_2  shift, and go to state 75
-    COLON         shift, and go to state 79
-    QUESTION      shift, and go to state 80
-
-    $default  reduce using rule 72 (EXP)
-
-
-State 110
-
-   67 EXP: EXP . R_DOT EXP
-   68    | EXP . COLON COLON EXPLICIT_TYPE
-   69    | EXP . BOOLEAN_LOGIC EXP
-   71    | EXP . QUESTION EXP COLON EXP
-   72    | EXP . EQUALITY_TEST EXP
-   73    | EXP . ORDER_RELATION EXP
-   73    | EXP ORDER_RELATION EXP .
-   74    | EXP . ARITHMETIC_1 EXP
-   75    | EXP . ARITHMETIC_2 EXP
+   68 EXP: EXP . R_DOT EXP
+   69    | EXP . COLON COLON EXPLICIT_TYPE
+   70    | EXP . BOOLEAN_LOGIC EXP
+   72    | EXP . QUESTION EXP COLON EXP
+   73    | EXP . EQUALITY_TEST EXP
+   73    | EXP EQUALITY_TEST EXP .
+   74    | EXP . ORDER_RELATION EXP
+   75    | EXP . ARITHMETIC_1 EXP
+   76    | EXP . ARITHMETIC_2 EXP
 
     R_DOT         shift, and go to state 73
     ARITHMETIC_1  shift, and go to state 74
@@ -1680,24 +1637,45 @@ State 110
     $default  reduce using rule 73 (EXP)
 
 
-State 111
+State 108
 
-   68 EXP: EXP COLON COLON . EXPLICIT_TYPE
+   68 EXP: EXP . R_DOT EXP
+   69    | EXP . COLON COLON EXPLICIT_TYPE
+   70    | EXP . BOOLEAN_LOGIC EXP
+   72    | EXP . QUESTION EXP COLON EXP
+   73    | EXP . EQUALITY_TEST EXP
+   74    | EXP . ORDER_RELATION EXP
+   74    | EXP ORDER_RELATION EXP .
+   75    | EXP . ARITHMETIC_1 EXP
+   76    | EXP . ARITHMETIC_2 EXP
 
-    EXPLICIT_TYPE  shift, and go to state 127
+    R_DOT         shift, and go to state 73
+    ARITHMETIC_1  shift, and go to state 74
+    ARITHMETIC_2  shift, and go to state 75
+    COLON         shift, and go to state 79
+    QUESTION      shift, and go to state 80
+
+    $default  reduce using rule 74 (EXP)
 
 
-State 112
+State 109
 
-   67 EXP: EXP . R_DOT EXP
-   68    | EXP . COLON COLON EXPLICIT_TYPE
-   69    | EXP . BOOLEAN_LOGIC EXP
-   71    | EXP . QUESTION EXP COLON EXP
-   71    | EXP QUESTION EXP . COLON EXP
-   72    | EXP . EQUALITY_TEST EXP
-   73    | EXP . ORDER_RELATION EXP
-   74    | EXP . ARITHMETIC_1 EXP
-   75    | EXP . ARITHMETIC_2 EXP
+   69 EXP: EXP COLON COLON . EXPLICIT_TYPE
+
+    EXPLICIT_TYPE  shift, and go to state 126
+
+
+State 110
+
+   68 EXP: EXP . R_DOT EXP
+   69    | EXP . COLON COLON EXPLICIT_TYPE
+   70    | EXP . BOOLEAN_LOGIC EXP
+   72    | EXP . QUESTION EXP COLON EXP
+   72    | EXP QUESTION EXP . COLON EXP
+   73    | EXP . EQUALITY_TEST EXP
+   74    | EXP . ORDER_RELATION EXP
+   75    | EXP . ARITHMETIC_1 EXP
+   76    | EXP . ARITHMETIC_2 EXP
 
     R_DOT           shift, and go to state 73
     ARITHMETIC_1    shift, and go to state 74
@@ -1705,49 +1683,444 @@ State 112
     BOOLEAN_LOGIC   shift, and go to state 76
     EQUALITY_TEST   shift, and go to state 77
     ORDER_RELATION  shift, and go to state 78
-    COLON           shift, and go to state 128
+    COLON           shift, and go to state 127
     QUESTION        shift, and go to state 80
+
+
+State 111
+
+    9 IF: R_IF EXP START_SCOPE BLOCK . END_SCOPE ELSES
+
+    $default  reduce using rule 4 (END_SCOPE)
+
+    END_SCOPE  go to state 128
+
+
+State 112
+
+   64 MATRIX_ACCESS_STATE: varConst MATRIX_INIT PRIMITIVE . COMMA PRIMITIVE MATRIX_END
+
+    COMMA  shift, and go to state 129
 
 
 State 113
 
-   10 ELSE: R_ELSE . ELSEIF
+    7 WHILE: R_WHILE EXP START_SCOPE BLOCK . END_SCOPE
 
-    R_IF  shift, and go to state 1
+    $default  reduce using rule 4 (END_SCOPE)
 
-    $default  reduce using rule 3 (START_SCOPE)
-
-    BLOCK        go to state 129
-    START_SCOPE  go to state 15
-    IF           go to state 130
-    ELSEIF       go to state 131
+    END_SCOPE  go to state 130
 
 
 State 114
 
-    9 IF: R_IF EXP BLOCK ELSE .
+    8 DO_WHILE: R_DO START_SCOPE BLOCK END_SCOPE . R_WHILE EXP
 
-    $default  reduce using rule 9 (IF)
+    R_WHILE  shift, and go to state 131
 
 
 State 115
 
-   63 MATRIX_ACCESS_STATE: varConst MATRIX_INIT PRIMITIVE . COMMA PRIMITIVE MATRIX_END
+   15 FOR: R_FOR '(' ASSIGNMENT_STATE SEMI_COLON . EXP SEMI_COLON UNITARY_STATE ')' BLOCK
 
-    COMMA  shift, and go to state 132
+    MATRIX_INIT  shift, and go to state 31
+    INTEGER      shift, and go to state 32
+    FLOAT        shift, and go to state 33
+    BOOLEAN      shift, and go to state 34
+    CHARACTER    shift, and go to state 35
+    STRING       shift, and go to state 36
+    NOT          shift, and go to state 37
+    VAR          shift, and go to state 38
+    CONST        shift, and go to state 39
+    '('          shift, and go to state 40
+
+    UNITARY_STATE        go to state 41
+    MATRIX_INIT_STATE    go to state 42
+    MATRIX_ACCESS_STATE  go to state 43
+    EXP                  go to state 132
+    PRIMITIVE            go to state 45
+    varConst             go to state 46
 
 
 State 116
 
-    8 DO_WHILE: R_DO BLOCK R_WHILE EXP .
-   67 EXP: EXP . R_DOT EXP
-   68    | EXP . COLON COLON EXPLICIT_TYPE
-   69    | EXP . BOOLEAN_LOGIC EXP
-   71    | EXP . QUESTION EXP COLON EXP
-   72    | EXP . EQUALITY_TEST EXP
-   73    | EXP . ORDER_RELATION EXP
-   74    | EXP . ARITHMETIC_1 EXP
-   75    | EXP . ARITHMETIC_2 EXP
+   16 SWITCH: R_SWITCH EXP BLOCK_INIT END_LINE . CASES BLOCK_END
+
+    R_CASE  shift, and go to state 133
+
+    CASES  go to state 134
+    CASE   go to state 135
+
+
+State 117
+
+   61 COMMA_OUT: COMMA . EXP COMMA_OUT
+
+    MATRIX_INIT  shift, and go to state 31
+    INTEGER      shift, and go to state 32
+    FLOAT        shift, and go to state 33
+    BOOLEAN      shift, and go to state 34
+    CHARACTER    shift, and go to state 35
+    STRING       shift, and go to state 36
+    NOT          shift, and go to state 37
+    VAR          shift, and go to state 38
+    CONST        shift, and go to state 39
+    '('          shift, and go to state 40
+
+    UNITARY_STATE        go to state 41
+    MATRIX_INIT_STATE    go to state 42
+    MATRIX_ACCESS_STATE  go to state 43
+    EXP                  go to state 136
+    PRIMITIVE            go to state 45
+    varConst             go to state 46
+
+
+State 118
+
+   60 OUT: R_OUT COLON EXP COMMA_OUT .
+
+    $default  reduce using rule 60 (OUT)
+
+
+State 119
+
+    2 BLOCK: BLOCK_INIT CMDS BLOCK_END .
+
+    $default  reduce using rule 2 (BLOCK)
+
+
+State 120
+
+   23 ASSIGNMENT_STATE: varConst MATRIX_INIT PRIMITIVE COMMA . PRIMITIVE MATRIX_END ASSIGNMENT EXP
+
+    INTEGER    shift, and go to state 32
+    FLOAT      shift, and go to state 33
+    BOOLEAN    shift, and go to state 34
+    CHARACTER  shift, and go to state 35
+    STRING     shift, and go to state 36
+    VAR        shift, and go to state 68
+    CONST      shift, and go to state 69
+
+    PRIMITIVE  go to state 137
+
+
+State 121
+
+   25 FUNCTION_STATE: varConst START_SCOPE '(' PARAMS . ')' BLOCK END_SCOPE
+
+    ')'  shift, and go to state 138
+
+
+State 122
+
+   26 PARAMS: PARAM . COMMA_PARAMS
+
+    COMMA  shift, and go to state 139
+
+    $default  reduce using rule 29 (COMMA_PARAMS)
+
+    COMMA_PARAMS  go to state 140
+
+
+State 123
+
+   30 PARAM: IS .
+
+    $default  reduce using rule 30 (PARAM)
+
+
+State 124
+
+   53 IS: varConst . R_IS TYPE
+
+    R_IS  shift, and go to state 65
+
+
+State 125
+
+   63 MATRIX_INIT_STATE: MATRIX_INIT PRIMITIVE COLON PRIMITIVE . MATRIX_END R_OF TYPE
+
+    MATRIX_END  shift, and go to state 141
+
+
+State 126
+
+   69 EXP: EXP COLON COLON EXPLICIT_TYPE .
+
+    $default  reduce using rule 69 (EXP)
+
+
+State 127
+
+   69 EXP: EXP COLON . COLON EXPLICIT_TYPE
+   72    | EXP QUESTION EXP COLON . EXP
+
+    MATRIX_INIT  shift, and go to state 31
+    INTEGER      shift, and go to state 32
+    FLOAT        shift, and go to state 33
+    BOOLEAN      shift, and go to state 34
+    CHARACTER    shift, and go to state 35
+    STRING       shift, and go to state 36
+    NOT          shift, and go to state 37
+    COLON        shift, and go to state 109
+    VAR          shift, and go to state 38
+    CONST        shift, and go to state 39
+    '('          shift, and go to state 40
+
+    UNITARY_STATE        go to state 41
+    MATRIX_INIT_STATE    go to state 42
+    MATRIX_ACCESS_STATE  go to state 43
+    EXP                  go to state 142
+    PRIMITIVE            go to state 45
+    varConst             go to state 46
+
+
+State 128
+
+    9 IF: R_IF EXP START_SCOPE BLOCK END_SCOPE . ELSES
+
+    END_LINE  shift, and go to state 143
+
+    ELSES  go to state 144
+
+
+State 129
+
+   64 MATRIX_ACCESS_STATE: varConst MATRIX_INIT PRIMITIVE COMMA . PRIMITIVE MATRIX_END
+
+    INTEGER    shift, and go to state 32
+    FLOAT      shift, and go to state 33
+    BOOLEAN    shift, and go to state 34
+    CHARACTER  shift, and go to state 35
+    STRING     shift, and go to state 36
+    VAR        shift, and go to state 68
+    CONST      shift, and go to state 69
+
+    PRIMITIVE  go to state 145
+
+
+State 130
+
+    7 WHILE: R_WHILE EXP START_SCOPE BLOCK END_SCOPE .
+
+    $default  reduce using rule 7 (WHILE)
+
+
+State 131
+
+    8 DO_WHILE: R_DO START_SCOPE BLOCK END_SCOPE R_WHILE . EXP
+
+    MATRIX_INIT  shift, and go to state 31
+    INTEGER      shift, and go to state 32
+    FLOAT        shift, and go to state 33
+    BOOLEAN      shift, and go to state 34
+    CHARACTER    shift, and go to state 35
+    STRING       shift, and go to state 36
+    NOT          shift, and go to state 37
+    VAR          shift, and go to state 38
+    CONST        shift, and go to state 39
+    '('          shift, and go to state 40
+
+    UNITARY_STATE        go to state 41
+    MATRIX_INIT_STATE    go to state 42
+    MATRIX_ACCESS_STATE  go to state 43
+    EXP                  go to state 146
+    PRIMITIVE            go to state 45
+    varConst             go to state 46
+
+
+State 132
+
+   15 FOR: R_FOR '(' ASSIGNMENT_STATE SEMI_COLON EXP . SEMI_COLON UNITARY_STATE ')' BLOCK
+   68 EXP: EXP . R_DOT EXP
+   69    | EXP . COLON COLON EXPLICIT_TYPE
+   70    | EXP . BOOLEAN_LOGIC EXP
+   72    | EXP . QUESTION EXP COLON EXP
+   73    | EXP . EQUALITY_TEST EXP
+   74    | EXP . ORDER_RELATION EXP
+   75    | EXP . ARITHMETIC_1 EXP
+   76    | EXP . ARITHMETIC_2 EXP
+
+    SEMI_COLON      shift, and go to state 147
+    R_DOT           shift, and go to state 73
+    ARITHMETIC_1    shift, and go to state 74
+    ARITHMETIC_2    shift, and go to state 75
+    BOOLEAN_LOGIC   shift, and go to state 76
+    EQUALITY_TEST   shift, and go to state 77
+    ORDER_RELATION  shift, and go to state 78
+    COLON           shift, and go to state 79
+    QUESTION        shift, and go to state 80
+
+
+State 133
+
+   19 CASE: R_CASE . EXP COLON CMDS
+
+    MATRIX_INIT  shift, and go to state 31
+    INTEGER      shift, and go to state 32
+    FLOAT        shift, and go to state 33
+    BOOLEAN      shift, and go to state 34
+    CHARACTER    shift, and go to state 35
+    STRING       shift, and go to state 36
+    NOT          shift, and go to state 37
+    VAR          shift, and go to state 38
+    CONST        shift, and go to state 39
+    '('          shift, and go to state 40
+
+    UNITARY_STATE        go to state 41
+    MATRIX_INIT_STATE    go to state 42
+    MATRIX_ACCESS_STATE  go to state 43
+    EXP                  go to state 148
+    PRIMITIVE            go to state 45
+    varConst             go to state 46
+
+
+State 134
+
+   16 SWITCH: R_SWITCH EXP BLOCK_INIT END_LINE CASES . BLOCK_END
+
+    BLOCK_END  shift, and go to state 149
+
+
+State 135
+
+   17 CASES: CASE . DEFAULT
+   18      | CASE . CASES
+
+    R_CASE     shift, and go to state 133
+    R_DEFAULT  shift, and go to state 150
+
+    CASES    go to state 151
+    CASE     go to state 135
+    DEFAULT  go to state 152
+
+
+State 136
+
+   61 COMMA_OUT: COMMA EXP . COMMA_OUT
+   68 EXP: EXP . R_DOT EXP
+   69    | EXP . COLON COLON EXPLICIT_TYPE
+   70    | EXP . BOOLEAN_LOGIC EXP
+   72    | EXP . QUESTION EXP COLON EXP
+   73    | EXP . EQUALITY_TEST EXP
+   74    | EXP . ORDER_RELATION EXP
+   75    | EXP . ARITHMETIC_1 EXP
+   76    | EXP . ARITHMETIC_2 EXP
+
+    R_DOT           shift, and go to state 73
+    ARITHMETIC_1    shift, and go to state 74
+    ARITHMETIC_2    shift, and go to state 75
+    BOOLEAN_LOGIC   shift, and go to state 76
+    EQUALITY_TEST   shift, and go to state 77
+    ORDER_RELATION  shift, and go to state 78
+    COLON           shift, and go to state 79
+    QUESTION        shift, and go to state 80
+    COMMA           shift, and go to state 117
+
+    $default  reduce using rule 62 (COMMA_OUT)
+
+    COMMA_OUT  go to state 153
+
+
+State 137
+
+   23 ASSIGNMENT_STATE: varConst MATRIX_INIT PRIMITIVE COMMA PRIMITIVE . MATRIX_END ASSIGNMENT EXP
+
+    MATRIX_END  shift, and go to state 154
+
+
+State 138
+
+   25 FUNCTION_STATE: varConst START_SCOPE '(' PARAMS ')' . BLOCK END_SCOPE
+
+    BLOCK_INIT  shift, and go to state 54
+
+    BLOCK  go to state 155
+
+
+State 139
+
+   28 COMMA_PARAMS: COMMA . PARAM COMMA_PARAMS
+
+    VAR    shift, and go to state 10
+    CONST  shift, and go to state 11
+
+    PARAM     go to state 156
+    IS        go to state 123
+    varConst  go to state 124
+
+
+State 140
+
+   26 PARAMS: PARAM COMMA_PARAMS .
+
+    $default  reduce using rule 26 (PARAMS)
+
+
+State 141
+
+   63 MATRIX_INIT_STATE: MATRIX_INIT PRIMITIVE COLON PRIMITIVE MATRIX_END . R_OF TYPE
+
+    R_OF  shift, and go to state 157
+
+
+State 142
+
+   68 EXP: EXP . R_DOT EXP
+   69    | EXP . COLON COLON EXPLICIT_TYPE
+   70    | EXP . BOOLEAN_LOGIC EXP
+   72    | EXP . QUESTION EXP COLON EXP
+   72    | EXP QUESTION EXP COLON EXP .
+   73    | EXP . EQUALITY_TEST EXP
+   74    | EXP . ORDER_RELATION EXP
+   75    | EXP . ARITHMETIC_1 EXP
+   76    | EXP . ARITHMETIC_2 EXP
+
+    R_DOT         shift, and go to state 73
+    ARITHMETIC_1  shift, and go to state 74
+    ARITHMETIC_2  shift, and go to state 75
+
+    $default  reduce using rule 72 (EXP)
+
+
+State 143
+
+   11 ELSES: END_LINE .
+
+    $default  reduce using rule 11 (ELSES)
+
+
+State 144
+
+    9 IF: R_IF EXP START_SCOPE BLOCK END_SCOPE ELSES .
+   10 ELSES: ELSES . ELSE
+
+    R_ELSE  shift, and go to state 158
+
+    R_ELSE    [reduce using rule 9 (IF)]
+    $default  reduce using rule 9 (IF)
+
+    ELSE  go to state 159
+
+
+State 145
+
+   64 MATRIX_ACCESS_STATE: varConst MATRIX_INIT PRIMITIVE COMMA PRIMITIVE . MATRIX_END
+
+    MATRIX_END  shift, and go to state 160
+
+
+State 146
+
+    8 DO_WHILE: R_DO START_SCOPE BLOCK END_SCOPE R_WHILE EXP .
+   68 EXP: EXP . R_DOT EXP
+   69    | EXP . COLON COLON EXPLICIT_TYPE
+   70    | EXP . BOOLEAN_LOGIC EXP
+   72    | EXP . QUESTION EXP COLON EXP
+   73    | EXP . EQUALITY_TEST EXP
+   74    | EXP . ORDER_RELATION EXP
+   75    | EXP . ARITHMETIC_1 EXP
+   76    | EXP . ARITHMETIC_2 EXP
 
     R_DOT           shift, and go to state 73
     ARITHMETIC_1    shift, and go to state 74
@@ -1761,477 +2134,161 @@ State 116
     $default  reduce using rule 8 (DO_WHILE)
 
 
-State 117
-
-   14 FOR: R_FOR '(' ASSIGNMENT_STATE SEMI_COLON . EXP SEMI_COLON UNITARY_STATE ')' BLOCK
-
-    MATRIX_INIT  shift, and go to state 32
-    INTEGER      shift, and go to state 33
-    FLOAT        shift, and go to state 34
-    BOOLEAN      shift, and go to state 35
-    CHARACTER    shift, and go to state 36
-    STRING       shift, and go to state 37
-    NOT          shift, and go to state 38
-    VAR          shift, and go to state 39
-    CONST        shift, and go to state 40
-    '('          shift, and go to state 41
-
-    UNITARY_STATE        go to state 42
-    MATRIX_INIT_STATE    go to state 43
-    MATRIX_ACCESS_STATE  go to state 44
-    EXP                  go to state 133
-    PRIMITIVE            go to state 46
-    varConst             go to state 47
-
-
-State 118
-
-   15 SWITCH: R_SWITCH EXP BLOCK_INIT END_LINE . CASES BLOCK_END
-
-    R_CASE  shift, and go to state 134
-
-    CASES  go to state 135
-    CASE   go to state 136
-
-
-State 119
-
-   60 COMMA_OUT: COMMA . EXP COMMA_OUT
-
-    MATRIX_INIT  shift, and go to state 32
-    INTEGER      shift, and go to state 33
-    FLOAT        shift, and go to state 34
-    BOOLEAN      shift, and go to state 35
-    CHARACTER    shift, and go to state 36
-    STRING       shift, and go to state 37
-    NOT          shift, and go to state 38
-    VAR          shift, and go to state 39
-    CONST        shift, and go to state 40
-    '('          shift, and go to state 41
-
-    UNITARY_STATE        go to state 42
-    MATRIX_INIT_STATE    go to state 43
-    MATRIX_ACCESS_STATE  go to state 44
-    EXP                  go to state 137
-    PRIMITIVE            go to state 46
-    varConst             go to state 47
-
-
-State 120
-
-   59 OUT: R_OUT COLON EXP COMMA_OUT .
-
-    $default  reduce using rule 59 (OUT)
-
-
-State 121
-
-    2 BLOCK: START_SCOPE BLOCK_INIT CMDS BLOCK_END . END_SCOPE
-
-    $default  reduce using rule 4 (END_SCOPE)
-
-    END_SCOPE  go to state 138
-
-
-State 122
-
-   22 ASSIGNMENT_STATE: varConst MATRIX_INIT PRIMITIVE COMMA . PRIMITIVE MATRIX_END ASSIGNMENT EXP
-
-    INTEGER    shift, and go to state 33
-    FLOAT      shift, and go to state 34
-    BOOLEAN    shift, and go to state 35
-    CHARACTER  shift, and go to state 36
-    STRING     shift, and go to state 37
-    VAR        shift, and go to state 68
-    CONST      shift, and go to state 69
-
-    PRIMITIVE  go to state 139
-
-
-State 123
-
-   24 FUNCTION_STATE: varConst '(' PARAMS ')' . BLOCK
-
-    $default  reduce using rule 3 (START_SCOPE)
-
-    BLOCK        go to state 140
-    START_SCOPE  go to state 15
-
-
-State 124
-
-   27 COMMA_PARAMS: COMMA . PARAM COMMA_PARAMS
-
-    VAR    shift, and go to state 10
-    CONST  shift, and go to state 11
-
-    PARAM     go to state 141
-    IS        go to state 101
-    varConst  go to state 102
-
-
-State 125
-
-   25 PARAMS: PARAM COMMA_PARAMS .
-
-    $default  reduce using rule 25 (PARAMS)
-
-
-State 126
-
-   62 MATRIX_INIT_STATE: MATRIX_INIT PRIMITIVE COLON PRIMITIVE . MATRIX_END R_OF TYPE
-
-    MATRIX_END  shift, and go to state 142
-
-
-State 127
-
-   68 EXP: EXP COLON COLON EXPLICIT_TYPE .
-
-    $default  reduce using rule 68 (EXP)
-
-
-State 128
-
-   68 EXP: EXP COLON . COLON EXPLICIT_TYPE
-   71    | EXP QUESTION EXP COLON . EXP
-
-    MATRIX_INIT  shift, and go to state 32
-    INTEGER      shift, and go to state 33
-    FLOAT        shift, and go to state 34
-    BOOLEAN      shift, and go to state 35
-    CHARACTER    shift, and go to state 36
-    STRING       shift, and go to state 37
-    NOT          shift, and go to state 38
-    COLON        shift, and go to state 111
-    VAR          shift, and go to state 39
-    CONST        shift, and go to state 40
-    '('          shift, and go to state 41
-
-    UNITARY_STATE        go to state 42
-    MATRIX_INIT_STATE    go to state 43
-    MATRIX_ACCESS_STATE  go to state 44
-    EXP                  go to state 143
-    PRIMITIVE            go to state 46
-    varConst             go to state 47
-
-
-State 129
-
-   13 ELSEIF: BLOCK .
-
-    $default  reduce using rule 13 (ELSEIF)
-
-
-State 130
-
-   12 ELSEIF: IF .
-
-    $default  reduce using rule 12 (ELSEIF)
-
-
-State 131
-
-   10 ELSE: R_ELSE ELSEIF .
-
-    $default  reduce using rule 10 (ELSE)
-
-
-State 132
-
-   63 MATRIX_ACCESS_STATE: varConst MATRIX_INIT PRIMITIVE COMMA . PRIMITIVE MATRIX_END
-
-    INTEGER    shift, and go to state 33
-    FLOAT      shift, and go to state 34
-    BOOLEAN    shift, and go to state 35
-    CHARACTER  shift, and go to state 36
-    STRING     shift, and go to state 37
-    VAR        shift, and go to state 68
-    CONST      shift, and go to state 69
-
-    PRIMITIVE  go to state 144
-
-
-State 133
-
-   14 FOR: R_FOR '(' ASSIGNMENT_STATE SEMI_COLON EXP . SEMI_COLON UNITARY_STATE ')' BLOCK
-   67 EXP: EXP . R_DOT EXP
-   68    | EXP . COLON COLON EXPLICIT_TYPE
-   69    | EXP . BOOLEAN_LOGIC EXP
-   71    | EXP . QUESTION EXP COLON EXP
-   72    | EXP . EQUALITY_TEST EXP
-   73    | EXP . ORDER_RELATION EXP
-   74    | EXP . ARITHMETIC_1 EXP
-   75    | EXP . ARITHMETIC_2 EXP
-
-    SEMI_COLON      shift, and go to state 145
-    R_DOT           shift, and go to state 73
-    ARITHMETIC_1    shift, and go to state 74
-    ARITHMETIC_2    shift, and go to state 75
-    BOOLEAN_LOGIC   shift, and go to state 76
-    EQUALITY_TEST   shift, and go to state 77
-    ORDER_RELATION  shift, and go to state 78
-    COLON           shift, and go to state 79
-    QUESTION        shift, and go to state 80
-
-
-State 134
-
-   18 CASE: R_CASE . EXP COLON CMDS
-
-    MATRIX_INIT  shift, and go to state 32
-    INTEGER      shift, and go to state 33
-    FLOAT        shift, and go to state 34
-    BOOLEAN      shift, and go to state 35
-    CHARACTER    shift, and go to state 36
-    STRING       shift, and go to state 37
-    NOT          shift, and go to state 38
-    VAR          shift, and go to state 39
-    CONST        shift, and go to state 40
-    '('          shift, and go to state 41
-
-    UNITARY_STATE        go to state 42
-    MATRIX_INIT_STATE    go to state 43
-    MATRIX_ACCESS_STATE  go to state 44
-    EXP                  go to state 146
-    PRIMITIVE            go to state 46
-    varConst             go to state 47
-
-
-State 135
-
-   15 SWITCH: R_SWITCH EXP BLOCK_INIT END_LINE CASES . BLOCK_END
-
-    BLOCK_END  shift, and go to state 147
-
-
-State 136
-
-   16 CASES: CASE . DEFAULT
-   17      | CASE . CASES
-
-    R_CASE     shift, and go to state 134
-    R_DEFAULT  shift, and go to state 148
-
-    CASES    go to state 149
-    CASE     go to state 136
-    DEFAULT  go to state 150
-
-
-State 137
-
-   60 COMMA_OUT: COMMA EXP . COMMA_OUT
-   67 EXP: EXP . R_DOT EXP
-   68    | EXP . COLON COLON EXPLICIT_TYPE
-   69    | EXP . BOOLEAN_LOGIC EXP
-   71    | EXP . QUESTION EXP COLON EXP
-   72    | EXP . EQUALITY_TEST EXP
-   73    | EXP . ORDER_RELATION EXP
-   74    | EXP . ARITHMETIC_1 EXP
-   75    | EXP . ARITHMETIC_2 EXP
-
-    R_DOT           shift, and go to state 73
-    ARITHMETIC_1    shift, and go to state 74
-    ARITHMETIC_2    shift, and go to state 75
-    BOOLEAN_LOGIC   shift, and go to state 76
-    EQUALITY_TEST   shift, and go to state 77
-    ORDER_RELATION  shift, and go to state 78
-    COLON           shift, and go to state 79
-    QUESTION        shift, and go to state 80
-    COMMA           shift, and go to state 119
-
-    $default  reduce using rule 61 (COMMA_OUT)
-
-    COMMA_OUT  go to state 151
-
-
-State 138
-
-    2 BLOCK: START_SCOPE BLOCK_INIT CMDS BLOCK_END END_SCOPE .
-
-    $default  reduce using rule 2 (BLOCK)
-
-
-State 139
-
-   22 ASSIGNMENT_STATE: varConst MATRIX_INIT PRIMITIVE COMMA PRIMITIVE . MATRIX_END ASSIGNMENT EXP
-
-    MATRIX_END  shift, and go to state 152
-
-
-State 140
-
-   24 FUNCTION_STATE: varConst '(' PARAMS ')' BLOCK .
-
-    $default  reduce using rule 24 (FUNCTION_STATE)
-
-
-State 141
-
-   27 COMMA_PARAMS: COMMA PARAM . COMMA_PARAMS
-
-    COMMA  shift, and go to state 124
-
-    $default  reduce using rule 28 (COMMA_PARAMS)
-
-    COMMA_PARAMS  go to state 153
-
-
-State 142
-
-   62 MATRIX_INIT_STATE: MATRIX_INIT PRIMITIVE COLON PRIMITIVE MATRIX_END . R_OF TYPE
-
-    R_OF  shift, and go to state 154
-
-
-State 143
-
-   67 EXP: EXP . R_DOT EXP
-   68    | EXP . COLON COLON EXPLICIT_TYPE
-   69    | EXP . BOOLEAN_LOGIC EXP
-   71    | EXP . QUESTION EXP COLON EXP
-   71    | EXP QUESTION EXP COLON EXP .
-   72    | EXP . EQUALITY_TEST EXP
-   73    | EXP . ORDER_RELATION EXP
-   74    | EXP . ARITHMETIC_1 EXP
-   75    | EXP . ARITHMETIC_2 EXP
-
-    R_DOT         shift, and go to state 73
-    ARITHMETIC_1  shift, and go to state 74
-    ARITHMETIC_2  shift, and go to state 75
-
-    $default  reduce using rule 71 (EXP)
-
-
-State 144
-
-   63 MATRIX_ACCESS_STATE: varConst MATRIX_INIT PRIMITIVE COMMA PRIMITIVE . MATRIX_END
-
-    MATRIX_END  shift, and go to state 155
-
-
-State 145
-
-   14 FOR: R_FOR '(' ASSIGNMENT_STATE SEMI_COLON EXP SEMI_COLON . UNITARY_STATE ')' BLOCK
-
-    VAR    shift, and go to state 10
-    CONST  shift, and go to state 11
-
-    UNITARY_STATE  go to state 156
-    varConst       go to state 157
-
-
-State 146
-
-   18 CASE: R_CASE EXP . COLON CMDS
-   67 EXP: EXP . R_DOT EXP
-   68    | EXP . COLON COLON EXPLICIT_TYPE
-   69    | EXP . BOOLEAN_LOGIC EXP
-   71    | EXP . QUESTION EXP COLON EXP
-   72    | EXP . EQUALITY_TEST EXP
-   73    | EXP . ORDER_RELATION EXP
-   74    | EXP . ARITHMETIC_1 EXP
-   75    | EXP . ARITHMETIC_2 EXP
-
-    R_DOT           shift, and go to state 73
-    ARITHMETIC_1    shift, and go to state 74
-    ARITHMETIC_2    shift, and go to state 75
-    BOOLEAN_LOGIC   shift, and go to state 76
-    EQUALITY_TEST   shift, and go to state 77
-    ORDER_RELATION  shift, and go to state 78
-    COLON           shift, and go to state 158
-    QUESTION        shift, and go to state 80
-
-
 State 147
 
-   15 SWITCH: R_SWITCH EXP BLOCK_INIT END_LINE CASES BLOCK_END .
+   15 FOR: R_FOR '(' ASSIGNMENT_STATE SEMI_COLON EXP SEMI_COLON . UNITARY_STATE ')' BLOCK
 
-    $default  reduce using rule 15 (SWITCH)
+    VAR    shift, and go to state 10
+    CONST  shift, and go to state 11
+
+    UNITARY_STATE  go to state 161
+    varConst       go to state 162
 
 
 State 148
 
-   19 DEFAULT: R_DEFAULT . COLON CMDS
+   19 CASE: R_CASE EXP . COLON CMDS
+   68 EXP: EXP . R_DOT EXP
+   69    | EXP . COLON COLON EXPLICIT_TYPE
+   70    | EXP . BOOLEAN_LOGIC EXP
+   72    | EXP . QUESTION EXP COLON EXP
+   73    | EXP . EQUALITY_TEST EXP
+   74    | EXP . ORDER_RELATION EXP
+   75    | EXP . ARITHMETIC_1 EXP
+   76    | EXP . ARITHMETIC_2 EXP
 
-    COLON  shift, and go to state 159
+    R_DOT           shift, and go to state 73
+    ARITHMETIC_1    shift, and go to state 74
+    ARITHMETIC_2    shift, and go to state 75
+    BOOLEAN_LOGIC   shift, and go to state 76
+    EQUALITY_TEST   shift, and go to state 77
+    ORDER_RELATION  shift, and go to state 78
+    COLON           shift, and go to state 163
+    QUESTION        shift, and go to state 80
 
 
 State 149
 
-   17 CASES: CASE CASES .
+   16 SWITCH: R_SWITCH EXP BLOCK_INIT END_LINE CASES BLOCK_END .
 
-    $default  reduce using rule 17 (CASES)
+    $default  reduce using rule 16 (SWITCH)
 
 
 State 150
 
-   16 CASES: CASE DEFAULT .
+   20 DEFAULT: R_DEFAULT . COLON CMDS
 
-    $default  reduce using rule 16 (CASES)
+    COLON  shift, and go to state 164
 
 
 State 151
 
-   60 COMMA_OUT: COMMA EXP COMMA_OUT .
+   18 CASES: CASE CASES .
 
-    $default  reduce using rule 60 (COMMA_OUT)
+    $default  reduce using rule 18 (CASES)
 
 
 State 152
 
-   22 ASSIGNMENT_STATE: varConst MATRIX_INIT PRIMITIVE COMMA PRIMITIVE MATRIX_END . ASSIGNMENT EXP
+   17 CASES: CASE DEFAULT .
 
-    ASSIGNMENT  shift, and go to state 160
+    $default  reduce using rule 17 (CASES)
 
 
 State 153
 
-   27 COMMA_PARAMS: COMMA PARAM COMMA_PARAMS .
+   61 COMMA_OUT: COMMA EXP COMMA_OUT .
 
-    $default  reduce using rule 27 (COMMA_PARAMS)
+    $default  reduce using rule 61 (COMMA_OUT)
 
 
 State 154
 
-   62 MATRIX_INIT_STATE: MATRIX_INIT PRIMITIVE COLON PRIMITIVE MATRIX_END R_OF . TYPE
+   23 ASSIGNMENT_STATE: varConst MATRIX_INIT PRIMITIVE COMMA PRIMITIVE MATRIX_END . ASSIGNMENT EXP
 
-    INTEGER    shift, and go to state 92
-    FLOAT      shift, and go to state 93
-    BOOLEAN    shift, and go to state 94
-    CHARACTER  shift, and go to state 95
-    STRING     shift, and go to state 96
-
-    TYPE  go to state 161
+    ASSIGNMENT  shift, and go to state 165
 
 
 State 155
 
-   63 MATRIX_ACCESS_STATE: varConst MATRIX_INIT PRIMITIVE COMMA PRIMITIVE MATRIX_END .
+   25 FUNCTION_STATE: varConst START_SCOPE '(' PARAMS ')' BLOCK . END_SCOPE
 
-    $default  reduce using rule 63 (MATRIX_ACCESS_STATE)
+    $default  reduce using rule 4 (END_SCOPE)
+
+    END_SCOPE  go to state 166
 
 
 State 156
 
-   14 FOR: R_FOR '(' ASSIGNMENT_STATE SEMI_COLON EXP SEMI_COLON UNITARY_STATE . ')' BLOCK
+   28 COMMA_PARAMS: COMMA PARAM . COMMA_PARAMS
 
-    ')'  shift, and go to state 162
+    COMMA  shift, and go to state 139
+
+    $default  reduce using rule 29 (COMMA_PARAMS)
+
+    COMMA_PARAMS  go to state 167
 
 
 State 157
 
-   50 UNITARY_STATE: varConst . R_UP
-   51              | varConst . R_UM
+   63 MATRIX_INIT_STATE: MATRIX_INIT PRIMITIVE COLON PRIMITIVE MATRIX_END R_OF . TYPE
+
+    INTEGER    shift, and go to state 93
+    FLOAT      shift, and go to state 94
+    BOOLEAN    shift, and go to state 95
+    CHARACTER  shift, and go to state 96
+    STRING     shift, and go to state 97
+
+    TYPE  go to state 168
+
+
+State 158
+
+   12 ELSE: R_ELSE . ELSEIF
+
+    R_IF  shift, and go to state 1
+
+    $default  reduce using rule 3 (START_SCOPE)
+
+    START_SCOPE  go to state 169
+    IF           go to state 170
+    ELSEIF       go to state 171
+
+
+State 159
+
+   10 ELSES: ELSES ELSE .
+
+    $default  reduce using rule 10 (ELSES)
+
+
+State 160
+
+   64 MATRIX_ACCESS_STATE: varConst MATRIX_INIT PRIMITIVE COMMA PRIMITIVE MATRIX_END .
+
+    $default  reduce using rule 64 (MATRIX_ACCESS_STATE)
+
+
+State 161
+
+   15 FOR: R_FOR '(' ASSIGNMENT_STATE SEMI_COLON EXP SEMI_COLON UNITARY_STATE . ')' BLOCK
+
+    ')'  shift, and go to state 172
+
+
+State 162
+
+   51 UNITARY_STATE: varConst . R_UP
+   52              | varConst . R_UM
 
     R_UP  shift, and go to state 63
     R_UM  shift, and go to state 64
 
 
-State 158
+State 163
 
-   18 CASE: R_CASE EXP COLON . CMDS
-   68 EXP: EXP COLON . COLON EXPLICIT_TYPE
+   19 CASE: R_CASE EXP COLON . CMDS
+   69 EXP: EXP COLON . COLON EXPLICIT_TYPE
 
     R_IF        shift, and go to state 1
     R_WHILE     shift, and go to state 2
@@ -2242,7 +2299,7 @@ State 158
     R_CONTINUE  shift, and go to state 7
     R_IN        shift, and go to state 8
     R_OUT       shift, and go to state 9
-    COLON       shift, and go to state 111
+    COLON       shift, and go to state 109
     VAR         shift, and go to state 10
     CONST       shift, and go to state 11
     END_LINE    shift, and go to state 12
@@ -2250,29 +2307,28 @@ State 158
     BLOCK_INIT  reduce using rule 3 (START_SCOPE)
     $default    reduce using rule 6 (CMDS)
 
-    BLOCK             go to state 14
-    START_SCOPE       go to state 15
-    CMDS              go to state 163
-    WHILE             go to state 17
-    DO_WHILE          go to state 18
-    IF                go to state 19
-    FOR               go to state 20
-    SWITCH            go to state 21
-    BREAK             go to state 22
-    CONTINUE          go to state 23
-    ASSIGNMENT_STATE  go to state 24
-    FUNCTION_STATE    go to state 25
-    CMD               go to state 26
-    UNITARY_STATE     go to state 27
-    IS                go to state 28
-    IN                go to state 29
-    OUT               go to state 30
-    varConst          go to state 31
+    START_SCOPE       go to state 14
+    CMDS              go to state 173
+    WHILE             go to state 16
+    DO_WHILE          go to state 17
+    IF                go to state 18
+    FOR               go to state 19
+    SWITCH            go to state 20
+    BREAK             go to state 21
+    CONTINUE          go to state 22
+    ASSIGNMENT_STATE  go to state 23
+    FUNCTION_STATE    go to state 24
+    CMD               go to state 25
+    UNITARY_STATE     go to state 26
+    IS                go to state 27
+    IN                go to state 28
+    OUT               go to state 29
+    varConst          go to state 30
 
 
-State 159
+State 164
 
-   19 DEFAULT: R_DEFAULT COLON . CMDS
+   20 DEFAULT: R_DEFAULT COLON . CMDS
 
     R_IF        shift, and go to state 1
     R_WHILE     shift, and go to state 2
@@ -2290,91 +2346,126 @@ State 159
     BLOCK_END  reduce using rule 6 (CMDS)
     $default   reduce using rule 3 (START_SCOPE)
 
-    BLOCK             go to state 14
-    START_SCOPE       go to state 15
-    CMDS              go to state 164
-    WHILE             go to state 17
-    DO_WHILE          go to state 18
-    IF                go to state 19
-    FOR               go to state 20
-    SWITCH            go to state 21
-    BREAK             go to state 22
-    CONTINUE          go to state 23
-    ASSIGNMENT_STATE  go to state 24
-    FUNCTION_STATE    go to state 25
-    CMD               go to state 26
-    UNITARY_STATE     go to state 27
-    IS                go to state 28
-    IN                go to state 29
-    OUT               go to state 30
-    varConst          go to state 31
-
-
-State 160
-
-   22 ASSIGNMENT_STATE: varConst MATRIX_INIT PRIMITIVE COMMA PRIMITIVE MATRIX_END ASSIGNMENT . EXP
-
-    MATRIX_INIT  shift, and go to state 32
-    INTEGER      shift, and go to state 33
-    FLOAT        shift, and go to state 34
-    BOOLEAN      shift, and go to state 35
-    CHARACTER    shift, and go to state 36
-    STRING       shift, and go to state 37
-    NOT          shift, and go to state 38
-    VAR          shift, and go to state 39
-    CONST        shift, and go to state 40
-    '('          shift, and go to state 41
-
-    UNITARY_STATE        go to state 42
-    MATRIX_INIT_STATE    go to state 43
-    MATRIX_ACCESS_STATE  go to state 44
-    EXP                  go to state 165
-    PRIMITIVE            go to state 46
-    varConst             go to state 47
-
-
-State 161
-
-   62 MATRIX_INIT_STATE: MATRIX_INIT PRIMITIVE COLON PRIMITIVE MATRIX_END R_OF TYPE .
-
-    $default  reduce using rule 62 (MATRIX_INIT_STATE)
-
-
-State 162
-
-   14 FOR: R_FOR '(' ASSIGNMENT_STATE SEMI_COLON EXP SEMI_COLON UNITARY_STATE ')' . BLOCK
-
-    $default  reduce using rule 3 (START_SCOPE)
-
-    BLOCK        go to state 166
-    START_SCOPE  go to state 15
-
-
-State 163
-
-   18 CASE: R_CASE EXP COLON CMDS .
-
-    $default  reduce using rule 18 (CASE)
-
-
-State 164
-
-   19 DEFAULT: R_DEFAULT COLON CMDS .
-
-    $default  reduce using rule 19 (DEFAULT)
+    START_SCOPE       go to state 14
+    CMDS              go to state 174
+    WHILE             go to state 16
+    DO_WHILE          go to state 17
+    IF                go to state 18
+    FOR               go to state 19
+    SWITCH            go to state 20
+    BREAK             go to state 21
+    CONTINUE          go to state 22
+    ASSIGNMENT_STATE  go to state 23
+    FUNCTION_STATE    go to state 24
+    CMD               go to state 25
+    UNITARY_STATE     go to state 26
+    IS                go to state 27
+    IN                go to state 28
+    OUT               go to state 29
+    varConst          go to state 30
 
 
 State 165
 
-   22 ASSIGNMENT_STATE: varConst MATRIX_INIT PRIMITIVE COMMA PRIMITIVE MATRIX_END ASSIGNMENT EXP .
-   67 EXP: EXP . R_DOT EXP
-   68    | EXP . COLON COLON EXPLICIT_TYPE
-   69    | EXP . BOOLEAN_LOGIC EXP
-   71    | EXP . QUESTION EXP COLON EXP
-   72    | EXP . EQUALITY_TEST EXP
-   73    | EXP . ORDER_RELATION EXP
-   74    | EXP . ARITHMETIC_1 EXP
-   75    | EXP . ARITHMETIC_2 EXP
+   23 ASSIGNMENT_STATE: varConst MATRIX_INIT PRIMITIVE COMMA PRIMITIVE MATRIX_END ASSIGNMENT . EXP
+
+    MATRIX_INIT  shift, and go to state 31
+    INTEGER      shift, and go to state 32
+    FLOAT        shift, and go to state 33
+    BOOLEAN      shift, and go to state 34
+    CHARACTER    shift, and go to state 35
+    STRING       shift, and go to state 36
+    NOT          shift, and go to state 37
+    VAR          shift, and go to state 38
+    CONST        shift, and go to state 39
+    '('          shift, and go to state 40
+
+    UNITARY_STATE        go to state 41
+    MATRIX_INIT_STATE    go to state 42
+    MATRIX_ACCESS_STATE  go to state 43
+    EXP                  go to state 175
+    PRIMITIVE            go to state 45
+    varConst             go to state 46
+
+
+State 166
+
+   25 FUNCTION_STATE: varConst START_SCOPE '(' PARAMS ')' BLOCK END_SCOPE .
+
+    $default  reduce using rule 25 (FUNCTION_STATE)
+
+
+State 167
+
+   28 COMMA_PARAMS: COMMA PARAM COMMA_PARAMS .
+
+    $default  reduce using rule 28 (COMMA_PARAMS)
+
+
+State 168
+
+   63 MATRIX_INIT_STATE: MATRIX_INIT PRIMITIVE COLON PRIMITIVE MATRIX_END R_OF TYPE .
+
+    $default  reduce using rule 63 (MATRIX_INIT_STATE)
+
+
+State 169
+
+   14 ELSEIF: START_SCOPE . BLOCK END_SCOPE
+
+    BLOCK_INIT  shift, and go to state 54
+
+    BLOCK  go to state 176
+
+
+State 170
+
+   13 ELSEIF: IF .
+
+    $default  reduce using rule 13 (ELSEIF)
+
+
+State 171
+
+   12 ELSE: R_ELSE ELSEIF .
+
+    $default  reduce using rule 12 (ELSE)
+
+
+State 172
+
+   15 FOR: R_FOR '(' ASSIGNMENT_STATE SEMI_COLON EXP SEMI_COLON UNITARY_STATE ')' . BLOCK
+
+    BLOCK_INIT  shift, and go to state 54
+
+    BLOCK  go to state 177
+
+
+State 173
+
+   19 CASE: R_CASE EXP COLON CMDS .
+
+    $default  reduce using rule 19 (CASE)
+
+
+State 174
+
+   20 DEFAULT: R_DEFAULT COLON CMDS .
+
+    $default  reduce using rule 20 (DEFAULT)
+
+
+State 175
+
+   23 ASSIGNMENT_STATE: varConst MATRIX_INIT PRIMITIVE COMMA PRIMITIVE MATRIX_END ASSIGNMENT EXP .
+   68 EXP: EXP . R_DOT EXP
+   69    | EXP . COLON COLON EXPLICIT_TYPE
+   70    | EXP . BOOLEAN_LOGIC EXP
+   72    | EXP . QUESTION EXP COLON EXP
+   73    | EXP . EQUALITY_TEST EXP
+   74    | EXP . ORDER_RELATION EXP
+   75    | EXP . ARITHMETIC_1 EXP
+   76    | EXP . ARITHMETIC_2 EXP
 
     R_DOT           shift, and go to state 73
     ARITHMETIC_1    shift, and go to state 74
@@ -2385,11 +2476,27 @@ State 165
     COLON           shift, and go to state 79
     QUESTION        shift, and go to state 80
 
-    $default  reduce using rule 22 (ASSIGNMENT_STATE)
+    $default  reduce using rule 23 (ASSIGNMENT_STATE)
 
 
-State 166
+State 176
 
-   14 FOR: R_FOR '(' ASSIGNMENT_STATE SEMI_COLON EXP SEMI_COLON UNITARY_STATE ')' BLOCK .
+   14 ELSEIF: START_SCOPE BLOCK . END_SCOPE
 
-    $default  reduce using rule 14 (FOR)
+    $default  reduce using rule 4 (END_SCOPE)
+
+    END_SCOPE  go to state 178
+
+
+State 177
+
+   15 FOR: R_FOR '(' ASSIGNMENT_STATE SEMI_COLON EXP SEMI_COLON UNITARY_STATE ')' BLOCK .
+
+    $default  reduce using rule 15 (FOR)
+
+
+State 178
+
+   14 ELSEIF: START_SCOPE BLOCK END_SCOPE .
+
+    $default  reduce using rule 14 (ELSEIF)
