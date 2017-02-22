@@ -50,7 +50,7 @@ Assignment          =
 %%
 "\["                { return MATRIX_INIT; }
 "\]"                { return MATRIX_END; }
-"return"            { return RETURN; }
+"return"            { return R_RETURN; }
 "\+\+"              { return R_UP; }
 "\-\-"              { return R_UM; }
 "if"                { return R_IF; }
@@ -63,6 +63,7 @@ Assignment          =
 "default"           { return R_DEFAULT; }
 "break"             { return R_BREAK; }
 "continue"          { return R_CONTINUE; }
+"Void"              { return R_VOID; }
 "String"            { yylval.token = STRING; return STRING; }
 "Float"             { yylval.token = FLOAT; return FLOAT; }
 "Int"               { yylval.token = INTEGER; return INTEGER; }

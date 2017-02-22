@@ -1,3 +1,4 @@
-for(i = 1.0; i < 10; i = i + 0.1){
-  out:i
+Int soma(a is Int, b is Int){
+  return a + b
 }
+soma(10,1)

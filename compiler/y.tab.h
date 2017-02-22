@@ -52,7 +52,7 @@ extern int yydebug;
     MATRIX_END = 262,
     R_UP = 263,
     R_UM = 264,
-    RETURN = 265,
+    R_RETURN = 265,
     R_IF = 266,
     R_ELSE = 267,
     R_WHILE = 268,
@@ -78,7 +78,7 @@ extern int yydebug;
     BOOLEAN = 288,
     CHARACTER = 289,
     STRING = 290,
-    VOID = 291,
+    R_VOID = 291,
     ARITHMETIC_1 = 292,
     ARITHMETIC_2 = 293,
     BOOLEAN_LOGIC = 294,
@@ -103,7 +103,7 @@ extern int yydebug;
 #define MATRIX_END 262
 #define R_UP 263
 #define R_UM 264
-#define RETURN 265
+#define R_RETURN 265
 #define R_IF 266
 #define R_ELSE 267
 #define R_WHILE 268
@@ -129,7 +129,7 @@ extern int yydebug;
 #define BOOLEAN 288
 #define CHARACTER 289
 #define STRING 290
-#define VOID 291
+#define R_VOID 291
 #define ARITHMETIC_1 292
 #define ARITHMETIC_2 293
 #define BOOLEAN_LOGIC 294

@@ -17,6 +17,7 @@
   #include <map>
   #include <string>
   #include <vector>
+  #include <algorithm>
   using namespace std;
 
   long long tempCount = 0;
@@ -60,6 +61,10 @@
   void yyerror(string);
 
   /* Messages */
+  void wrongParams(func);
+  void needsReturn(func);
+  void cantReturn();
+  void wrongReturnType(func,int);
   void outOfRange(string,int,int);
   void notDeclared(string);
   void constWontChangeValue(string);
@@ -68,10 +73,14 @@
   void warningExplicitType(string,string);
 
   /* VarMap Functions */
+  bool checkFuncParams(string,vector<temp>);
+  bool checkFuncReturn(int);
+  bool existsFunc(string);
   bool exists(string);
   bool existsOnScope(string);
   void addVar(temp,string,bool,string,int);
   attr getVar(string);
+  func getFunction(string);
   string checkType(int);
   string checkType(string);
   temp createTemp(int,string);
@@ -83,6 +92,7 @@
   /* Heap */
   vector<func> functions = {};
   vector<temp> functionsParams = {};
+  vector<temp> functionsReturns = {};
   vector<temp> tempsOnMemory = {};
   vector<map<string,attr>> scopes = {};
 
@@ -96,11 +106,11 @@
 %}
 
 %token BLOCK_INIT BLOCK_END SEMI_COLON MATRIX_INIT MATRIX_END
-%token R_UP R_UM RETURN
+%token R_UP R_UM R_RETURN
 %token R_IF R_ELSE R_WHILE R_DO R_FOR R_SWITCH R_CASE R_DEFAULT R_BREAK R_CONTINUE
 %token R_IN R_OUT R_IS R_DOT R_OF
 %token MTX_INT MTX_FLOAT MTX_BOOLEAN MTX_CHAR MTX_STRING
-%token INTEGER FLOAT BOOLEAN CHARACTER STRING VOID
+%token INTEGER FLOAT BOOLEAN CHARACTER STRING R_VOID
 %token ARITHMETIC_1 ARITHMETIC_2 BOOLEAN_LOGIC EQUALITY_TEST ORDER_RELATION
 %token ASSIGNMENT NOT COLON QUESTION COMMA
 %token VAR CONST EXPLICIT_TYPE
@@ -496,20 +506,46 @@
       }
     };
 
-  FUNCTION_STATE:
-    varConst START_SCOPE '(' PARAMS ')' BLOCK END_SCOPE {
-      $6.translation.pop_back();
+  FUNCTION_START:
+    R_VOID varConst {
       func f;
-      f.name = $1.id;
-      f.returnType = VOID;
-      f.translation =
-        checkType(VOID) + " " + f.name + " (" + $4.paramTranslation + ") {\n\t" +
+      f.name = $2.id;
+      f.returnType = R_VOID;
+      functions.push_back(f);
+      $$.token = R_VOID;
+    };
+    | TYPE varConst {
+      func f;
+      f.name = $2.id;
+      f.returnType = $1.token;
+      functions.push_back(f);
+      $$.token = $1.token;
+    };
+
+  FUNCTION_STATE:
+    varConst START_SCOPE '(' PARAMS ')' END_SCOPE {
+      if(!existsFunc($1.id)){ notDeclared($1.id); }
+      if(!checkFuncParams($1.id,functionsParams)){ wrongParams(getFunction($1.id)); }
+      functionsParams.clear();
+    };
+    | FUNCTION_START START_SCOPE '(' PARAMS ')' BLOCK END_SCOPE {
+      if(functionsReturns.size() == 0 && $1.token != R_VOID){ needsReturn(functions.back()); }
+      $6.scopesLabels.pop_back();
+      functions.back().translation =
+        $1.token == STRING ?
+        "char* " + functions.back().name + " (" + $4.paramTranslation + ") {\n\t" +
           $6.tempTranslation +
           $6.translation +
+          $6.scopesLabels +
+        "}" :
+        checkType($1.token) + " " + functions.back().name + " (" + $4.paramTranslation + ") {\n\t" +
+          $6.tempTranslation +
+          $6.translation +
+          $6.scopesLabels +
         "}";
-      f.params = functionsParams;
+      functions.back().params = functionsParams;
       functionsParams.clear();
-      functions.push_back(f);
+      functionsReturns.clear();
     };
 
   PARAMS:
@@ -544,6 +580,22 @@
         checkType($1.tempVar.token) + " " + $1.tempVar.name;
       functionsParams.push_back($1.tempVar);
     };
+    | EXP {
+      $$.translation = $1.translation;
+      $$.tempTranslation = $1.tempTranslation;
+      functionsParams.push_back($1.tempVar);
+    };
+
+  RETURN:
+    R_RETURN EXP {
+      if(functions.size() == 0) { cantReturn(); }
+      if(!checkFuncReturn($2.token)) { wrongReturnType(functions.back(),$2.token); }
+      $$.tempTranslation = $2.tempTranslation;
+      $$.translation =
+        $2.translation +
+        "return "+ $2.tempVar.name + ";\n\t";
+      functionsReturns.push_back($2.tempVar);
+    };
 
   CMD:
     FUNCTION_STATE;
@@ -555,6 +607,7 @@
     | SWITCH;
     | BREAK;
     | CONTINUE;
+    | RETURN;
     | IS;
     | IN;
     | OUT;
@@ -624,6 +677,12 @@
       attr t = getVar($3.id);
       attr inBuffer;
       switch(t.token){
+        case MTX_INT:
+        case MTX_FLOAT:
+        case MTX_STRING:
+        case MTX_CHAR:
+        case MTX_BOOLEAN:
+          wrongOperation("in:","Matrix");
         case STRING:
           if(!(exists("inBuffer"))){
             temp sizeOfTemp = createTemp(INTEGER,"sizeof(char);");
@@ -698,14 +757,18 @@
       if($3.token == MTX_INT || $3.token == MTX_FLOAT || $1.token == MTX_STRING ||
          $3.token == MTX_CHAR || $3.token == MTX_BOOLEAN){
            $$.tempTranslation = $3.tempTranslation + $4.tempTranslation;
-           string result = "";
+           string result = "cout << \"Matrix ["+to_string(t.ln)+"x"+to_string(t.col)+"]\" << endl;\n\t";
            for(int i = 0; i < t.ln; i++){
              for(int j = 0; j < t.col; j++){
                result += "cout << " + t.name + "[ "+ to_string(j) +" + "+ to_string(t.col) +" * "+to_string(i)+" ] << \" \";\n\t";
              }
-             result += "cout << endl;\n\t";
+             if(i != t.ln-1) result += "cout << endl;\n\t";
            }
-           $$.translation = result + $4.translation + "cout << endl;\n\t";
+           $$.translation =
+            "cout << \"\\n\";\n\t" +
+            result +
+            "cout << \"\\n\";\n\t" +
+            $4.translation + "cout << endl;\n\t";
       }
     };
 
@@ -720,6 +783,23 @@
         $3.translation.empty() ?
           $2.translation + "cout << " + t.name + " << \" \";\n\t" :
           $2.translation + "cout << " + t.name + " << \" \";\n\t" + $3.translation;
+
+      if($2.token == MTX_INT || $2.token == MTX_FLOAT || $2.token == MTX_STRING ||
+         $2.token == MTX_CHAR || $2.token == MTX_BOOLEAN){
+           $$.tempTranslation = $2.tempTranslation + $3.tempTranslation;
+           string result = "cout << \"Matrix ["+to_string(t.ln)+"x"+to_string(t.col)+"]\" << endl;\n\t";
+           for(int i = 0; i < t.ln; i++){
+             for(int j = 0; j < t.col; j++){
+               result += "cout << " + t.name + "[ "+ to_string(j) +" + "+ to_string(t.col) +" * "+to_string(i)+" ] << \" \";\n\t";
+             }
+             if(i != t.ln-1) result += "cout << endl;\n\t";
+           }
+           $$.translation =
+            "cout << \"\\n\";\n\t" +
+            result +
+            "cout << \"\\n\";\n\t" +
+            $3.translation + "cout << endl;\n\t";
+      }
     };
     |;
 
@@ -1141,7 +1221,7 @@ string createFunctions(){
     for(temp t : f.params){
       cout << "\t" << t.name << " " << checkType(t.token) << endl;
     }
-    result += f.translation + "\n\t";
+    result += f.translation + "\n";
   }
   return result;
 }
@@ -1167,6 +1247,33 @@ string actualLine(){
           Messages
   ------------------------
 */
+void wrongParams(func f){
+  cout << colorText("error:"+actualLine()+": ",hexToRGB(RED)) <<
+  "The Function " << colorText(f.name,hexToRGB(AQUA)) << " needs this parameters:\n";
+  for(temp t : f.params){ cout << colorText(checkType(t.token),hexToRGB(AQUA)) << endl; }
+  cout << endl;
+  exit(1);
+}
+
+void needsReturn(func f){
+  cout << colorText("error:"+actualLine()+": ",hexToRGB(RED)) << colorText(f.name,hexToRGB(AQUA)) << " needs a return." << endl;
+  exit(1);
+}
+
+void cantReturn(){
+  cout << colorText("error:"+actualLine()+": ",hexToRGB(RED)) << " can't do a 'return' without fuction." << endl;
+  exit(1);
+}
+
+void wrongReturnType(func f, int token){
+  if(f.returnType == R_VOID){
+    cout << colorText("error:"+actualLine()+": ",hexToRGB(RED)) << colorText(f.name,hexToRGB(AQUA)) << " doesn't need a return..." << endl;
+    exit(1);
+  }
+  cout << colorText("error:"+actualLine()+": ",hexToRGB(RED)) << colorText(f.name,hexToRGB(AQUA)) << " needs a return like " << colorText(checkType(f.returnType),hexToRGB(GREEN)) << " not " <<  colorText(checkType(token),hexToRGB(GREEN)) << endl;
+  exit(1);
+}
+
 void outOfRange(string name, int ln, int col){
   cout << colorText("error:"+actualLine()+": ",hexToRGB(RED)) << colorText(name,hexToRGB(AQUA)) << "[" << ln << "," << col << "] is " << colorText("OUT",hexToRGB(RED)) << " of range." << endl;
   exit(1);
@@ -1210,6 +1317,14 @@ attr getVar(string name){
   return scopeIterator->second;
 }
 
+func getFunction(string name){
+  for(func f : functions){
+    if(f.name == name) { return f; }
+  }
+  func cantFind;
+  return cantFind;
+}
+
 temp createTemp(int token, string value){
   tempCount++;
   temp t;
@@ -1247,7 +1362,7 @@ string checkType(int token){
     case BOOLEAN: return "int";
     case CHARACTER: return "char";
     case STRING: return "string";
-    case VOID: return "void";
+    case R_VOID: return "void";
     case MTX_INT: return "int*";
     case MTX_FLOAT: return "float*";
     case MTX_CHAR: return "char*";
@@ -1269,6 +1384,28 @@ string checkType(string name){
     case STRING: return "string";
     default: return "UNDEFINED";
   }
+}
+
+bool checkFuncParams(string name,vector<temp> params){
+  for(func f : functions){
+    if(f.name == name){
+      if(f.params.size() != params.size()) return false;
+      for(int i = 0; i < f.params.size(); i++){
+        if(f.params[i].token != params[i].token) return false;
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
+bool checkFuncReturn(int token){
+  return functions.back().returnType == token;
+}
+
+bool existsFunc(string funcName){
+  for(func f : functions){ if(f.name == funcName) return true; }
+  return false;
 }
 
 bool exists(string varName){
