@@ -68,31 +68,32 @@ extern int yydebug;
     R_IS = 278,
     R_DOT = 279,
     R_OF = 280,
-    MTX_INT = 281,
-    MTX_FLOAT = 282,
-    MTX_BOOLEAN = 283,
-    MTX_CHAR = 284,
-    MTX_STRING = 285,
-    INTEGER = 286,
-    FLOAT = 287,
-    BOOLEAN = 288,
-    CHARACTER = 289,
-    STRING = 290,
-    R_VOID = 291,
-    ARITHMETIC_1 = 292,
-    ARITHMETIC_2 = 293,
-    BOOLEAN_LOGIC = 294,
-    EQUALITY_TEST = 295,
-    ORDER_RELATION = 296,
-    ASSIGNMENT = 297,
-    NOT = 298,
-    COLON = 299,
-    QUESTION = 300,
-    COMMA = 301,
-    VAR = 302,
-    CONST = 303,
-    EXPLICIT_TYPE = 304,
-    END_LINE = 305
+    R_DOLLAR = 281,
+    MTX_INT = 282,
+    MTX_FLOAT = 283,
+    MTX_BOOLEAN = 284,
+    MTX_CHAR = 285,
+    MTX_STRING = 286,
+    INTEGER = 287,
+    FLOAT = 288,
+    BOOLEAN = 289,
+    CHARACTER = 290,
+    STRING = 291,
+    R_VOID = 292,
+    ARITHMETIC_1 = 293,
+    ARITHMETIC_2 = 294,
+    BOOLEAN_LOGIC = 295,
+    EQUALITY_TEST = 296,
+    ORDER_RELATION = 297,
+    ASSIGNMENT = 298,
+    NOT = 299,
+    COLON = 300,
+    QUESTION = 301,
+    COMMA = 302,
+    VAR = 303,
+    CONST = 304,
+    EXPLICIT_TYPE = 305,
+    END_LINE = 306
   };
 #endif
 /* Tokens.  */
@@ -119,31 +120,32 @@ extern int yydebug;
 #define R_IS 278
 #define R_DOT 279
 #define R_OF 280
-#define MTX_INT 281
-#define MTX_FLOAT 282
-#define MTX_BOOLEAN 283
-#define MTX_CHAR 284
-#define MTX_STRING 285
-#define INTEGER 286
-#define FLOAT 287
-#define BOOLEAN 288
-#define CHARACTER 289
-#define STRING 290
-#define R_VOID 291
-#define ARITHMETIC_1 292
-#define ARITHMETIC_2 293
-#define BOOLEAN_LOGIC 294
-#define EQUALITY_TEST 295
-#define ORDER_RELATION 296
-#define ASSIGNMENT 297
-#define NOT 298
-#define COLON 299
-#define QUESTION 300
-#define COMMA 301
-#define VAR 302
-#define CONST 303
-#define EXPLICIT_TYPE 304
-#define END_LINE 305
+#define R_DOLLAR 281
+#define MTX_INT 282
+#define MTX_FLOAT 283
+#define MTX_BOOLEAN 284
+#define MTX_CHAR 285
+#define MTX_STRING 286
+#define INTEGER 287
+#define FLOAT 288
+#define BOOLEAN 289
+#define CHARACTER 290
+#define STRING 291
+#define R_VOID 292
+#define ARITHMETIC_1 293
+#define ARITHMETIC_2 294
+#define BOOLEAN_LOGIC 295
+#define EQUALITY_TEST 296
+#define ORDER_RELATION 297
+#define ASSIGNMENT 298
+#define NOT 299
+#define COLON 300
+#define QUESTION 301
+#define COMMA 302
+#define VAR 303
+#define CONST 304
+#define EXPLICIT_TYPE 305
+#define END_LINE 306
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED

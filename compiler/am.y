@@ -80,7 +80,8 @@
   bool existsOnScope(string);
   void addVar(temp,string,bool,string,int);
   attr getVar(string);
-  func getFunction(string);
+  attr getVarAndIgnoreMyScope(string);
+  func getFunction(string,vector<temp>);
   string checkType(int);
   string checkType(string);
   temp createTemp(int,string);
@@ -108,7 +109,7 @@
 %token BLOCK_INIT BLOCK_END SEMI_COLON MATRIX_INIT MATRIX_END
 %token R_UP R_UM R_RETURN
 %token R_IF R_ELSE R_WHILE R_DO R_FOR R_SWITCH R_CASE R_DEFAULT R_BREAK R_CONTINUE
-%token R_IN R_OUT R_IS R_DOT R_OF
+%token R_IN R_OUT R_IS R_DOT R_OF R_DOLLAR
 %token MTX_INT MTX_FLOAT MTX_BOOLEAN MTX_CHAR MTX_STRING
 %token INTEGER FLOAT BOOLEAN CHARACTER STRING R_VOID
 %token ARITHMETIC_1 ARITHMETIC_2 BOOLEAN_LOGIC EQUALITY_TEST ORDER_RELATION
@@ -393,17 +394,53 @@
 
   BREAK:
     R_BREAK {
-      $$.translation = "goto BLOCK_LABEL_" + to_string(scopes.size()+1) + "_END;\n\t";
+      $$.translation = "goto BLOCK_LABEL_" + to_string(scopes.size()) + "_END;\n\t";
     };
 
   CONTINUE:
     R_CONTINUE {
       $$.translation = "goto BLOCK_LABEL_" + to_string(scopes.size()) +"_BEGIN;\n\t";
-    }
-  ;
+    };
+
+  DOLLAR_VARCONST:
+    R_DOLLAR varConst {
+      if(!exists($2.id)) { notDeclared($2.id); };
+      $$.id = $2.id;
+      $$.isVar = getVarAndIgnoreMyScope($2.id).isVar;
+      $$.tempVar = getVarAndIgnoreMyScope($2.id).tempVar;
+      $$.token = getVarAndIgnoreMyScope($2.id).token;
+    };
 
   ASSIGNMENT_STATE:
-    varConst MATRIX_INIT PRIMITIVE COMMA PRIMITIVE MATRIX_END ASSIGNMENT EXP {
+    DOLLAR_VARCONST ASSIGNMENT EXP {
+      if(!$1.isVar){ constWontChangeValue($1.id); }
+      if($1.token != $3.token) { alreadyDeclared($1.id,checkType($1.id)); }
+      $$.tempTranslation = $3.tempTranslation;
+      temp strLenTemp = createTemp(INTEGER,"strlen(" + $3.tempVar.name + ");");
+      temp sizeOfTemp = createTemp(INTEGER,"sizeof(char);");
+      temp calcMallocTemp = createTemp(INTEGER,strLenTemp.name + " * " + sizeOfTemp.name + ";");
+      switch($1.token){
+        case STRING:
+          $$.tempTranslation =
+            $$.tempTranslation +
+            strLenTemp.translation + "// " + strLenTemp.value + "\n\t" +
+            sizeOfTemp.translation + "// " + sizeOfTemp.value + "\n\t" +
+            calcMallocTemp.translation + "// " + calcMallocTemp.value + "\n\t";
+          $$.translation =
+            $3.translation +
+            strLenTemp.name + " = " + strLenTemp.value + "\n\t" +
+            sizeOfTemp.name + " = " + sizeOfTemp.value + "\n\t" +
+            calcMallocTemp.name + " = " + calcMallocTemp.value + "\n\t" +
+            "free(" + $1.tempVar.name + ");\n\t" +
+            $1.tempVar.name + " = (char*) malloc(" + calcMallocTemp.name + ");\n\t" +
+            "strcpy(" + $1.tempVar.name + "," + $3.tempVar.name + ");\n\t";
+        break;
+        default:
+          $$.translation = $3.translation + $1.tempVar.name + " = " + $3.tempVar.name + ";\n\t";
+        break;
+      }
+    };
+    | varConst MATRIX_INIT PRIMITIVE COMMA PRIMITIVE MATRIX_END ASSIGNMENT EXP {
       string name = $1.isVar ? $1.id : $1.id.erase(0,1);
       if(!existsOnScope(name)){ notDeclared($1.id); }
       if($1.token != MTX_INT && $1.token != MTX_FLOAT && $1.token != MTX_STRING &&
@@ -522,14 +559,48 @@
       $$.token = $1.token;
     };
 
-  FUNCTION_STATE:
-    varConst START_SCOPE '(' PARAMS ')' END_SCOPE {
+  FUNCTION_ACCESS_STATE:
+    varConst START_SCOPE '(' PARAMS_ACCESS ')' END_SCOPE {
       if(!existsFunc($1.id)){ notDeclared($1.id); }
-      if(!checkFuncParams($1.id,functionsParams)){ wrongParams(getFunction($1.id)); }
+      if(!checkFuncParams($1.id,functionsParams)){ wrongParams(getFunction($1.id,functionsParams)); }
+      func f = getFunction($1.id,functionsParams);
+      temp t = createTemp(f.returnType,f.name+"("+$4.paramTranslation+");");
+      $$.tempTranslation =
+        $4.tempTranslation +
+        t.translation + " // " + t.value + "\n\t";
+      $$.translation =
+        $4.translation +
+        t.name + " = " + t.value + "\n\t";
+
+      $$.tempVar = t;
+      $$.token = f.returnType;
       functionsParams.clear();
     };
-    | FUNCTION_START START_SCOPE '(' PARAMS ')' BLOCK END_SCOPE {
-      if(functionsReturns.size() == 0 && $1.token != R_VOID){ needsReturn(functions.back()); }
+
+  PARAMS_ACCESS:
+    EXP COMMA_EXP {
+      $$.translation = $1.translation + $2.translation;
+      $$.tempTranslation = $1.tempTranslation + $2.tempTranslation;
+      $$.paramTranslation =
+        $2.tempVar.name.empty() ?
+        $1.tempVar.name :
+        $1.tempVar.name + ", " + $2.tempVar.name;
+      functionsParams.push_back($1.tempVar);
+    };
+
+  COMMA_EXP:
+    COMMA EXP COMMA_EXP {
+      $$.translation = $2.translation;
+      $$.tempTranslation = $2.tempTranslation;
+      $$.paramTranslation = $2.tempVar.name + ", " + $2.tempVar.name;
+      $$.tempVar = $2.tempVar;
+      functionsParams.push_back($2.tempVar);
+    };
+    |;
+
+  FUNCTION_INIT_STATE:
+    FUNCTION_START START_SCOPE '(' PARAMS ')' BLOCK END_SCOPE {
+      if(functions.back().params.size() == 0 && $1.token != R_VOID){ needsReturn(functions.back()); }
       $6.scopesLabels.pop_back();
       functions.back().translation =
         $1.token == STRING ?
@@ -543,8 +614,6 @@
           $6.translation +
           $6.scopesLabels +
         "}";
-      functions.back().params = functionsParams;
-      functionsParams.clear();
       functionsReturns.clear();
     };
 
@@ -578,12 +647,7 @@
         $1.tempVar.token == STRING ?
         "char* " + $1.tempVar.name :
         checkType($1.tempVar.token) + " " + $1.tempVar.name;
-      functionsParams.push_back($1.tempVar);
-    };
-    | EXP {
-      $$.translation = $1.translation;
-      $$.tempTranslation = $1.tempTranslation;
-      functionsParams.push_back($1.tempVar);
+      functions.back().params.push_back($1.tempVar);
     };
 
   RETURN:
@@ -598,7 +662,8 @@
     };
 
   CMD:
-    FUNCTION_STATE;
+    FUNCTION_ACCESS_STATE;
+    | FUNCTION_INIT_STATE;
     | IF;
     | WHILE;
     | DO_WHILE;
@@ -627,7 +692,7 @@
   UNITARY_STATE:
     varConst R_UP {
       string name = $1.isVar ? $1.id : $1.id.erase(0,1);
-      if(!exists(name)){ notDeclared($1.id); }
+      if(!existsOnScope(name)){ notDeclared($1.id); }
       if($1.token != INTEGER){ wrongOperation("'++' (Unitary Increment)",checkType($1.token)); }
       attr varConst = getVar(name);
       if(!varConst.isVar){ constWontChangeValue(name); }
@@ -641,7 +706,7 @@
     };
     | varConst R_UM {
       string name = $1.isVar ? $1.id : $1.id.erase(0,1);
-      if(!exists(name)){ notDeclared($1.id); }
+      if(!existsOnScope(name)){ notDeclared($1.id); }
       if($1.token != INTEGER){ wrongOperation("'--' (Unitary Decrement)",checkType($1.token)); }
       attr varConst = getVar(name);
       if(!varConst.isVar){ constWontChangeValue(name); }
@@ -653,10 +718,32 @@
         varConst.tempVar.name + " = " + t.name + ";\n\t";
       $$.tempVar = varConst.tempVar;
     };
+    | DOLLAR_VARCONST R_UP {
+      if($1.token != INTEGER){ wrongOperation("'++' (Unitary Increment)",checkType($1.token)); }
+      if(!$1.isVar){ constWontChangeValue($1.id); }
+      temp t = createTemp($1.token,$1.tempVar.name + " + 1;");
+      $$.tempTranslation =
+        t.translation + " // " + t.value + "\n\t";
+      $$.translation =
+        t.name + " = " + t.value + "\n\t" +
+        $1.tempVar.name + " = " + t.name + ";\n\t";
+      $$.tempVar = $1.tempVar;
+    };
+    | DOLLAR_VARCONST R_UM {
+      if($1.token != INTEGER){ wrongOperation("'--' (Unitary Decrement)",checkType($1.token)); }
+      if(!$1.isVar){ constWontChangeValue($1.id); }
+      temp t = createTemp($1.token,$1.tempVar.name + " - 1;");
+      $$.tempTranslation =
+        t.translation + " // " + t.value + "\n\t";
+      $$.translation =
+        t.name + " = " + t.value + "\n\t" +
+        $1.tempVar.name + " = " + t.name + ";\n\t";
+      $$.tempVar = $1.tempVar;
+    };
 
   IS:
     varConst R_IS TYPE {
-      if(exists($1.id)){ alreadyDeclared($1.id, checkType($1.id)); }
+      if(existsOnScope($1.id)){ alreadyDeclared($1.id, checkType($1.id)); }
       temp t = createTemp($3.token,"");
       addVar(t,$1.id, $1.isVar, "", $3.token);
       $$.tempTranslation = t.translation + " // Pre-declaration\n\t";
@@ -672,7 +759,7 @@
 
   IN:
     R_IN COLON varConst {
-      if(!(exists($3.id))){ notDeclared($3.id); }
+      if(!(existsOnScope($3.id))){ notDeclared($3.id); }
       if(!getVar($3.id).isVar){ constWontChangeValue($3.id); }
       attr t = getVar($3.id);
       attr inBuffer;
@@ -846,7 +933,7 @@
   MATRIX_ACCESS_STATE:
     varConst MATRIX_INIT PRIMITIVE COMMA PRIMITIVE MATRIX_END {
       string name = $1.isVar ? $1.id : $1.id.erase(0,1);
-      if(!exists(name)){ notDeclared($1.id); }
+      if(!existsOnScope(name)){ notDeclared($1.id); }
       if($1.token != MTX_INT && $1.token != MTX_FLOAT && $1.token != MTX_STRING &&
           $1.token != MTX_CHAR && $1.token != MTX_BOOLEAN) { wrongOperation("'[Int,Int]' (Matrix Access)",checkType($1.token));  }
       if($3.token != INTEGER){ wrongOperation("'[Int,Int]' (Matrix Access)",checkType($3.token)); }
@@ -880,7 +967,8 @@
     };
 
   EXP:
-    MATRIX_INIT_STATE;
+    FUNCTION_ACCESS_STATE;
+    | MATRIX_INIT_STATE;
     | MATRIX_ACCESS_STATE;
     | UNITARY_STATE;
     | EXP R_DOT EXP { // EXP.EXP (String Concatenation)
@@ -922,7 +1010,6 @@
       }
       $$.token = STRING;
       $$.tempVar = t;
-      tempsOnMemory.push_back(t);
     };
     | EXP COLON COLON EXPLICIT_TYPE { // EXP::EXPLICIT_TYPE
       temp t;
@@ -1115,15 +1202,16 @@
     | PRIMITIVE;
 
   PRIMITIVE:
-      VAR {
-       if(!exists($1.id)) { notDeclared($1.id); };
+      DOLLAR_VARCONST;
+      | VAR {
+       if(!existsOnScope($1.id)) { notDeclared($1.id); };
        $$.tempVar = getVar($1.id).tempVar;
        $$.token = getVar($1.id).token;
        $$.value = getVar($1.id).value;
        $$.id = $1.id;
      };
      | CONST {
-       if(!exists($1.id)) { notDeclared($1.id); };
+       if(!existsOnScope($1.id)) { notDeclared($1.id); };
        $$.tempVar = getVar($1.id).tempVar;
        $$.token = getVar($1.id).token;
        $$.value = getVar($1.id).value;
@@ -1169,7 +1257,7 @@
     VAR {
       $$.id = $1.id;
       $$.isVar = true;
-      if(exists($1.id)){
+      if(existsOnScope($1.id)){
         $$.tempVar = getVar($1.id).tempVar;
         $$.token = getVar($1.id).token;
       }
@@ -1177,7 +1265,7 @@
     | CONST {
       $$.id = $1.id;
       $$.isVar = false;
-      if(exists($1.id)){
+      if(existsOnScope($1.id)){
         $$.tempVar = getVar($1.id).tempVar;
         $$.token = getVar($1.id).token;
       }
@@ -1317,9 +1405,25 @@ attr getVar(string name){
   return scopeIterator->second;
 }
 
-func getFunction(string name){
+attr getVarAndIgnoreMyScope(string name){
+  for(int i = 0; i < scopes.size()-1; i++){
+      scopeIterator = scopes[i].find(name);
+      if(scopeIterator != scopes[i].end()){ return scopeIterator->second; }
+  }
+  scopeIterator = globalScope.find(name);
+  return scopeIterator->second;
+}
+
+func getFunction(string name, vector<temp> params){
+  bool check = false;
   for(func f : functions){
-    if(f.name == name) { return f; }
+    cout << f.name << " " << f.params.size() << " " << params.size() <<  endl;
+    if(f.name == name && f.params.size() == params.size()){
+      for(int i = 0; i < f.params.size(); i++){
+        if(f.params[i].token == params[i].token){ check = true; }
+      }
+      if(check) { return f; }
+    }
   }
   func cantFind;
   return cantFind;
@@ -1387,13 +1491,13 @@ string checkType(string name){
 }
 
 bool checkFuncParams(string name,vector<temp> params){
+  bool check = false;
   for(func f : functions){
-    if(f.name == name){
-      if(f.params.size() != params.size()) return false;
+    if(f.name == name && f.params.size() == params.size()){
       for(int i = 0; i < f.params.size(); i++){
-        if(f.params[i].token != params[i].token) return false;
+        if(f.params[i].token == params[i].token){ check = true; }
       }
-      return true;
+      if(check) { return true; }
     }
   }
   return false;

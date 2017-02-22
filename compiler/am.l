@@ -48,6 +48,7 @@ Colon               :
 Assignment          =
 
 %%
+"\$"                { return R_DOLLAR; }
 "\["                { return MATRIX_INIT; }
 "\]"                { return MATRIX_END; }
 "return"            { return R_RETURN; }

@@ -1,4 +1,1 @@
-Int soma(a is Int, b is Int){
-  return a + b
-}
-soma(10,1)
+
